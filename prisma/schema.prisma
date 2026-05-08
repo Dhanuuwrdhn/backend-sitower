@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Pegawai {
+  id        String    @id @default(cuid())
+  nik       String    @unique
+  nama      String
+  jabatan   String
+  unit      String
+  role      String    @default("teknisi")
+  password  String
+  aktif     Boolean   @default(true)
+  foto      String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  laporan   Laporan[]
+}
+
+model Tower {
+  id        String   @id
+  nama      String
+  lat       Float
+  lng       Float
+  tegangan  String
+  tipe      String
+  kondisi   String   @default("normal")
+  lokasi    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  laporan    Laporan[]
+  sertifikat Sertifikat[]
+  asBuilt    AsBuiltDrawing[]
+}
+
+model Laporan {
+  id        String  @id @default(cuid())
+  towerId   String
+  tower     Tower   @relation(fields: [towerId], references: [id])
+  pelaporId String
+  pelapor   Pegawai @relation(fields: [pelaporId], references: [id])
+
+  jenisGangguan String
+  deskripsi     String
+  levelRisiko   String
+  status        String   @default("berlangsung")
+  tanggal       DateTime
+  lokasiDetail  String?
+  keterangan String?
+  foto      String[]
+
+  noSpk    String?
+  teknisi  String?
+  temuan   String?
+  hasil    String?
+  penyebab String?
+  durasi   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Sertifikat {
+  id            String   @id @default(cuid())
+  towerId       String
+  tower         Tower    @relation(fields: [towerId], references: [id])
+  tipe          String
+  nama          String
+  berlakuHingga DateTime
+  status        String
+  fileUrl       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model AsBuiltDrawing {
+  id         String   @id @default(cuid())
+  towerId    String
+  tower      Tower    @relation(fields: [towerId], references: [id])
+  namaFile   String
+  tipe       String
+  tahun      Int
+  versi      String?
+  fileUrl    String?
+  keterangan String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
