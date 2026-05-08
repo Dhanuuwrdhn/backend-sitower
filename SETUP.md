@@ -1,4 +1,4 @@
-# Backend SPEKTRA — Setup Guide
+# Backend SiTower — Setup Guide
 
 NestJS REST API untuk sistem pemantauan tower transmisi PLN UIW Banten.
 
@@ -97,6 +97,63 @@ Seed akan membuat:
 ```bash
 # Development (watch mode)
 npm run start:dev
+
+# Production
+npm run build
+npm run start:prod
+```
+
+Server akan berjalan di `http://localhost:3001`
+
+---
+
+## API Documentation
+
+Akses Swagger UI di: `http://localhost:3001/api`
+
+---
+
+## Testing
+
+```bash
+# Unit tests
+npm run test
+
+# E2E tests
+npm run test:e2e
+
+# Coverage
+npm run test:cov
+```
+
+---
+
+## Troubleshooting
+
+### Error koneksi database
+- Pastikan PostgreSQL berjalan: `brew services start postgresql` (macOS)
+- Cek DATABASE_URL di `.env`
+- Verifikasi user dan database ada: `psql -U dhanu -d sitower_db`
+
+### Prisma error
+- Jalankan `npx prisma generate` setelah perubahan schema
+- Untuk reset database: `npx prisma migrate reset`
+
+### Port conflict
+- Ganti PORT di `.env` jika 3001 sudah digunakan
+
+### Upload error
+- Pastikan folder `uploads/` ada dan writable
+- Cek konfigurasi UPLOAD_DIR di `.env`
+
+---
+
+## Development Tips
+
+- Gunakan `npm run start:debug` untuk debugging
+- Format code: `npm run format`
+- Lint code: `npm run lint`
+- Prisma Studio: `npx prisma studio` (akses di browser)
 
 # Production
 npm run build

@@ -1,53 +1,84 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Backend SiTower
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+NestJS REST API untuk sistem pemantauan tower transmisi PLN UIW Banten.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Deskripsi
 
-## Description
+Backend SiTower adalah aplikasi REST API yang dibangun dengan NestJS untuk mengelola data tower transmisi, laporan, sertifikat, dan as-built drawing. Sistem ini menggunakan Prisma sebagai ORM dengan PostgreSQL sebagai database.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Fitur
 
-## Project setup
+- **Autentikasi & Otorisasi**: JWT-based authentication dengan role-based access control
+- **Manajemen Tower**: CRUD operasi untuk data tower transmisi
+- **Laporan**: Upload dan manajemen laporan dalam format Excel
+- **Sertifikat**: Upload dan tracking sertifikat tower
+- **As-Built Drawing**: Upload dan penyimpanan gambar as-built
+- **Import Data**: Import data dari file Excel
+- **API Documentation**: Swagger UI untuk dokumentasi API
+
+## Tech Stack
+
+- **Framework**: NestJS 11
+- **ORM**: Prisma 7
+- **Database**: PostgreSQL
+- **Authentication**: JWT + Passport
+- **File Upload**: Multer
+- **Validation**: class-validator
+- **Documentation**: Swagger
+
+## Quick Start
+
+1. Clone repository
+2. Install dependencies: `npm install`
+3. Setup environment variables (lihat SETUP.md)
+4. Setup database: `npx prisma migrate dev`
+5. Run development server: `npm run start:dev`
+
+## Scripts
 
 ```bash
-$ npm install
+# Development
+npm run start:dev          # Start with hot reload
+npm run start:debug        # Start with debugger
+
+# Production
+npm run build             # Build application
+npm run start:prod        # Start production server
+
+# Database
+npx prisma migrate dev    # Run migrations
+npx prisma generate       # Generate Prisma client
+npx prisma studio         # Open Prisma Studio
+
+# Testing
+npm run test              # Run unit tests
+npm run test:e2e          # Run e2e tests
+npm run test:cov          # Run tests with coverage
+
+# Linting & Formatting
+npm run lint              # Run ESLint
+npm run format            # Format code with Prettier
 ```
 
-## Compile and run the project
+## API Documentation
 
-```bash
-# development
-$ npm run start
+Ketika server berjalan, akses Swagger UI di: `http://localhost:3001/api`
 
-# watch mode
-$ npm run start:dev
+## Environment Variables
 
-# production mode
-$ npm run start:prod
-```
+Lihat file `SETUP.md` untuk konfigurasi environment variables yang diperlukan.
 
-## Run tests
+## Contributing
 
-```bash
-# unit tests
+1. Fork repository
+2. Create feature branch: `git checkout -b feature/nama-fitur`
+3. Commit changes: `git commit -m 'feat: tambah fitur baru'`
+4. Push to branch: `git push origin feature/nama-fitur`
+5. Create Pull Request
+
+## License
+
+UNLICENSED
 $ npm run test
 
 # e2e tests
