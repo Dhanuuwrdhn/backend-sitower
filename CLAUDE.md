@@ -1,6 +1,6 @@
 # backend-sitower
 
-NestJS backend untuk SPEKTRA — sistem pemantauan kerawanan transmisi tower PLN UIW Banten.
+NestJS backend untuk SPEKTRA — sistem pemantauan kerawanan transmisi tower PLN.
 
 ## Stack
 
