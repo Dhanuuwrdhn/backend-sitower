@@ -75,7 +75,7 @@ export class ImportService {
     if (known.includes(s)) return s
     return 'tidak_ada_aktifitas'
   }
-
+//test
   private normalizeJenis(raw: string): string {
     const s = (raw || '').trim().toLowerCase()
     if (s.includes('pihak lain') || s.includes('ppl')) return 'pekerjaan_pihak_lain'
