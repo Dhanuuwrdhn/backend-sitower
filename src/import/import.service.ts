@@ -65,6 +65,7 @@ export class ImportService {
 
   private normalizeStatus(raw: string): string {
     const s = (raw || '').trim().toLowerCase()
+    if (!s) return 'tidak_ada_aktifitas' // kosong → belum ada aktifitas
     if (s.includes('berlangsung') || s.includes('ongoing')) return 'berlangsung'
     if (s.includes('selesai') || s.includes('done') || s.includes('complete')) return 'selesai'
     if (s.includes('tidak ada') || s.includes('tidak aktif') || s === 'inactive') return 'tidak_ada_aktifitas'
@@ -72,7 +73,7 @@ export class ImportService {
     // sudah lowercase & cocok langsung
     const known = ['berlangsung','selesai','tidak_ada_aktifitas']
     if (known.includes(s)) return s
-    return 'berlangsung'
+    return 'tidak_ada_aktifitas'
   }
 
   private normalizeJenis(raw: string): string {

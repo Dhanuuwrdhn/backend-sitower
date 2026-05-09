@@ -108,6 +108,8 @@ let ImportService = class ImportService {
     }
     normalizeStatus(raw) {
         const s = (raw || '').trim().toLowerCase();
+        if (!s)
+            return 'tidak_ada_aktifitas';
         if (s.includes('berlangsung') || s.includes('ongoing'))
             return 'berlangsung';
         if (s.includes('selesai') || s.includes('done') || s.includes('complete'))
@@ -117,7 +119,7 @@ let ImportService = class ImportService {
         const known = ['berlangsung', 'selesai', 'tidak_ada_aktifitas'];
         if (known.includes(s))
             return s;
-        return 'berlangsung';
+        return 'tidak_ada_aktifitas';
     }
     normalizeJenis(raw) {
         const s = (raw || '').trim().toLowerCase();

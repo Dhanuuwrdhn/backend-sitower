@@ -44,14 +44,7 @@ async function bootstrap() {
     ['uploads/laporan', 'uploads/sertifikat', 'uploads/asbuilt'].forEach((d) => !fs.existsSync(d) && fs.mkdirSync(d, { recursive: true }));
     app.useStaticAssets((0, path_1.join)(process.cwd(), 'uploads'), { prefix: '/uploads' });
     app.enableCors({
-        origin: (origin, callback) => {
-            if (!origin || /^http:\/\/localhost:\d+$/.test(origin)) {
-                callback(null, true);
-            }
-            else {
-                callback(new Error('Not allowed by CORS'));
-            }
-        },
+        origin: true,
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
         credentials: true,
     });
@@ -64,8 +57,8 @@ async function bootstrap() {
         .addBearerAuth()
         .build();
     swagger_1.SwaggerModule.setup('docs', app, swagger_1.SwaggerModule.createDocument(app, config));
-    await app.listen(process.env.PORT || 3001);
-    console.log('Backend: http://localhost:3001/api');
+    await app.listen(process.env.PORT || 3001, '0.0.0.0');
+    console.log('Backend: http://localhost:3001/api (Listening on 0.0.0.0)');
     console.log('Swagger: http://localhost:3001/docs');
 }
 bootstrap();

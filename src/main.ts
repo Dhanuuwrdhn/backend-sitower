@@ -15,15 +15,8 @@ async function bootstrap() {
 
   app.useStaticAssets(join(process.cwd(), 'uploads'), { prefix: '/uploads' })
 
-  // Allow any localhost port so dev server port changes don't break CORS
   app.enableCors({
-    origin: (origin, callback) => {
-      if (!origin || /^http:\/\/localhost:\d+$/.test(origin)) {
-        callback(null, true)
-      } else {
-        callback(new Error('Not allowed by CORS'))
-      }
-    },
+    origin: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     credentials: true,
   })
@@ -39,8 +32,8 @@ async function bootstrap() {
     .build()
   SwaggerModule.setup('docs', app, SwaggerModule.createDocument(app, config))
 
-  await app.listen(process.env.PORT || 3001)
-  console.log('Backend: http://localhost:3001/api')
+  await app.listen(process.env.PORT || 3001, '0.0.0.0')
+  console.log('Backend: http://localhost:3001/api (Listening on 0.0.0.0)')
   console.log('Swagger: http://localhost:3001/docs')
 }
 bootstrap()
