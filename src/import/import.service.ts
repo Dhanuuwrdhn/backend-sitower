@@ -50,13 +50,13 @@ export class ImportService {
 
   private async importSertifikat(rows: any[]) {
     const data = rows
-      .filter(r => r.towerId || r.tower_id)
+      .filter(r => r.nama || r.Nama)
       .map(r => ({
-        towerId:      String(r.towerId || r.tower_id),
-        tipe:         String(r.tipe    || r.Tipe || ''),
-        nama:         String(r.nama    || r.Nama || ''),
-        berlakuHingga: new Date(r.berlakuHingga || r.berlaku_hingga),
-        status:       String(r.status  || r.Status || 'valid'),
+        towerId:       r.towerId || r.tower_id ? String(r.towerId || r.tower_id) : undefined,
+        kategori:      String(r.kategori || r.tipe || r.Tipe || r.Kategori || ''),
+        nama:          String(r.nama    || r.Nama || ''),
+        berlakuHingga: r.berlakuHingga || r.berlaku_hingga ? new Date(r.berlakuHingga || r.berlaku_hingga) : undefined,
+        status:        String(r.status  || r.Status || 'berlaku'),
       }))
 
     await this.prisma.sertifikat.createMany({ data, skipDuplicates: true })

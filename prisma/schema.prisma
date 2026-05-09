@@ -66,16 +66,26 @@ model Laporan {
 }
 
 model Sertifikat {
-  id            String   @id @default(cuid())
-  towerId       String
-  tower         Tower    @relation(fields: [towerId], references: [id])
-  tipe          String
+  id            String              @id @default(cuid())
   nama          String
-  berlakuHingga DateTime
-  status        String
-  fileUrl       String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  kategori      String
+  status        String              @default("berlaku")
+  towerId       String?
+  tower         Tower?              @relation(fields: [towerId], references: [id])
+  berlakuHingga DateTime?
+  dokumen       SertifikatDokumen[]
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+}
+
+model SertifikatDokumen {
+  id        String     @id @default(cuid())
+  folderId  String
+  folder    Sertifikat @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  namaFile  String
+  fileUrl   String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 }
 
 model AsBuiltDrawing {

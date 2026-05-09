@@ -1,22 +1,25 @@
-import { IsString, IsOptional, IsDateString } from 'class-validator'
+import { IsString, IsOptional, IsDateString, IsIn } from 'class-validator'
 
-export class CreateSertifikatDto {
-  @IsString()
-  towerId: string
-
-  @IsString()
-  tipe: string
-
+export class CreateFolderDto {
   @IsString()
   nama: string
 
-  @IsDateString()
-  berlakuHingga: string
-
   @IsString()
-  status: string
+  @IsIn(['Kelayakan', 'Grounding', 'Konstruksi', 'K3', 'Lingkungan'])
+  kategori: string
 
   @IsOptional()
   @IsString()
-  fileUrl?: string
+  @IsIn(['berlaku', 'expired'])
+  status?: string
+
+  @IsOptional()
+  @IsString()
+  towerId?: string
+
+  @IsOptional()
+  @IsDateString()
+  berlakuHingga?: string
 }
+
+export class CreateSertifikatDto extends CreateFolderDto {}
