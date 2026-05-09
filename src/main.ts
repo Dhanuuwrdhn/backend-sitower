@@ -16,8 +16,13 @@ async function bootstrap() {
   app.useStaticAssets(join(process.cwd(), 'uploads'), { prefix: '/uploads' })
 
   app.enableCors({
-    origin: true,
+    origin: [
+      'http://localhost:3000',
+      'https://spektra.biz.id',
+      process.env.FRONTEND_URL,
+    ].filter(Boolean),
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Authorization', 'Content-Type'],
     credentials: true,
   })
 
