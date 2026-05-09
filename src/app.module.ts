@@ -10,7 +10,7 @@ import { SertifikatModule } from './sertifikat/sertifikat.module'
 import { AsBuiltDrawingModule } from './as-built-drawing/as-built-drawing.module'
 import { PegawaiModule } from './pegawai/pegawai.module'
 import { ImportModule } from './import/import.module'
-
+//test
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
