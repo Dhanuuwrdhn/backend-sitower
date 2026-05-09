@@ -7,6 +7,10 @@ import { diskStorage } from 'multer'
 import { extname, join } from 'path'
 import type { Response } from 'express'
 import { createReadStream, existsSync } from 'fs'
+import {
+  ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes,
+  ApiBody, ApiParam, ApiQuery,
+} from '@nestjs/swagger'
 import { SertifikatService } from './sertifikat.service'
 import { CreateFolderDto } from './dto/create-sertifikat.dto'
 import { UpdateSertifikatDto } from './dto/update-sertifikat.dto'
@@ -14,6 +18,8 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { RolesGuard } from '../auth/roles.guard'
 import { Roles } from '../auth/roles.decorator'
 
+@ApiTags('Sertifikat')
+@ApiBearerAuth()
 @Controller('sertifikat')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class SertifikatController {
@@ -22,6 +28,10 @@ export class SertifikatController {
   // ─── Folders ──────────────────────────────────────────────────────────────────
 
   @Get()
+  @ApiOperation({ summary: 'List semua folder sertifikat' })
+  @ApiQuery({ name: 'search',   required: false, description: 'Cari berdasarkan nama tower' })
+  @ApiQuery({ name: 'kategori', required: false, enum: ['Kelayakan','Grounding','Konstruksi','K3','Lingkungan'] })
+  @ApiQuery({ name: 'status',   required: false, enum: ['berlaku','expired'] })
   findAll(
     @Query() query: { search?: string; kategori?: string; status?: string },
   ) {
@@ -29,24 +39,31 @@ export class SertifikatController {
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Detail folder + list dokumen di dalamnya' })
+  @ApiParam({ name: 'id', description: 'Folder ID' })
   findFolder(@Param('id') id: string) {
     return this.sertifikatService.findFolder(id)
   }
 
   @Post()
   @Roles('admin')
+  @ApiOperation({ summary: 'Buat folder sertifikat baru (admin)' })
   createFolder(@Body() dto: CreateFolderDto) {
     return this.sertifikatService.createFolder(dto)
   }
 
   @Put(':id')
   @Roles('admin')
+  @ApiOperation({ summary: 'Update folder sertifikat (admin)' })
+  @ApiParam({ name: 'id', description: 'Folder ID' })
   updateFolder(@Param('id') id: string, @Body() dto: UpdateSertifikatDto) {
     return this.sertifikatService.updateFolder(id, dto)
   }
 
   @Delete(':id')
   @Roles('admin')
+  @ApiOperation({ summary: 'Hapus folder + semua dokumen di dalamnya (admin)' })
+  @ApiParam({ name: 'id', description: 'Folder ID' })
   deleteFolder(@Param('id') id: string) {
     return this.sertifikatService.deleteFolder(id)
   }
@@ -54,12 +71,18 @@ export class SertifikatController {
   // ─── Dokumen ──────────────────────────────────────────────────────────────────
 
   @Get(':folderId/dokumen')
+  @ApiOperation({ summary: 'List dokumen dalam folder' })
+  @ApiParam({ name: 'folderId', description: 'Folder ID' })
   findDokumen(@Param('folderId') folderId: string) {
     return this.sertifikatService.findDokumenByFolder(folderId)
   }
 
   @Post(':folderId/dokumen')
   @Roles('admin')
+  @ApiOperation({ summary: 'Upload dokumen ke folder (admin) — multipart/form-data, field: file' })
+  @ApiParam({ name: 'folderId', description: 'Folder ID' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({ schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } } } })
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
@@ -77,11 +100,15 @@ export class SertifikatController {
   }
 
   @Get('dokumen/:id')
+  @ApiOperation({ summary: 'Metadata satu dokumen' })
+  @ApiParam({ name: 'id', description: 'Dokumen ID' })
   findOneDokumen(@Param('id') id: string) {
     return this.sertifikatService.findDokumen(id)
   }
 
   @Get('dokumen/:id/preview')
+  @ApiOperation({ summary: 'Stream file dokumen inline (PDF / gambar) untuk preview' })
+  @ApiParam({ name: 'id', description: 'Dokumen ID' })
   async previewDokumen(@Param('id') id: string, @Res({ passthrough: false }) res: Response) {
     const doc = await this.sertifikatService.findDokumen(id)
     const filePath = join(process.cwd(), doc.fileUrl)
@@ -97,6 +124,8 @@ export class SertifikatController {
 
   @Delete('dokumen/:id')
   @Roles('admin')
+  @ApiOperation({ summary: 'Hapus dokumen (admin)' })
+  @ApiParam({ name: 'id', description: 'Dokumen ID' })
   deleteDokumen(@Param('id') id: string) {
     return this.sertifikatService.deleteDokumen(id)
   }
