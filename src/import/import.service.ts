@@ -63,18 +63,47 @@ export class ImportService {
     return { message: 'Import sertifikat selesai', total: data.length }
   }
 
+  private normalizeStatus(raw: string): string {
+    const s = (raw || '').trim().toLowerCase()
+    if (s.includes('berlangsung') || s.includes('ongoing')) return 'berlangsung'
+    if (s.includes('selesai') || s.includes('done') || s.includes('complete')) return 'selesai'
+    if (s.includes('tidak ada') || s.includes('tidak aktif') || s === 'inactive') return 'menunggu'
+    if (s.includes('ditangani') || s.includes('handling')) return 'ditangani'
+    if (s.includes('pemantauan') || s.includes('monitoring')) return 'pemantauan'
+    if (s.includes('eskalasi') || s.includes('escalat')) return 'eskalasi'
+    // sudah lowercase & cocok langsung
+    const known = ['berlangsung','selesai','ditangani','pemantauan','eskalasi','menunggu']
+    if (known.includes(s)) return s
+    return 'berlangsung'
+  }
+
+  private normalizeJenis(raw: string): string {
+    const s = (raw || '').trim().toLowerCase()
+    if (s.includes('pihak lain') || s.includes('ppl')) return 'pekerjaan_pihak_lain'
+    if (s.includes('kebakaran') || s.includes('fire'))  return 'kebakaran'
+    if (s.includes('layangan') || s.includes('layang'))  return 'layangan'
+    if (s.includes('pencurian') || s.includes('theft'))  return 'pencurian'
+    if (s.includes('pemanfaatan') || s.includes('lahan')) return 'pemanfaatan_lahan'
+    return 'pekerjaan_pihak_lain'
+  }
+
   private async importLaporan(rows: any[]) {
     let createdCount = 0
 
-    // Filter valid rows: Abaikan baris instruksi/header (yg isinya 'Input manual', dsb)
+    // Filter valid rows: abaikan baris instruksi/header
     const validRows = rows.filter(r => {
-      const isInstruction = 
-        r['RUAS'] === 'Otomatis by foto lokasi' || 
+      const isInstruction =
+        r['RUAS'] === 'Otomatis by foto lokasi' ||
         r['URAIAN PEKERJAAN'] === 'Input manual' ||
-        String(r['NO']).toLowerCase().includes('no')
-      
-      const hasContent = r.towerId || r['NO. TOWER'] || r['SPAN'] || r['URAIAN PEKERJAAN']
-      return !isInstruction && hasContent
+        String(r['NO']).toLowerCase() === 'no'
+
+      // Terima jika ada SPAN, NO. TOWER, RUAS, KLASIFIKASI, atau URAIAN
+      const hasContent =
+        r['SPAN'] || r['NO. TOWER'] || r['RUAS'] ||
+        r['KLASIFIKASI '] || r['KLASIFIKASI'] ||
+        r['URAIAN PEKERJAAN']
+
+      return !isInstruction && !!hasContent
     })
 
     console.log(`[Import] Total rows: ${rows.length}, Valid rows: ${validRows.length}`)
@@ -82,18 +111,24 @@ export class ImportService {
     for (const r of validRows) {
       let rawTowerId = String(r.towerId || r['NO. TOWER'] || r['SPAN'] || 'UNKNOWN-TOWER')
       let rawPelapor = String(r.pelaporId || r['PETUGAS LW'] || 'Teknisi Default')
-      
-      let jenisGangguan = String(r.jenisGangguan || r.kategori || r['KLASIFIKASI '] || r['KLASIFIKASI'] || 'Pekerjaan Pihak Lain').trim()
-      
-      const deskripsi   = String(r.deskripsi || r['URAIAN PEKERJAAN'] || '')
-      const keterangan  = (r.keterangan || r['PENGENDALIAN'] || '') + (r['PIHAK LAIN'] ? `\nPihak Lain: ${r['PIHAK LAIN']}` : '')
-      
-      let statusStr = String(r.status || r['STATUS'] || 'Sedang Berlangsung').trim()
-      
+
+      // Normalisasi jenis & status dari nilai Excel
+      const rawJenis = String(r.jenisGangguan || r.kategori || r['KLASIFIKASI '] || r['KLASIFIKASI'] || '')
+      const jenisGangguan = this.normalizeJenis(rawJenis)
+
+      const deskripsi  = String(r.deskripsi || r['URAIAN PEKERJAAN'] || jenisGangguan)
+      const keterangan = [
+        r['PENGENDALIAN'] || r.keterangan || '',
+        r['PIHAK LAIN'] ? `Pihak Lain: ${r['PIHAK LAIN']}` : '',
+      ].filter(Boolean).join('\n')
+
+      const rawStatus = String(r.status || r['STATUS'] || '')
+      const statusStr = this.normalizeStatus(rawStatus)
+
       const levelRisiko = String(r.levelRisiko || r.level || 'rendah')
       const tanggal = r.tanggal ? new Date(r.tanggal) : new Date()
 
-      rawPelapor = rawPelapor.trim()
+      rawPelapor = rawPelapor.trim() || 'Teknisi Default'
       let pegawai = await this.prisma.pegawai.findFirst({ where: { nama: rawPelapor } })
       if (!pegawai) {
         pegawai = await this.prisma.pegawai.create({

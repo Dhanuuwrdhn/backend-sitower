@@ -8,5 +8,7 @@ export declare class ImportService {
     }>;
     private importTowers;
     private importSertifikat;
+    private normalizeStatus;
+    private normalizeJenis;
     private importLaporan;
 }
