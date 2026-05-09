@@ -265,3 +265,37 @@ URL hanya boleh ada di `prisma.config.ts`.
 
 **Port sudah dipakai**
 Ubah `PORT` di `.env`. Default: `3001`.
+
+---
+
+## Menggunakan Claude
+
+Project ini sudah dilengkapi skill context untuk Claude Code. Setelah masuk ke folder ini, kamu bisa langsung minta bantuan Claude dengan konteks penuh soal backend SPEKTRA.
+
+### Cara pakai
+
+1. Pastikan [Claude Code](https://claude.ai/code) sudah terinstal
+2. Buka terminal di folder `backend-sitower/`
+3. Jalankan:
+   ```bash
+   claude
+   ```
+4. Di dalam Claude, panggil context skill:
+   ```
+   load sitower-workspace-context
+   ```
+5. Setelah itu Claude sudah paham stack, struktur modul, konvensi, dan endpoint project ini
+
+### Contoh prompt yang bisa langsung dipakai
+
+```
+Tambahkan endpoint GET /api/towers/:id untuk ambil detail tower by ID
+```
+```
+Buatkan DTO dan service untuk modul kerawanan baru
+```
+```
+Ada error P1012 di Prisma, bantu debug
+```
+
+> Skill ini mencakup: NestJS module structure, Prisma v7 adapter pattern, JwtAuthGuard usage, response format `{ data, message }`, dan semua dev commands.
