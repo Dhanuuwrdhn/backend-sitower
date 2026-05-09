@@ -48,6 +48,8 @@ export declare class TowersController {
         tipe: string;
         tegangan: string;
         nama: string;
+        lat: number;
+        lng: number;
     }[]>;
     findOne(id: string): Promise<{
         laporan: ({
@@ -62,6 +64,8 @@ export declare class TowersController {
             updatedAt: Date;
             foto: string[];
             teknisi: string | null;
+            towerId: string;
+            pelaporId: string;
             jenisGangguan: string;
             deskripsi: string;
             levelRisiko: string;
@@ -74,8 +78,6 @@ export declare class TowersController {
             hasil: string | null;
             penyebab: string | null;
             durasi: string | null;
-            towerId: string;
-            pelaporId: string;
         })[];
         sertifikat: {
             id: string;
@@ -83,8 +85,8 @@ export declare class TowersController {
             tipe: string;
             createdAt: Date;
             updatedAt: Date;
-            status: string;
             towerId: string;
+            status: string;
             berlakuHingga: Date;
             fileUrl: string | null;
         }[];
@@ -93,8 +95,8 @@ export declare class TowersController {
             tipe: string;
             createdAt: Date;
             updatedAt: Date;
-            keterangan: string | null;
             towerId: string;
+            keterangan: string | null;
             tahun: number;
             fileUrl: string | null;
             namaFile: string;

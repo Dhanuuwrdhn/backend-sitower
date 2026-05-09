@@ -68,7 +68,7 @@ let TowersService = class TowersService {
     }
     async findAllForDropdown() {
         const towers = await this.prisma.tower.findMany({
-            select: { id: true, nama: true, tipe: true, tegangan: true },
+            select: { id: true, nama: true, tipe: true, tegangan: true, lat: true, lng: true },
             orderBy: { id: 'asc' },
         });
         return towers.map((t) => ({
@@ -78,6 +78,8 @@ let TowersService = class TowersService {
             tipe: t.tipe,
             tegangan: t.tegangan,
             nama: t.nama,
+            lat: t.lat,
+            lng: t.lng,
         }));
     }
     async findOne(id) {

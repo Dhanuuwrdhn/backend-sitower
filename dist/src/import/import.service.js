@@ -113,14 +113,8 @@ let ImportService = class ImportService {
         if (s.includes('selesai') || s.includes('done') || s.includes('complete'))
             return 'selesai';
         if (s.includes('tidak ada') || s.includes('tidak aktif') || s === 'inactive')
-            return 'menunggu';
-        if (s.includes('ditangani') || s.includes('handling'))
-            return 'ditangani';
-        if (s.includes('pemantauan') || s.includes('monitoring'))
-            return 'pemantauan';
-        if (s.includes('eskalasi') || s.includes('escalat'))
-            return 'eskalasi';
-        const known = ['berlangsung', 'selesai', 'ditangani', 'pemantauan', 'eskalasi', 'menunggu'];
+            return 'tidak_ada_aktifitas';
+        const known = ['berlangsung', 'selesai', 'tidak_ada_aktifitas'];
         if (known.includes(s))
             return s;
         return 'berlangsung';
@@ -194,21 +188,30 @@ let ImportService = class ImportService {
                     }
                 });
             }
-            await this.prisma.laporan.create({
-                data: {
+            const existingLaporan = await this.prisma.laporan.findFirst({
+                where: {
                     towerId: tower.id,
-                    pelaporId: pegawai.id,
                     jenisGangguan: jenisGangguan,
                     deskripsi: deskripsi,
-                    levelRisiko: levelRisiko,
-                    status: statusStr,
-                    tanggal: tanggal,
-                    lokasiDetail: r.lokasiDetail || r.lokasi || r['RUAS'] || null,
-                    keterangan: keterangan,
-                    foto: r.foto ? String(r.foto).split(',').map((s) => s.trim()) : [],
                 }
             });
-            createdCount++;
+            if (!existingLaporan) {
+                await this.prisma.laporan.create({
+                    data: {
+                        towerId: tower.id,
+                        pelaporId: pegawai.id,
+                        jenisGangguan: jenisGangguan,
+                        deskripsi: deskripsi,
+                        levelRisiko: levelRisiko,
+                        status: statusStr,
+                        tanggal: tanggal,
+                        lokasiDetail: r.lokasiDetail || r.lokasi || r['RUAS'] || null,
+                        keterangan: keterangan,
+                        foto: r.foto ? String(r.foto).split(',').map((s) => s.trim()) : [],
+                    }
+                });
+                createdCount++;
+            }
         }
         return { message: 'Import laporan selesai', total: createdCount };
     }

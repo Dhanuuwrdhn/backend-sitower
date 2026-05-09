@@ -26,6 +26,8 @@ export declare class LaporanService {
             updatedAt: Date;
             foto: string[];
             teknisi: string | null;
+            towerId: string;
+            pelaporId: string;
             jenisGangguan: string;
             deskripsi: string;
             levelRisiko: string;
@@ -38,8 +40,6 @@ export declare class LaporanService {
             hasil: string | null;
             penyebab: string | null;
             durasi: string | null;
-            towerId: string;
-            pelaporId: string;
         })[];
         total: number;
         page: number;
@@ -65,6 +65,8 @@ export declare class LaporanService {
         updatedAt: Date;
         foto: string[];
         teknisi: string | null;
+        towerId: string;
+        pelaporId: string;
         jenisGangguan: string;
         deskripsi: string;
         levelRisiko: string;
@@ -77,8 +79,6 @@ export declare class LaporanService {
         hasil: string | null;
         penyebab: string | null;
         durasi: string | null;
-        towerId: string;
-        pelaporId: string;
     }>;
     getStats(): Promise<{
         total: number;
@@ -104,6 +104,8 @@ export declare class LaporanService {
         updatedAt: Date;
         foto: string[];
         teknisi: string | null;
+        towerId: string;
+        pelaporId: string;
         jenisGangguan: string;
         deskripsi: string;
         levelRisiko: string;
@@ -116,8 +118,6 @@ export declare class LaporanService {
         hasil: string | null;
         penyebab: string | null;
         durasi: string | null;
-        towerId: string;
-        pelaporId: string;
     }, never, import("@prisma/client/runtime/client").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
     update(id: string, dto: UpdateLaporanDto): Promise<{
         tower: {
@@ -139,6 +139,8 @@ export declare class LaporanService {
         updatedAt: Date;
         foto: string[];
         teknisi: string | null;
+        towerId: string;
+        pelaporId: string;
         jenisGangguan: string;
         deskripsi: string;
         levelRisiko: string;
@@ -151,8 +153,6 @@ export declare class LaporanService {
         hasil: string | null;
         penyebab: string | null;
         durasi: string | null;
-        towerId: string;
-        pelaporId: string;
     }>;
     remove(id: string): Promise<{
         id: string;
@@ -160,6 +160,8 @@ export declare class LaporanService {
         updatedAt: Date;
         foto: string[];
         teknisi: string | null;
+        towerId: string;
+        pelaporId: string;
         jenisGangguan: string;
         deskripsi: string;
         levelRisiko: string;
@@ -172,8 +174,6 @@ export declare class LaporanService {
         hasil: string | null;
         penyebab: string | null;
         durasi: string | null;
-        towerId: string;
-        pelaporId: string;
     }>;
     updateFotoUrls(id: string, urls: string[]): Promise<{
         id: string;
@@ -181,6 +181,8 @@ export declare class LaporanService {
         updatedAt: Date;
         foto: string[];
         teknisi: string | null;
+        towerId: string;
+        pelaporId: string;
         jenisGangguan: string;
         deskripsi: string;
         levelRisiko: string;
@@ -193,7 +195,5 @@ export declare class LaporanService {
         hasil: string | null;
         penyebab: string | null;
         durasi: string | null;
-        towerId: string;
-        pelaporId: string;
     }>;
 }

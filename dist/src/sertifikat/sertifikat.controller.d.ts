@@ -19,8 +19,8 @@ export declare class SertifikatController {
         tipe: string;
         createdAt: Date;
         updatedAt: Date;
-        status: string;
         towerId: string;
+        status: string;
         berlakuHingga: Date;
         fileUrl: string | null;
     })[]>;
@@ -35,8 +35,8 @@ export declare class SertifikatController {
         tipe: string;
         createdAt: Date;
         updatedAt: Date;
-        status: string;
         towerId: string;
+        status: string;
         berlakuHingga: Date;
         fileUrl: string | null;
     }>;
@@ -46,8 +46,8 @@ export declare class SertifikatController {
         tipe: string;
         createdAt: Date;
         updatedAt: Date;
-        status: string;
         towerId: string;
+        status: string;
         berlakuHingga: Date;
         fileUrl: string | null;
     }, never, import("@prisma/client/runtime/client").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
@@ -57,8 +57,8 @@ export declare class SertifikatController {
         tipe: string;
         createdAt: Date;
         updatedAt: Date;
-        status: string;
         towerId: string;
+        status: string;
         berlakuHingga: Date;
         fileUrl: string | null;
     }>;
@@ -68,8 +68,8 @@ export declare class SertifikatController {
         tipe: string;
         createdAt: Date;
         updatedAt: Date;
-        status: string;
         towerId: string;
+        status: string;
         berlakuHingga: Date;
         fileUrl: string | null;
     }>;
@@ -79,8 +79,8 @@ export declare class SertifikatController {
         tipe: string;
         createdAt: Date;
         updatedAt: Date;
-        status: string;
         towerId: string;
+        status: string;
         berlakuHingga: Date;
         fileUrl: string | null;
     }>;

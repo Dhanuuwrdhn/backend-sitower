@@ -18,8 +18,8 @@ export declare class AsBuiltDrawingService {
         tipe: string;
         createdAt: Date;
         updatedAt: Date;
-        keterangan: string | null;
         towerId: string;
+        keterangan: string | null;
         tahun: number;
         fileUrl: string | null;
         namaFile: string;
@@ -35,8 +35,8 @@ export declare class AsBuiltDrawingService {
         tipe: string;
         createdAt: Date;
         updatedAt: Date;
-        keterangan: string | null;
         towerId: string;
+        keterangan: string | null;
         tahun: number;
         fileUrl: string | null;
         namaFile: string;
@@ -47,8 +47,8 @@ export declare class AsBuiltDrawingService {
         tipe: string;
         createdAt: Date;
         updatedAt: Date;
-        keterangan: string | null;
         towerId: string;
+        keterangan: string | null;
         tahun: number;
         fileUrl: string | null;
         namaFile: string;
@@ -59,8 +59,8 @@ export declare class AsBuiltDrawingService {
         tipe: string;
         createdAt: Date;
         updatedAt: Date;
-        keterangan: string | null;
         towerId: string;
+        keterangan: string | null;
         tahun: number;
         fileUrl: string | null;
         namaFile: string;
@@ -71,8 +71,8 @@ export declare class AsBuiltDrawingService {
         tipe: string;
         createdAt: Date;
         updatedAt: Date;
-        keterangan: string | null;
         towerId: string;
+        keterangan: string | null;
         tahun: number;
         fileUrl: string | null;
         namaFile: string;
@@ -83,8 +83,8 @@ export declare class AsBuiltDrawingService {
         tipe: string;
         createdAt: Date;
         updatedAt: Date;
-        keterangan: string | null;
         towerId: string;
+        keterangan: string | null;
         tahun: number;
         fileUrl: string | null;
         namaFile: string;
