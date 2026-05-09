@@ -19,8 +19,8 @@ async function bootstrap() {
     origin: [
       'http://localhost:3000',
       'https://spektra.biz.id',
-      process.env.FRONTEND_URL,
-    ].filter(Boolean),
+      ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
+    ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Authorization', 'Content-Type'],
     credentials: true,
