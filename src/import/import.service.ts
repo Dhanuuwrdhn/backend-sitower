@@ -124,7 +124,7 @@ export class ImportService {
       const rawStatus = String(r.status || r['STATUS'] || '')
       const statusStr = this.normalizeStatus(rawStatus)
 
-      const levelRisiko = String(r.levelRisiko || r.level || 'rendah')
+      const levelRisiko = String(r.levelRisiko || r.level || 'aman')
       const tanggal = r.tanggal ? new Date(r.tanggal) : new Date()
 
       rawPelapor = rawPelapor.trim() || 'Teknisi Default'

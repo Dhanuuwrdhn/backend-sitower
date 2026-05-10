@@ -38,7 +38,7 @@ export class LaporanController {
   @ApiQuery({ name: 'search',        required: false })
   @ApiQuery({ name: 'jenisGangguan', required: false, enum: ['pekerjaan_pihak_lain','kebakaran','layangan','pencurian','pemanfaatan_lahan','gangguan','span','cui','cleanup'] })
   @ApiQuery({ name: 'status',        required: false, enum: ['berlangsung','selesai','tidak_ada_aktifitas'] })
-  @ApiQuery({ name: 'levelRisiko',   required: false, enum: ['tinggi','sedang','rendah'] })
+  @ApiQuery({ name: 'levelRisiko',   required: false, enum: ['kritis','sedang','aman'] })
   @ApiQuery({ name: 'towerId',       required: false })
   @ApiQuery({ name: 'tglMulai',      required: false, description: 'YYYY-MM-DD' })
   @ApiQuery({ name: 'tglAkhir',      required: false, description: 'YYYY-MM-DD' })

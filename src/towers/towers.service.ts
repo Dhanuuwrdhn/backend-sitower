@@ -63,7 +63,7 @@ export class TowersService {
       updatedAt: t.updatedAt.toISOString(),
       kerawanan: t.laporan.map((l) => ({
         kategori: l.jenisGangguan,
-        level: l.levelRisiko as 'tinggi' | 'sedang' | 'rendah',
+        level: l.levelRisiko as 'kritis' | 'sedang' | 'aman',
         status: l.status,
       })),
     }))

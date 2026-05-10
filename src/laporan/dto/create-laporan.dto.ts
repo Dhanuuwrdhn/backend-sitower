@@ -14,7 +14,7 @@ export class CreateLaporanDto {
   @IsString()
   deskripsi!: string
 
-  @ApiProperty({ example: 'sedang', enum: ['tinggi', 'sedang', 'rendah'] })
+  @ApiProperty({ example: 'sedang', enum: ['kritis', 'sedang', 'aman'] })
   @IsString()
   levelRisiko!: string
 
