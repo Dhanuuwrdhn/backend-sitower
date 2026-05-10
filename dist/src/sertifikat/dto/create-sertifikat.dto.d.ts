@@ -1,8 +1,9 @@
-export declare class CreateSertifikatDto {
-    towerId: string;
-    tipe: string;
+export declare class CreateFolderDto {
     nama: string;
-    berlakuHingga: string;
-    status: string;
-    fileUrl?: string;
+    kategori: string;
+    status?: string;
+    towerId?: string;
+    berlakuHingga?: string;
+}
+export declare class CreateSertifikatDto extends CreateFolderDto {
 }

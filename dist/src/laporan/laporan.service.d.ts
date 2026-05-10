@@ -6,154 +6,18 @@ export declare class LaporanService {
     private prisma;
     constructor(prisma: PrismaService);
     findAll(query: QueryLaporanDto): Promise<{
-        data: ({
-            tower: {
-                id: string;
-                nama: string;
-                tegangan: string;
-                tipe: string;
-                lokasi: string | null;
-            };
-            pelapor: {
-                id: string;
-                nama: string;
-                jabatan: string;
-                unit: string;
-            };
-        } & {
-            id: string;
-            createdAt: Date;
-            updatedAt: Date;
-            foto: string[];
-            teknisi: string | null;
-            towerId: string;
-            pelaporId: string;
-            jenisGangguan: string;
-            deskripsi: string;
-            levelRisiko: string;
-            status: string;
-            tanggal: Date;
-            lokasiDetail: string | null;
-            keterangan: string | null;
-            noSpk: string | null;
-            temuan: string | null;
-            hasil: string | null;
-            penyebab: string | null;
-            durasi: string | null;
-        })[];
+        data: any[];
         total: number;
         page: number;
         limit: number;
     }>;
-    findOne(id: string): Promise<{
-        tower: {
-            id: string;
-            nama: string;
-            tegangan: string;
-            tipe: string;
-            lokasi: string | null;
-        };
-        pelapor: {
-            id: string;
-            nama: string;
-            jabatan: string;
-            unit: string;
-        };
-    } & {
-        id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        foto: string[];
-        teknisi: string | null;
-        towerId: string;
-        pelaporId: string;
-        jenisGangguan: string;
-        deskripsi: string;
-        levelRisiko: string;
-        status: string;
-        tanggal: Date;
-        lokasiDetail: string | null;
-        keterangan: string | null;
-        noSpk: string | null;
-        temuan: string | null;
-        hasil: string | null;
-        penyebab: string | null;
-        durasi: string | null;
-    }>;
+    findOne(id: string): Promise<any>;
     getStats(): Promise<{
         total: number;
         berlangsung: number;
     }>;
-    create(dto: CreateLaporanDto, pelaporId: string): import("@prisma/client").Prisma.Prisma__LaporanClient<{
-        tower: {
-            id: string;
-            nama: string;
-            tegangan: string;
-            tipe: string;
-            lokasi: string | null;
-        };
-        pelapor: {
-            id: string;
-            nama: string;
-            jabatan: string;
-            unit: string;
-        };
-    } & {
-        id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        foto: string[];
-        teknisi: string | null;
-        towerId: string;
-        pelaporId: string;
-        jenisGangguan: string;
-        deskripsi: string;
-        levelRisiko: string;
-        status: string;
-        tanggal: Date;
-        lokasiDetail: string | null;
-        keterangan: string | null;
-        noSpk: string | null;
-        temuan: string | null;
-        hasil: string | null;
-        penyebab: string | null;
-        durasi: string | null;
-    }, never, import("@prisma/client/runtime/client").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
-    update(id: string, dto: UpdateLaporanDto): Promise<{
-        tower: {
-            id: string;
-            nama: string;
-            tegangan: string;
-            tipe: string;
-            lokasi: string | null;
-        };
-        pelapor: {
-            id: string;
-            nama: string;
-            jabatan: string;
-            unit: string;
-        };
-    } & {
-        id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        foto: string[];
-        teknisi: string | null;
-        towerId: string;
-        pelaporId: string;
-        jenisGangguan: string;
-        deskripsi: string;
-        levelRisiko: string;
-        status: string;
-        tanggal: Date;
-        lokasiDetail: string | null;
-        keterangan: string | null;
-        noSpk: string | null;
-        temuan: string | null;
-        hasil: string | null;
-        penyebab: string | null;
-        durasi: string | null;
-    }>;
+    create(dto: CreateLaporanDto, pelaporId: string): Promise<any>;
+    update(id: string, dto: UpdateLaporanDto): Promise<any>;
     remove(id: string): Promise<{
         id: string;
         createdAt: Date;

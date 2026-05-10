@@ -20,6 +20,7 @@ export declare class TowersController {
             tipe: string;
             kondisi: string;
             lokasi: string | null;
+            radius: number;
             createdAt: Date;
             updatedAt: Date;
         }[];
@@ -50,6 +51,7 @@ export declare class TowersController {
         nama: string;
         lat: number;
         lng: number;
+        radius: number;
     }[]>;
     findOne(id: string): Promise<{
         laporan: ({
@@ -82,13 +84,12 @@ export declare class TowersController {
         sertifikat: {
             id: string;
             nama: string;
-            tipe: string;
             createdAt: Date;
             updatedAt: Date;
-            towerId: string;
+            towerId: string | null;
             status: string;
-            berlakuHingga: Date;
-            fileUrl: string | null;
+            berlakuHingga: Date | null;
+            kategori: string;
         }[];
         asBuilt: {
             id: string;
@@ -98,9 +99,9 @@ export declare class TowersController {
             towerId: string;
             keterangan: string | null;
             tahun: number;
-            fileUrl: string | null;
             namaFile: string;
             versi: string | null;
+            fileUrl: string | null;
         }[];
     } & {
         id: string;
@@ -111,6 +112,7 @@ export declare class TowersController {
         tipe: string;
         kondisi: string;
         lokasi: string | null;
+        radius: number;
         createdAt: Date;
         updatedAt: Date;
     }>;
@@ -123,6 +125,7 @@ export declare class TowersController {
         tipe: string;
         kondisi: string;
         lokasi: string | null;
+        radius: number;
         createdAt: Date;
         updatedAt: Date;
     }, never, import("@prisma/client/runtime/client").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
@@ -135,6 +138,7 @@ export declare class TowersController {
         tipe: string;
         kondisi: string;
         lokasi: string | null;
+        radius: number;
         createdAt: Date;
         updatedAt: Date;
     }>;
@@ -147,6 +151,7 @@ export declare class TowersController {
         tipe: string;
         kondisi: string;
         lokasi: string | null;
+        radius: number;
         createdAt: Date;
         updatedAt: Date;
     }>;

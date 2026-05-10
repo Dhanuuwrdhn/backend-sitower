@@ -1,27 +1,25 @@
-import { IsString, IsNumber, IsOptional } from 'class-validator'
+import { IsString, IsNumber, IsOptional, IsIn } from 'class-validator'
+import { Type } from 'class-transformer'
 
-export class CreateAsBuiltDrawingDto {
+export class CreateFolderDto {
   @IsString()
-  towerId: string
-
-  @IsString()
-  namaFile: string
+  nama: string
 
   @IsString()
+  @IsIn(['Electrical', 'Mechanical', 'Civil', 'Grounding', 'Lainnya'])
   tipe: string
 
   @IsNumber()
+  @Type(() => Number)
   tahun: number
 
   @IsOptional()
   @IsString()
-  versi?: string
-
-  @IsOptional()
-  @IsString()
-  fileUrl?: string
+  towerId?: string
 
   @IsOptional()
   @IsString()
   keterangan?: string
 }
+
+export class CreateAsBuiltDrawingDto extends CreateFolderDto {}

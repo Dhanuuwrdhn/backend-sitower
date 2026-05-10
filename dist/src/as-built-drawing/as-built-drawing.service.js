@@ -12,44 +12,77 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AsBuiltDrawingService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const FOLDER_INCLUDE = {
+    tower: { select: { id: true, nama: true } },
+    _count: { select: { dokumen: true } },
+};
 let AsBuiltDrawingService = class AsBuiltDrawingService {
     prisma;
     constructor(prisma) {
         this.prisma = prisma;
     }
-    findAll(query) {
-        return this.prisma.asBuiltDrawing.findMany({
-            where: {
-                ...(query?.towerId && { towerId: query.towerId }),
-                ...(query?.tipe && { tipe: query.tipe }),
-                ...(query?.tahun && { tahun: Number(query.tahun) }),
-            },
-            include: { tower: { select: { id: true, nama: true } } },
-            orderBy: { tahun: 'desc' },
-        });
+    findAllFolders(query) {
+        const where = {};
+        if (query.tipe)
+            where.tipe = query.tipe;
+        if (query.tahun)
+            where.tahun = Number(query.tahun);
+        if (query.towerId)
+            where.towerId = query.towerId;
+        if (query.search)
+            where.nama = { contains: query.search, mode: 'insensitive' };
+        return this.prisma.asBuiltFolder.findMany({ where, include: FOLDER_INCLUDE, orderBy: { createdAt: 'desc' } });
     }
-    async findOne(id) {
-        const data = await this.prisma.asBuiltDrawing.findUnique({
+    async findFolder(id) {
+        const folder = await this.prisma.asBuiltFolder.findUnique({
             where: { id },
-            include: { tower: { select: { id: true, nama: true } } },
+            include: { ...FOLDER_INCLUDE, dokumen: { orderBy: { createdAt: 'desc' } } },
         });
-        if (!data)
-            throw new common_1.NotFoundException(`As-Built Drawing ${id} tidak ditemukan`);
-        return data;
+        if (!folder)
+            throw new common_1.NotFoundException(`Folder ${id} tidak ditemukan`);
+        return folder;
     }
-    create(dto) {
-        return this.prisma.asBuiltDrawing.create({ data: dto });
+    createFolder(dto) {
+        const { towerId, ...rest } = dto;
+        return this.prisma.asBuiltFolder.create({
+            data: { ...rest, ...(towerId && { tower: { connect: { id: towerId } } }) },
+            include: FOLDER_INCLUDE,
+        });
     }
-    async update(id, dto) {
-        await this.findOne(id);
-        return this.prisma.asBuiltDrawing.update({ where: { id }, data: dto });
+    async updateFolder(id, dto) {
+        await this.findFolder(id);
+        const { towerId, ...rest } = dto;
+        return this.prisma.asBuiltFolder.update({
+            where: { id },
+            data: {
+                ...rest,
+                ...(towerId !== undefined && {
+                    tower: towerId ? { connect: { id: towerId } } : { disconnect: true },
+                }),
+            },
+            include: FOLDER_INCLUDE,
+        });
     }
-    async remove(id) {
-        await this.findOne(id);
-        return this.prisma.asBuiltDrawing.delete({ where: { id } });
+    async deleteFolder(id) {
+        await this.findFolder(id);
+        return this.prisma.asBuiltFolder.delete({ where: { id } });
     }
-    async updateFileUrl(id, fileUrl) {
-        return this.prisma.asBuiltDrawing.update({ where: { id }, data: { fileUrl } });
+    findDokumenByFolder(folderId) {
+        return this.prisma.asBuiltDokumen.findMany({ where: { folderId }, orderBy: { createdAt: 'desc' } });
+    }
+    async findDokumen(id) {
+        const doc = await this.prisma.asBuiltDokumen.findUnique({ where: { id } });
+        if (!doc)
+            throw new common_1.NotFoundException(`Dokumen ${id} tidak ditemukan`);
+        return doc;
+    }
+    async addDokumen(folderId, namaFile, fileUrl) {
+        await this.findFolder(folderId);
+        return this.prisma.asBuiltDokumen.create({ data: { folderId, namaFile, fileUrl } });
+    }
+    async deleteDokumen(id) {
+        await this.findDokumen(id);
+        return this.prisma.asBuiltDokumen.delete({ where: { id } });
     }
 };
 exports.AsBuiltDrawingService = AsBuiltDrawingService;

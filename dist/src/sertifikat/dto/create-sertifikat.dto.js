@@ -9,40 +9,42 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CreateSertifikatDto = void 0;
+exports.CreateSertifikatDto = exports.CreateFolderDto = void 0;
 const class_validator_1 = require("class-validator");
-class CreateSertifikatDto {
-    towerId;
-    tipe;
+class CreateFolderDto {
     nama;
-    berlakuHingga;
+    kategori;
     status;
-    fileUrl;
+    towerId;
+    berlakuHingga;
 }
-exports.CreateSertifikatDto = CreateSertifikatDto;
+exports.CreateFolderDto = CreateFolderDto;
 __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], CreateSertifikatDto.prototype, "towerId", void 0);
+], CreateFolderDto.prototype, "nama", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsIn)(['Kelayakan', 'Grounding', 'Konstruksi', 'K3', 'Lingkungan']),
     __metadata("design:type", String)
-], CreateSertifikatDto.prototype, "tipe", void 0);
+], CreateFolderDto.prototype, "kategori", void 0);
 __decorate([
+    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsIn)(['berlaku', 'expired']),
     __metadata("design:type", String)
-], CreateSertifikatDto.prototype, "nama", void 0);
-__decorate([
-    (0, class_validator_1.IsDateString)(),
-    __metadata("design:type", String)
-], CreateSertifikatDto.prototype, "berlakuHingga", void 0);
-__decorate([
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], CreateSertifikatDto.prototype, "status", void 0);
+], CreateFolderDto.prototype, "status", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], CreateSertifikatDto.prototype, "fileUrl", void 0);
+], CreateFolderDto.prototype, "towerId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsDateString)(),
+    __metadata("design:type", String)
+], CreateFolderDto.prototype, "berlakuHingga", void 0);
+class CreateSertifikatDto extends CreateFolderDto {
+}
+exports.CreateSertifikatDto = CreateSertifikatDto;
 //# sourceMappingURL=create-sertifikat.dto.js.map

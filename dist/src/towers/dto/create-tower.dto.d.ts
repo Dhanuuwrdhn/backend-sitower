@@ -7,4 +7,5 @@ export declare class CreateTowerDto {
     tipe: string;
     kondisi?: string;
     lokasi?: string;
+    radius?: number;
 }
