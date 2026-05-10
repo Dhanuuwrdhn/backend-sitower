@@ -23,26 +23,82 @@ export class ImportService {
 
     // ── Sheet 2: Panduan ───────────────────────────────────────────────────────
     const panduan = [
-      ['Kolom', 'Wajib?', 'Tipe', 'Keterangan', 'Contoh Nilai'],
-      ['id',        'Ya',  'Teks', 'ID unik tower. Akan di-update jika sudah ada.', 'T-DKS-001'],
-      ['nama',      'Ya',  'Teks', 'Nama lengkap tower.',                            'Tower 1 Durikosambi–Kembangan'],
-      ['lat',       'Ya',  'Angka desimal', 'Latitude (WGS84). Negatif untuk lintang selatan.', '-6.1523'],
-      ['lng',       'Ya',  'Angka desimal', 'Longitude (WGS84).',                    '106.7041'],
-      ['tegangan',  'Ya',  'Teks', 'Tegangan operasi tower.',                        '500kV / 150kV / 70kV'],
-      ['tipe',      'Ya',  'Teks', 'Tipe tower. Pilih salah satu nilai valid.',      'SUTET | SUTT | SKTT | garduInduk'],
-      ['kondisi',   'Tidak', 'Teks', 'Kondisi tower saat ini. Default: normal.',      'normal | waspada | gangguan | maintenance'],
-      ['lokasi',    'Tidak', 'Teks', 'Deskripsi lokasi administratif.',               'Kel. Rawa Buaya, Cengkareng'],
-      ['jalur',     'Tidak', 'Teks', 'Nama jalur transmisi. Digunakan untuk polyline otomatis di peta.', 'SUTET 500kV DURIKOSAMBI-KEMBANGAN'],
-      ['nomorUrut', 'Tidak', 'Angka bulat', 'Urutan tower dalam jalur (ascending). Digunakan untuk sorting polyline.', '1, 2, 3, ...'],
+      ['PANDUAN PENGISIAN TEMPLATE IMPORT DATA ASET TRANSMISI'],
       [],
-      ['Catatan:'],
-      ['- Baris kosong akan diabaikan.'],
-      ['- Jika id sudah ada di database, data tower akan di-update (bukan duplikat).'],
-      ['- Kolom jalur + nomorUrut opsional, tapi wajib diisi jika ingin polyline otomatis tampil di peta.'],
-      ['- Format koordinat: gunakan titik (.) sebagai pemisah desimal, bukan koma.'],
+      ['Kolom', 'Nama Kolom', 'Wajib?', 'Tipe Data', 'Penjelasan Lengkap', 'Nilai yang Valid', 'Contoh'],
+      [
+        'A', 'id', 'WAJIB', 'Teks',
+        'ID unik tower sebagai kode identifikasi di sistem. Jika ID sudah ada di database, data tower akan di-UPDATE (bukan duplikat). Jika belum ada, data akan dibuat baru.',
+        'Bebas, tidak boleh duplikat',
+        'T-DKS-001',
+      ],
+      [
+        'B', 'nama', 'WAJIB', 'Teks',
+        'Nama lengkap tower transmisi. Biasanya mencantumkan nomor urut dan nama ruas jalur.',
+        'Teks bebas',
+        'Tower 1 Durikosambi–Kembangan',
+      ],
+      [
+        'C', 'lat', 'WAJIB', 'Angka desimal',
+        'Koordinat Latitude (garis lintang) dalam sistem WGS84 (standar GPS). Untuk wilayah Indonesia, nilainya negatif karena berada di belahan bumi selatan. Gunakan titik (.) sebagai pemisah desimal, BUKAN koma.',
+        'Angka desimal, misal: -6.1523',
+        '-6.1523',
+      ],
+      [
+        'D', 'lng', 'WAJIB', 'Angka desimal',
+        'Koordinat Longitude (garis bujur) dalam sistem WGS84. Untuk wilayah Indonesia berkisar antara 95 sampai 141. Gunakan titik (.) sebagai pemisah desimal, BUKAN koma.',
+        'Angka desimal, misal: 106.7041',
+        '106.7041',
+      ],
+      [
+        'E', 'tegangan', 'WAJIB', 'Teks',
+        'Tegangan operasi jaringan transmisi. Isi sesuai rating tegangan tower.',
+        '500kV / 150kV / 70kV / 20kV',
+        '500kV',
+      ],
+      [
+        'F', 'tipe', 'WAJIB', 'Teks',
+        'Tipe/klasifikasi tower. Harus diisi salah satu dari nilai yang valid persis seperti ditulis (case-sensitive).\n• SUTET = Saluran Udara Tegangan Ekstra Tinggi (500kV)\n• SUTT  = Saluran Udara Tegangan Tinggi (150kV/70kV)\n• SKTT  = Saluran Kabel Tegangan Tinggi (bawah tanah)\n• garduInduk = Gardu Induk (substation)',
+        'SUTET | SUTT | SKTT | garduInduk',
+        'SUTET',
+      ],
+      [
+        'G', 'kondisi', 'Opsional', 'Teks',
+        'Kondisi operasional tower saat ini. Jika dikosongkan, sistem otomatis mengisi "normal".\n• normal      = Tower beroperasi normal\n• waspada     = Ada potensi gangguan, perlu pemantauan\n• gangguan    = Tower sedang mengalami gangguan\n• maintenance = Tower sedang dalam pemeliharaan',
+        'normal | waspada | gangguan | maintenance',
+        'normal',
+      ],
+      [
+        'H', 'lokasi', 'Opsional', 'Teks',
+        'Deskripsi lokasi administratif tower (kelurahan, kecamatan, kota/kabupaten). Digunakan untuk keperluan referensi dan pencarian.',
+        'Teks bebas',
+        'Kel. Rawa Buaya, Cengkareng, Jakarta Barat',
+      ],
+      [
+        'I', 'jalur', 'Opsional*', 'Teks',
+        '(*) Wajib diisi jika ingin polyline jalur tampil di peta secara otomatis.\nNama jalur transmisi tempat tower ini berada. Tower dengan nama jalur yang sama akan disambungkan sebagai garis di peta (polyline), diurutkan berdasarkan kolom nomorUrut.\nGunakan nama yang KONSISTEN untuk satu jalur (sama persis antar baris).',
+        'Teks bebas, harus konsisten per jalur',
+        'SUTET 500kV DURIKOSAMBI-KEMBANGAN',
+      ],
+      [
+        'J', 'nomorUrut', 'Opsional*', 'Angka bulat',
+        '(*) Wajib diisi jika kolom jalur diisi.\nNomor urut posisi tower dalam jalur transmisi, dihitung dari ujung ke ujung jalur. Digunakan untuk menentukan urutan sambungan polyline di peta. Isi dengan angka bulat positif mulai dari 1.',
+        'Angka bulat: 1, 2, 3, ...',
+        '1',
+      ],
+      [],
+      ['CATATAN PENTING:'],
+      ['1. Baris kosong akan diabaikan secara otomatis.'],
+      ['2. Baris pertama (header) tidak boleh diubah.'],
+      ['3. Jika kolom id sudah ada di database → data di-UPDATE. Jika belum ada → data DIBUAT BARU.'],
+      ['4. Kolom jalur dan nomorUrut bersifat opsional, tetapi KEDUANYA harus diisi agar polyline peta bekerja.'],
+      ['5. Koordinat lat/lng: gunakan titik (.) sebagai pemisah desimal, bukan koma.'],
+      ['6. Nilai kolom tipe harus PERSIS seperti yang tertulis di kolom "Nilai yang Valid" (perhatikan huruf besar/kecil).'],
+      ['7. Untuk kolom kondisi, jika dikosongkan sistem akan mengisi "normal" secara otomatis.'],
     ]
     const ws2 = XLSX.utils.aoa_to_sheet(panduan)
-    ws2['!cols'] = [14, 10, 16, 60, 36].map(w => ({ wch: w }))
+    ws2['!cols'] = [6, 14, 10, 16, 70, 36, 36].map(w => ({ wch: w }))
+    ws2['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }]
     XLSX.utils.book_append_sheet(wb, ws2, 'Panduan')
 
     const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
