@@ -1,0 +1,15 @@
+name: Deploy Staging — Backend
+
+on:
+  push:
+    branches:
+      - staging
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger staging deploy via webhook
+        run: |
+          curl -s -o /dev/null -w "%{http_code}" \
+            https://staging.spektra.biz.id/webhook/deploy-staging-backend
