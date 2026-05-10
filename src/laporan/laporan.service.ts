@@ -9,6 +9,11 @@ const INCLUDE_FULL = {
   pelapor: { select: { id: true, nama: true, jabatan: true, unit: true } },
 }
 
+function mapLaporan(l: any) {
+  if (!l) return l
+  return { ...l, tower: l.tower ? { ...l.tower, nomorTower: l.tower.id } : null }
+}
+
 @Injectable()
 export class LaporanService {
   constructor(private prisma: PrismaService) {}
@@ -51,7 +56,7 @@ export class LaporanService {
       this.prisma.laporan.count({ where }),
     ])
 
-    return { data, total, page, limit }
+    return { data: data.map(mapLaporan), total, page, limit }
   }
 
   async findOne(id: string) {
@@ -60,7 +65,7 @@ export class LaporanService {
       include: INCLUDE_FULL,
     })
     if (!laporan) throw new NotFoundException(`Laporan ${id} tidak ditemukan`)
-    return laporan
+    return mapLaporan(laporan)
   }
 
   async getStats() {
@@ -87,9 +92,9 @@ export class LaporanService {
     return { ...result, total, berlangsung }
   }
 
-  create(dto: CreateLaporanDto, pelaporId: string) {
+  async create(dto: CreateLaporanDto, pelaporId: string) {
     const { towerId, tanggal, foto = [], ...rest } = dto
-    return this.prisma.laporan.create({
+    const result = await this.prisma.laporan.create({
       data: {
         ...rest,
         tanggal: new Date(tanggal),
@@ -99,12 +104,13 @@ export class LaporanService {
       },
       include: INCLUDE_FULL,
     })
+    return mapLaporan(result)
   }
 
   async update(id: string, dto: UpdateLaporanDto) {
     await this.findOne(id)
     const { towerId, tanggal, pelaporId: _, ...rest } = dto as any
-    return this.prisma.laporan.update({
+    const result = await this.prisma.laporan.update({
       where: { id },
       data: {
         ...rest,
@@ -113,6 +119,7 @@ export class LaporanService {
       },
       include: INCLUDE_FULL,
     })
+    return mapLaporan(result)
   }
 
   async remove(id: string) {

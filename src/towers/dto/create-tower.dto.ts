@@ -26,4 +26,8 @@ export class CreateTowerDto {
   @IsOptional()
   @IsString()
   lokasi?: string
+
+  @IsOptional()
+  @IsNumber()
+  radius?: number
 }

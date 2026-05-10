@@ -71,7 +71,7 @@ export class TowersService {
 
   async findAllForDropdown() {
     const towers = await this.prisma.tower.findMany({
-      select: { id: true, nama: true, tipe: true, tegangan: true, lat: true, lng: true },
+      select: { id: true, nama: true, tipe: true, tegangan: true, lat: true, lng: true, radius: true },
       orderBy: { id: 'asc' },
     })
     // Map id → nomorTower so frontend TowerOption interface is satisfied
@@ -84,6 +84,7 @@ export class TowersService {
       nama: t.nama,
       lat: t.lat,
       lng: t.lng,
+      radius: t.radius,
     }))
   }
 

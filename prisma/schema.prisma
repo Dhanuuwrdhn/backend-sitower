@@ -30,6 +30,7 @@ model Tower {
   tipe      String
   kondisi   String   @default("normal")
   lokasi    String?
+  radius    Float    @default(100)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
