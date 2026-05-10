@@ -16,6 +16,11 @@ const INCLUDE_FULL = {
     tower: { select: { id: true, nama: true, tipe: true, tegangan: true, lokasi: true } },
     pelapor: { select: { id: true, nama: true, jabatan: true, unit: true } },
 };
+function mapLaporan(l) {
+    if (!l)
+        return l;
+    return { ...l, tower: l.tower ? { ...l.tower, nomorTower: l.tower.id } : null };
+}
 let LaporanService = class LaporanService {
     prisma;
     constructor(prisma) {
@@ -59,7 +64,7 @@ let LaporanService = class LaporanService {
             }),
             this.prisma.laporan.count({ where }),
         ]);
-        return { data, total, page, limit };
+        return { data: data.map(mapLaporan), total, page, limit };
     }
     async findOne(id) {
         const laporan = await this.prisma.laporan.findUnique({
@@ -68,7 +73,7 @@ let LaporanService = class LaporanService {
         });
         if (!laporan)
             throw new common_1.NotFoundException(`Laporan ${id} tidak ditemukan`);
-        return laporan;
+        return mapLaporan(laporan);
     }
     async getStats() {
         const counts = await this.prisma.laporan.groupBy({
@@ -89,9 +94,9 @@ let LaporanService = class LaporanService {
         ]);
         return { ...result, total, berlangsung };
     }
-    create(dto, pelaporId) {
+    async create(dto, pelaporId) {
         const { towerId, tanggal, foto = [], ...rest } = dto;
-        return this.prisma.laporan.create({
+        const result = await this.prisma.laporan.create({
             data: {
                 ...rest,
                 tanggal: new Date(tanggal),
@@ -101,11 +106,12 @@ let LaporanService = class LaporanService {
             },
             include: INCLUDE_FULL,
         });
+        return mapLaporan(result);
     }
     async update(id, dto) {
         await this.findOne(id);
         const { towerId, tanggal, pelaporId: _, ...rest } = dto;
-        return this.prisma.laporan.update({
+        const result = await this.prisma.laporan.update({
             where: { id },
             data: {
                 ...rest,
@@ -114,6 +120,7 @@ let LaporanService = class LaporanService {
             },
             include: INCLUDE_FULL,
         });
+        return mapLaporan(result);
     }
     async remove(id) {
         await this.findOne(id);

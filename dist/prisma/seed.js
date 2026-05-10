@@ -88,12 +88,12 @@ async function main() {
             { towerId: 'SK-001', pelaporId: ahmad.id, jenisGangguan: 'cleanup', deskripsi: 'Pembersihan ROW dari vegetasi liar', levelRisiko: 'rendah', status: 'menunggu', tanggal: new Date('2025-05-05T07:00:00'), lokasiDetail: 'Metland, Jakarta Barat', teknisi: 'TBD', noSpk: 'SPK-2025-0430', foto: [] },
         ] });
     await prisma.sertifikat.createMany({ skipDuplicates: true, data: [
-            { towerId: 'ST-003', tipe: 'Kelayakan', nama: 'SLO Tower SUTET Balaraja', berlakuHingga: new Date('2026-12-31'), status: 'valid' },
-            { towerId: 'GI-002', tipe: 'Grounding', nama: 'Uji Tahanan Pentanahan GIS Kembangan', berlakuHingga: new Date('2025-06-30'), status: 'valid' },
-            { towerId: 'GI-004', tipe: 'Konstruksi', nama: 'Izin Konstruksi GI Durikosambi', berlakuHingga: new Date('2025-03-15'), status: 'expired' },
-            { towerId: 'TT-001', tipe: 'K3', nama: 'Sertifikat K3 Tower Lontar', berlakuHingga: new Date('2027-01-01'), status: 'valid' },
-            { towerId: 'GI-001', tipe: 'Lingkungan', nama: 'AMDAL GIS Lontar', berlakuHingga: new Date('2026-10-20'), status: 'valid' },
-            { towerId: 'ST-002', tipe: 'K3', nama: 'Sertifikat K3 Tower Kembangan', berlakuHingga: new Date('2024-12-31'), status: 'expired' },
+            { towerId: 'ST-003', kategori: 'Kelayakan', nama: 'SLO Tower SUTET Balaraja', berlakuHingga: new Date('2026-12-31'), status: 'berlaku' },
+            { towerId: 'GI-002', kategori: 'Grounding', nama: 'Uji Tahanan Pentanahan GIS Kembangan', berlakuHingga: new Date('2025-06-30'), status: 'berlaku' },
+            { towerId: 'GI-004', kategori: 'Konstruksi', nama: 'Izin Konstruksi GI Durikosambi', berlakuHingga: new Date('2025-03-15'), status: 'expired' },
+            { towerId: 'TT-001', kategori: 'K3', nama: 'Sertifikat K3 Tower Lontar', berlakuHingga: new Date('2027-01-01'), status: 'berlaku' },
+            { towerId: 'GI-001', kategori: 'Lingkungan', nama: 'AMDAL GIS Lontar', berlakuHingga: new Date('2026-10-20'), status: 'berlaku' },
+            { towerId: 'ST-002', kategori: 'K3', nama: 'Sertifikat K3 Tower Kembangan', berlakuHingga: new Date('2024-12-31'), status: 'expired' },
         ] });
     await prisma.asBuiltDrawing.createMany({ skipDuplicates: true, data: [
             { towerId: 'ST-003', namaFile: 'ABD-ST003-Balaraja-2023.pdf', tipe: 'Single Line Diagram', tahun: 2023, versi: 'v2.1' },

@@ -9,47 +9,42 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CreateAsBuiltDrawingDto = void 0;
+exports.CreateAsBuiltDrawingDto = exports.CreateFolderDto = void 0;
 const class_validator_1 = require("class-validator");
-class CreateAsBuiltDrawingDto {
-    towerId;
-    namaFile;
+const class_transformer_1 = require("class-transformer");
+class CreateFolderDto {
+    nama;
     tipe;
     tahun;
-    versi;
-    fileUrl;
+    towerId;
     keterangan;
 }
-exports.CreateAsBuiltDrawingDto = CreateAsBuiltDrawingDto;
+exports.CreateFolderDto = CreateFolderDto;
 __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], CreateAsBuiltDrawingDto.prototype, "towerId", void 0);
+], CreateFolderDto.prototype, "nama", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsIn)(['Electrical', 'Mechanical', 'Civil', 'Grounding', 'Lainnya']),
     __metadata("design:type", String)
-], CreateAsBuiltDrawingDto.prototype, "namaFile", void 0);
-__decorate([
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], CreateAsBuiltDrawingDto.prototype, "tipe", void 0);
+], CreateFolderDto.prototype, "tipe", void 0);
 __decorate([
     (0, class_validator_1.IsNumber)(),
+    (0, class_transformer_1.Type)(() => Number),
     __metadata("design:type", Number)
-], CreateAsBuiltDrawingDto.prototype, "tahun", void 0);
+], CreateFolderDto.prototype, "tahun", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], CreateAsBuiltDrawingDto.prototype, "versi", void 0);
+], CreateFolderDto.prototype, "towerId", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], CreateAsBuiltDrawingDto.prototype, "fileUrl", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], CreateAsBuiltDrawingDto.prototype, "keterangan", void 0);
+], CreateFolderDto.prototype, "keterangan", void 0);
+class CreateAsBuiltDrawingDto extends CreateFolderDto {
+}
+exports.CreateAsBuiltDrawingDto = CreateAsBuiltDrawingDto;
 //# sourceMappingURL=create-as-built-drawing.dto.js.map

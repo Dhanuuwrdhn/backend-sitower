@@ -1,61 +1,158 @@
 import {
   Controller, Get, Post, Put, Delete, Body, Param, Query,
-  UseGuards, UseInterceptors, UploadedFile,
+  UseGuards, UseInterceptors, UploadedFile, Res,
 } from '@nestjs/common'
 import { FileInterceptor } from '@nestjs/platform-express'
 import { diskStorage } from 'multer'
 import { extname, join } from 'path'
+import type { Response } from 'express'
+import { createReadStream, existsSync } from 'fs'
+import {
+  ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes,
+  ApiBody, ApiParam, ApiQuery,
+} from '@nestjs/swagger'
 import { AsBuiltDrawingService } from './as-built-drawing.service'
-import { CreateAsBuiltDrawingDto } from './dto/create-as-built-drawing.dto'
+import { CreateFolderDto } from './dto/create-as-built-drawing.dto'
 import { UpdateAsBuiltDrawingDto } from './dto/update-as-built-drawing.dto'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { RolesGuard } from '../auth/roles.guard'
 import { Roles } from '../auth/roles.decorator'
 
+@ApiTags('As-Built Drawing')
+@ApiBearerAuth()
 @Controller('as-built-drawing')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class AsBuiltDrawingController {
   constructor(private asBuiltDrawingService: AsBuiltDrawingService) {}
 
+  // ── Folders ──────────────────────────────────────────────────────────────────
+
   @Get()
-  findAll(@Query() query: { towerId?: string; tipe?: string; tahun?: number }) {
-    return this.asBuiltDrawingService.findAll(query)
+  @ApiOperation({ summary: 'List semua folder as-built drawing' })
+  @ApiQuery({ name: 'search',  required: false })
+  @ApiQuery({ name: 'tipe',    required: false, enum: ['Electrical','Mechanical','Civil','Grounding','Lainnya'] })
+  @ApiQuery({ name: 'tahun',   required: false })
+  @ApiQuery({ name: 'towerId', required: false })
+  findAll(@Query() query: { search?: string; tipe?: string; tahun?: string; towerId?: string }) {
+    return this.asBuiltDrawingService.findAllFolders(query)
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.asBuiltDrawingService.findOne(id)
+  @ApiOperation({ summary: 'Detail folder + list dokumen' })
+  @ApiParam({ name: 'id', description: 'Folder ID' })
+  findFolder(@Param('id') id: string) {
+    return this.asBuiltDrawingService.findFolder(id)
   }
 
   @Post()
   @Roles('admin')
-  create(@Body() dto: CreateAsBuiltDrawingDto) {
-    return this.asBuiltDrawingService.create(dto)
+  @ApiOperation({ summary: 'Buat folder as-built drawing baru (admin)' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['nama', 'tipe', 'tahun'],
+      properties: {
+        nama:       { type: 'string', example: 'Drawing Tower T-23 2024' },
+        tipe:       { type: 'string', enum: ['Electrical','Mechanical','Civil','Grounding','Lainnya'], example: 'Electrical' },
+        tahun:      { type: 'number', example: 2024 },
+        towerId:    { type: 'string', example: 'T-23', description: 'Opsional' },
+        keterangan: { type: 'string', example: 'Drawing hasil revisi 2024', description: 'Opsional' },
+      },
+    },
+  })
+  createFolder(@Body() dto: CreateFolderDto) {
+    return this.asBuiltDrawingService.createFolder(dto)
   }
 
   @Put(':id')
   @Roles('admin')
-  update(@Param('id') id: string, @Body() dto: UpdateAsBuiltDrawingDto) {
-    return this.asBuiltDrawingService.update(id, dto)
+  @ApiOperation({ summary: 'Update folder (admin)' })
+  @ApiParam({ name: 'id', description: 'Folder ID' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        nama:       { type: 'string', example: 'Drawing Tower T-23 2024 (rev)' },
+        tipe:       { type: 'string', enum: ['Electrical','Mechanical','Civil','Grounding','Lainnya'] },
+        tahun:      { type: 'number', example: 2024 },
+        towerId:    { type: 'string', example: 'T-23' },
+        keterangan: { type: 'string', example: 'Catatan revisi' },
+      },
+    },
+  })
+  updateFolder(@Param('id') id: string, @Body() dto: UpdateAsBuiltDrawingDto) {
+    return this.asBuiltDrawingService.updateFolder(id, dto)
   }
 
   @Delete(':id')
   @Roles('admin')
-  remove(@Param('id') id: string) {
-    return this.asBuiltDrawingService.remove(id)
+  @ApiOperation({ summary: 'Hapus folder + semua dokumen (admin)' })
+  @ApiParam({ name: 'id', description: 'Folder ID' })
+  deleteFolder(@Param('id') id: string) {
+    return this.asBuiltDrawingService.deleteFolder(id)
   }
 
-  @Post(':id/upload')
+  // ── Dokumen ──────────────────────────────────────────────────────────────────
+
+  @Get(':folderId/dokumen')
+  @ApiOperation({ summary: 'List dokumen dalam folder' })
+  @ApiParam({ name: 'folderId', description: 'Folder ID' })
+  findDokumen(@Param('folderId') folderId: string) {
+    return this.asBuiltDrawingService.findDokumenByFolder(folderId)
+  }
+
+  @Post(':folderId/dokumen')
   @Roles('admin')
+  @ApiOperation({ summary: 'Upload dokumen ke folder (admin)' })
+  @ApiParam({ name: 'folderId', description: 'Folder ID' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({ schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } } } })
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
         destination: join(process.cwd(), 'uploads', 'asbuilt'),
-        filename: (req, file, cb) => cb(null, `${Date.now()}${extname(file.originalname)}`),
+        filename: (_req, file, cb) => cb(null, `${Date.now()}${extname(file.originalname)}`),
       }),
     }),
   )
-  uploadFile(@Param('id') id: string, @UploadedFile() file: Express.Multer.File) {
-    return this.asBuiltDrawingService.updateFileUrl(id, `/uploads/asbuilt/${file.filename}`)
+  uploadDokumen(
+    @Param('folderId') folderId: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    const fileUrl = `/uploads/asbuilt/${file.filename}`
+    return this.asBuiltDrawingService.addDokumen(folderId, file.originalname, fileUrl)
+  }
+
+  @Get('dokumen/:id')
+  @ApiOperation({ summary: 'Metadata satu dokumen' })
+  @ApiParam({ name: 'id', description: 'Dokumen ID' })
+  findOneDokumen(@Param('id') id: string) {
+    return this.asBuiltDrawingService.findDokumen(id)
+  }
+
+  @Get('dokumen/:id/preview')
+  @ApiOperation({ summary: 'Stream file dokumen inline untuk preview (PDF/gambar)' })
+  @ApiParam({ name: 'id', description: 'Dokumen ID' })
+  async previewDokumen(@Param('id') id: string, @Res({ passthrough: false }) res: Response) {
+    const doc = await this.asBuiltDrawingService.findDokumen(id)
+    const filePath = join(process.cwd(), doc.fileUrl)
+    if (!existsSync(filePath)) {
+      return res.status(404).json({ message: 'File tidak ditemukan di server' })
+    }
+    const ext = extname(doc.namaFile).toLowerCase()
+    const mime = ext === '.pdf' ? 'application/pdf'
+      : ['.png', '.jpg', '.jpeg'].includes(ext) ? `image/${ext.slice(1)}`
+      : 'application/octet-stream'
+    res.setHeader('Content-Type', mime)
+    res.setHeader('Content-Disposition', `inline; filename="${doc.namaFile}"`)
+    createReadStream(filePath).pipe(res)
+  }
+
+  @Delete('dokumen/:id')
+  @Roles('admin')
+  @ApiOperation({ summary: 'Hapus dokumen (admin)' })
+  @ApiParam({ name: 'id', description: 'Dokumen ID' })
+  deleteDokumen(@Param('id') id: string) {
+    return this.asBuiltDrawingService.deleteDokumen(id)
   }
 }

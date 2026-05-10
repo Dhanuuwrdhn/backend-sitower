@@ -1,93 +1,136 @@
+import type { Response } from 'express';
 import { AsBuiltDrawingService } from './as-built-drawing.service';
-import { CreateAsBuiltDrawingDto } from './dto/create-as-built-drawing.dto';
+import { CreateFolderDto } from './dto/create-as-built-drawing.dto';
 import { UpdateAsBuiltDrawingDto } from './dto/update-as-built-drawing.dto';
 export declare class AsBuiltDrawingController {
     private asBuiltDrawingService;
     constructor(asBuiltDrawingService: AsBuiltDrawingService);
     findAll(query: {
-        towerId?: string;
+        search?: string;
         tipe?: string;
-        tahun?: number;
+        tahun?: string;
+        towerId?: string;
     }): import("@prisma/client").Prisma.PrismaPromise<({
         tower: {
             id: string;
             nama: string;
+        } | null;
+        _count: {
+            dokumen: number;
         };
     } & {
         id: string;
+        nama: string;
         tipe: string;
         createdAt: Date;
         updatedAt: Date;
-        towerId: string;
+        towerId: string | null;
         keterangan: string | null;
         tahun: number;
-        fileUrl: string | null;
-        namaFile: string;
-        versi: string | null;
     })[]>;
-    findOne(id: string): Promise<{
+    findFolder(id: string): Promise<{
         tower: {
             id: string;
             nama: string;
+        } | null;
+        _count: {
+            dokumen: number;
+        };
+        dokumen: {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            namaFile: string;
+            fileUrl: string;
+            folderId: string;
+        }[];
+    } & {
+        id: string;
+        nama: string;
+        tipe: string;
+        createdAt: Date;
+        updatedAt: Date;
+        towerId: string | null;
+        keterangan: string | null;
+        tahun: number;
+    }>;
+    createFolder(dto: CreateFolderDto): import("@prisma/client").Prisma.Prisma__AsBuiltFolderClient<{
+        tower: {
+            id: string;
+            nama: string;
+        } | null;
+        _count: {
+            dokumen: number;
         };
     } & {
         id: string;
+        nama: string;
         tipe: string;
         createdAt: Date;
         updatedAt: Date;
-        towerId: string;
+        towerId: string | null;
         keterangan: string | null;
         tahun: number;
-        fileUrl: string | null;
-        namaFile: string;
-        versi: string | null;
-    }>;
-    create(dto: CreateAsBuiltDrawingDto): import("@prisma/client").Prisma.Prisma__AsBuiltDrawingClient<{
-        id: string;
-        tipe: string;
-        createdAt: Date;
-        updatedAt: Date;
-        towerId: string;
-        keterangan: string | null;
-        tahun: number;
-        fileUrl: string | null;
-        namaFile: string;
-        versi: string | null;
     }, never, import("@prisma/client/runtime/client").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
-    update(id: string, dto: UpdateAsBuiltDrawingDto): Promise<{
+    updateFolder(id: string, dto: UpdateAsBuiltDrawingDto): Promise<{
+        tower: {
+            id: string;
+            nama: string;
+        } | null;
+        _count: {
+            dokumen: number;
+        };
+    } & {
         id: string;
+        nama: string;
         tipe: string;
         createdAt: Date;
         updatedAt: Date;
-        towerId: string;
+        towerId: string | null;
         keterangan: string | null;
         tahun: number;
-        fileUrl: string | null;
-        namaFile: string;
-        versi: string | null;
     }>;
-    remove(id: string): Promise<{
+    deleteFolder(id: string): Promise<{
         id: string;
+        nama: string;
         tipe: string;
         createdAt: Date;
         updatedAt: Date;
-        towerId: string;
+        towerId: string | null;
         keterangan: string | null;
         tahun: number;
-        fileUrl: string | null;
-        namaFile: string;
-        versi: string | null;
     }>;
-    uploadFile(id: string, file: Express.Multer.File): Promise<{
+    findDokumen(folderId: string): import("@prisma/client").Prisma.PrismaPromise<{
         id: string;
-        tipe: string;
         createdAt: Date;
         updatedAt: Date;
-        towerId: string;
-        keterangan: string | null;
-        tahun: number;
-        fileUrl: string | null;
         namaFile: string;
-        versi: string | null;
+        fileUrl: string;
+        folderId: string;
+    }[]>;
+    uploadDokumen(folderId: string, file: Express.Multer.File): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        namaFile: string;
+        fileUrl: string;
+        folderId: string;
+    }>;
+    findOneDokumen(id: string): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        namaFile: string;
+        fileUrl: string;
+        folderId: string;
+    }>;
+    previewDokumen(id: string, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
+    deleteDokumen(id: string): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        namaFile: string;
+        fileUrl: string;
+        folderId: string;
     }>;
 }

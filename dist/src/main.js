@@ -44,8 +44,13 @@ async function bootstrap() {
     ['uploads/laporan', 'uploads/sertifikat', 'uploads/asbuilt'].forEach((d) => !fs.existsSync(d) && fs.mkdirSync(d, { recursive: true }));
     app.useStaticAssets((0, path_1.join)(process.cwd(), 'uploads'), { prefix: '/uploads' });
     app.enableCors({
-        origin: true,
+        origin: [
+            'http://localhost:3000',
+            'https://spektra.biz.id',
+            ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
+        ],
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+        allowedHeaders: ['Authorization', 'Content-Type'],
         credentials: true,
     });
     app.setGlobalPrefix('api');

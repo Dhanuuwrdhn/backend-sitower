@@ -1,9 +1,9 @@
-export declare class CreateAsBuiltDrawingDto {
-    towerId: string;
-    namaFile: string;
+export declare class CreateFolderDto {
+    nama: string;
     tipe: string;
     tahun: number;
-    versi?: string;
-    fileUrl?: string;
+    towerId?: string;
     keterangan?: string;
+}
+export declare class CreateAsBuiltDrawingDto extends CreateFolderDto {
 }

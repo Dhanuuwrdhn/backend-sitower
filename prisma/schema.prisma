@@ -34,9 +34,10 @@ model Tower {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  laporan    Laporan[]
-  sertifikat Sertifikat[]
-  asBuilt    AsBuiltDrawing[]
+  laporan        Laporan[]
+  sertifikat     Sertifikat[]
+  asBuilt        AsBuiltDrawing[]
+  asBuiltFolders AsBuiltFolder[]
 }
 
 model Laporan {
@@ -101,4 +102,27 @@ model AsBuiltDrawing {
   keterangan String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+}
+
+model AsBuiltFolder {
+  id         String          @id @default(cuid())
+  nama       String
+  tipe       String
+  tahun      Int
+  towerId    String?
+  tower      Tower?          @relation(fields: [towerId], references: [id])
+  keterangan String?
+  dokumen    AsBuiltDokumen[]
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+}
+
+model AsBuiltDokumen {
+  id        String        @id @default(cuid())
+  folderId  String
+  folder    AsBuiltFolder @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  namaFile  String
+  fileUrl   String
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 }

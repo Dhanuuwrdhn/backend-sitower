@@ -20,6 +20,7 @@ class CreateTowerDto {
     tipe;
     kondisi;
     lokasi;
+    radius;
 }
 exports.CreateTowerDto = CreateTowerDto;
 __decorate([
@@ -56,4 +57,9 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateTowerDto.prototype, "lokasi", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsNumber)(),
+    __metadata("design:type", Number)
+], CreateTowerDto.prototype, "radius", void 0);
 //# sourceMappingURL=create-tower.dto.js.map

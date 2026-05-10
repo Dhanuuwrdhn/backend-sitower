@@ -17,47 +17,88 @@ let SertifikatService = class SertifikatService {
     constructor(prisma) {
         this.prisma = prisma;
     }
-    findAll(query) {
+    findAllFolders(query) {
         return this.prisma.sertifikat.findMany({
             where: {
-                ...(query?.towerId && { towerId: query.towerId }),
+                ...(query?.kategori && { kategori: query.kategori }),
                 ...(query?.status && { status: query.status }),
-                ...(query?.tipe && { tipe: query.tipe }),
+                ...(query?.search && {
+                    tower: { nama: { contains: query.search, mode: 'insensitive' } },
+                }),
+            },
+            include: {
+                tower: { select: { id: true, nama: true } },
+                _count: { select: { dokumen: true } },
+            },
+            orderBy: { createdAt: 'desc' },
+        });
+    }
+    async findFolder(id) {
+        const folder = await this.prisma.sertifikat.findUnique({
+            where: { id },
+            include: {
+                tower: { select: { id: true, nama: true } },
+                dokumen: { orderBy: { createdAt: 'desc' } },
+            },
+        });
+        if (!folder)
+            throw new common_1.NotFoundException(`Folder ${id} tidak ditemukan`);
+        return folder;
+    }
+    createFolder(dto) {
+        return this.prisma.sertifikat.create({
+            data: {
+                nama: dto.nama,
+                kategori: dto.kategori,
+                status: dto.status ?? 'berlaku',
+                ...(dto.towerId && { towerId: dto.towerId }),
+                ...(dto.berlakuHingga && { berlakuHingga: new Date(dto.berlakuHingga) }),
             },
             include: { tower: { select: { id: true, nama: true } } },
-            orderBy: { berlakuHingga: 'asc' },
         });
     }
-    async findOne(id) {
-        const data = await this.prisma.sertifikat.findUnique({
-            where: { id },
-            include: { tower: { select: { id: true, nama: true } } },
-        });
-        if (!data)
-            throw new common_1.NotFoundException(`Sertifikat ${id} tidak ditemukan`);
-        return data;
-    }
-    create(dto) {
-        return this.prisma.sertifikat.create({
-            data: { ...dto, berlakuHingga: new Date(dto.berlakuHingga) },
-        });
-    }
-    async update(id, dto) {
-        await this.findOne(id);
+    async updateFolder(id, dto) {
+        await this.findFolder(id);
         return this.prisma.sertifikat.update({
             where: { id },
             data: {
-                ...dto,
+                ...(dto.nama && { nama: dto.nama }),
+                ...(dto.kategori && { kategori: dto.kategori }),
+                ...(dto.status && { status: dto.status }),
+                ...(dto.towerId !== undefined && { towerId: dto.towerId || null }),
                 ...(dto.berlakuHingga && { berlakuHingga: new Date(dto.berlakuHingga) }),
             },
         });
     }
-    async remove(id) {
-        await this.findOne(id);
+    async deleteFolder(id) {
+        await this.findFolder(id);
         return this.prisma.sertifikat.delete({ where: { id } });
     }
-    async updateFileUrl(id, fileUrl) {
-        return this.prisma.sertifikat.update({ where: { id }, data: { fileUrl } });
+    async findDokumenByFolder(folderId) {
+        await this.findFolder(folderId);
+        return this.prisma.sertifikatDokumen.findMany({
+            where: { folderId },
+            orderBy: { createdAt: 'desc' },
+        });
+    }
+    async findDokumen(id) {
+        const doc = await this.prisma.sertifikatDokumen.findUnique({
+            where: { id },
+            include: { folder: { select: { id: true, nama: true } } },
+        });
+        if (!doc)
+            throw new common_1.NotFoundException(`Dokumen ${id} tidak ditemukan`);
+        return doc;
+    }
+    async addDokumen(folderId, namaFile, fileUrl) {
+        await this.findFolder(folderId);
+        return this.prisma.sertifikatDokumen.create({
+            data: { folderId, namaFile, fileUrl },
+        });
+    }
+    async deleteDokumen(id) {
+        await this.findDokumen(id);
+        return this.prisma.sertifikatDokumen.delete({ where: { id } });
     }
 };
 exports.SertifikatService = SertifikatService;
