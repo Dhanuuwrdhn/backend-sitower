@@ -47,19 +47,7 @@ export class AsBuiltDrawingController {
   @Post()
   @Roles('admin')
   @ApiOperation({ summary: 'Buat folder as-built drawing baru (admin)' })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      required: ['nama', 'tipe', 'tahun'],
-      properties: {
-        nama:       { type: 'string', example: 'Drawing Tower T-23 2024' },
-        tipe:       { type: 'string', enum: ['Electrical','Mechanical','Civil','Grounding','Lainnya'], example: 'Electrical' },
-        tahun:      { type: 'number', example: 2024 },
-        towerId:    { type: 'string', example: 'T-23', description: 'Opsional' },
-        keterangan: { type: 'string', example: 'Drawing hasil revisi 2024', description: 'Opsional' },
-      },
-    },
-  })
+  @ApiBody({ type: CreateFolderDto })
   createFolder(@Body() dto: CreateFolderDto) {
     return this.asBuiltDrawingService.createFolder(dto)
   }
@@ -68,18 +56,7 @@ export class AsBuiltDrawingController {
   @Roles('admin')
   @ApiOperation({ summary: 'Update folder (admin)' })
   @ApiParam({ name: 'id', description: 'Folder ID' })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        nama:       { type: 'string', example: 'Drawing Tower T-23 2024 (rev)' },
-        tipe:       { type: 'string', enum: ['Electrical','Mechanical','Civil','Grounding','Lainnya'] },
-        tahun:      { type: 'number', example: 2024 },
-        towerId:    { type: 'string', example: 'T-23' },
-        keterangan: { type: 'string', example: 'Catatan revisi' },
-      },
-    },
-  })
+  @ApiBody({ type: UpdateAsBuiltDrawingDto })
   updateFolder(@Param('id') id: string, @Body() dto: UpdateAsBuiltDrawingDto) {
     return this.asBuiltDrawingService.updateFolder(id, dto)
   }
