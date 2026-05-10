@@ -9,15 +9,16 @@ export class ImportService {
   async generateTowerTemplate(): Promise<Buffer> {
     const wb = XLSX.utils.book_new()
 
-    // ── Sheet 1: Template ──────────────────────────────────────────────────────
+    // ── Sheet 1: Data tower existing dari DB ───────────────────────────────────
+    const towers = await this.prisma.tower.findMany({
+      orderBy: [{ jalur: 'asc' }, { nomorUrut: 'asc' }, { id: 'asc' }],
+    })
     const headers = ['id', 'nama', 'lat', 'lng', 'tegangan', 'tipe', 'kondisi', 'lokasi', 'jalur', 'nomorUrut']
-    const examples = [
-      ['T-DKS-001', 'Tower 1 Durikosambi–Kembangan', -6.1523, 106.7041, '500kV', 'SUTET', 'normal', 'Kel. Rawa Buaya, Cengkareng, Jakarta Barat', 'SUTET 500kV DURIKOSAMBI-KEMBANGAN', 1],
-      ['T-DKS-002', 'Tower 2 Durikosambi–Kembangan', -6.1598, 106.7105, '500kV', 'SUTET', 'waspada', 'Kel. Kapuk, Cengkareng, Jakarta Barat', 'SUTET 500kV DURIKOSAMBI-KEMBANGAN', 2],
-      ['T-JTK-015', 'Tower 15 Jatake–Tangerang', -6.2234, 106.6187, '150kV', 'SUTT', 'normal', 'Kel. Jatake, Jatiuwung, Kota Tangerang', 'SUTT 150kV JATAKE-TANGERANG', 15],
-    ]
-    const ws1 = XLSX.utils.aoa_to_sheet([headers, ...examples])
-    // Set column widths
+    const rows = towers.map(t => [
+      t.id, t.nama, t.lat, t.lng, t.tegangan ?? '', t.tipe ?? '',
+      t.kondisi ?? 'normal', t.lokasi ?? '', t.jalur ?? '', t.nomorUrut ?? '',
+    ])
+    const ws1 = XLSX.utils.aoa_to_sheet([headers, ...rows])
     ws1['!cols'] = [14, 36, 12, 12, 10, 12, 12, 36, 40, 12].map(w => ({ wch: w }))
     XLSX.utils.book_append_sheet(wb, ws1, 'Template')
 
