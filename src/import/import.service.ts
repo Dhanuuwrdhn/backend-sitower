@@ -6,6 +6,49 @@ import * as XLSX from 'xlsx'
 export class ImportService {
   constructor(private prisma: PrismaService) {}
 
+  async generateTowerTemplate(): Promise<Buffer> {
+    const wb = XLSX.utils.book_new()
+
+    // ── Sheet 1: Template ──────────────────────────────────────────────────────
+    const headers = ['id', 'nama', 'lat', 'lng', 'tegangan', 'tipe', 'kondisi', 'lokasi', 'jalur', 'nomorUrut']
+    const examples = [
+      ['T-DKS-001', 'Tower 1 Durikosambi–Kembangan', -6.1523, 106.7041, '500kV', 'SUTET', 'normal', 'Kel. Rawa Buaya, Cengkareng, Jakarta Barat', 'SUTET 500kV DURIKOSAMBI-KEMBANGAN', 1],
+      ['T-DKS-002', 'Tower 2 Durikosambi–Kembangan', -6.1598, 106.7105, '500kV', 'SUTET', 'waspada', 'Kel. Kapuk, Cengkareng, Jakarta Barat', 'SUTET 500kV DURIKOSAMBI-KEMBANGAN', 2],
+      ['T-JTK-015', 'Tower 15 Jatake–Tangerang', -6.2234, 106.6187, '150kV', 'SUTT', 'normal', 'Kel. Jatake, Jatiuwung, Kota Tangerang', 'SUTT 150kV JATAKE-TANGERANG', 15],
+    ]
+    const ws1 = XLSX.utils.aoa_to_sheet([headers, ...examples])
+    // Set column widths
+    ws1['!cols'] = [14, 36, 12, 12, 10, 12, 12, 36, 40, 12].map(w => ({ wch: w }))
+    XLSX.utils.book_append_sheet(wb, ws1, 'Template')
+
+    // ── Sheet 2: Panduan ───────────────────────────────────────────────────────
+    const panduan = [
+      ['Kolom', 'Wajib?', 'Tipe', 'Keterangan', 'Contoh Nilai'],
+      ['id',        'Ya',  'Teks', 'ID unik tower. Akan di-update jika sudah ada.', 'T-DKS-001'],
+      ['nama',      'Ya',  'Teks', 'Nama lengkap tower.',                            'Tower 1 Durikosambi–Kembangan'],
+      ['lat',       'Ya',  'Angka desimal', 'Latitude (WGS84). Negatif untuk lintang selatan.', '-6.1523'],
+      ['lng',       'Ya',  'Angka desimal', 'Longitude (WGS84).',                    '106.7041'],
+      ['tegangan',  'Ya',  'Teks', 'Tegangan operasi tower.',                        '500kV / 150kV / 70kV'],
+      ['tipe',      'Ya',  'Teks', 'Tipe tower. Pilih salah satu nilai valid.',      'SUTET | SUTT | SKTT | garduInduk'],
+      ['kondisi',   'Tidak', 'Teks', 'Kondisi tower saat ini. Default: normal.',      'normal | waspada | gangguan | maintenance'],
+      ['lokasi',    'Tidak', 'Teks', 'Deskripsi lokasi administratif.',               'Kel. Rawa Buaya, Cengkareng'],
+      ['jalur',     'Tidak', 'Teks', 'Nama jalur transmisi. Digunakan untuk polyline otomatis di peta.', 'SUTET 500kV DURIKOSAMBI-KEMBANGAN'],
+      ['nomorUrut', 'Tidak', 'Angka bulat', 'Urutan tower dalam jalur (ascending). Digunakan untuk sorting polyline.', '1, 2, 3, ...'],
+      [],
+      ['Catatan:'],
+      ['- Baris kosong akan diabaikan.'],
+      ['- Jika id sudah ada di database, data tower akan di-update (bukan duplikat).'],
+      ['- Kolom jalur + nomorUrut opsional, tapi wajib diisi jika ingin polyline otomatis tampil di peta.'],
+      ['- Format koordinat: gunakan titik (.) sebagai pemisah desimal, bukan koma.'],
+    ]
+    const ws2 = XLSX.utils.aoa_to_sheet(panduan)
+    ws2['!cols'] = [14, 10, 16, 60, 36].map(w => ({ wch: w }))
+    XLSX.utils.book_append_sheet(wb, ws2, 'Panduan')
+
+    const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
+    return Buffer.from(buf)
+  }
+
   async importFile(type: string, buffer: Buffer) {
     const wb = XLSX.read(buffer, { type: 'buffer', cellDates: true })
     const sheet = wb.Sheets[wb.SheetNames[0]]
@@ -27,13 +70,15 @@ export class ImportService {
     let updated = 0
     for (const row of rows) {
       const data = {
-        nama:     String(row.nama     || row.Nama     || ''),
-        lat:      Number(row.lat      || row.Lat      || 0),
-        lng:      Number(row.lng      || row.Lng      || 0),
-        tegangan: String(row.tegangan || row.Tegangan || ''),
-        tipe:     String(row.tipe     || row.Tipe     || ''),
-        kondisi:  String(row.kondisi  || row.Kondisi  || 'normal'),
-        lokasi:   row.lokasi || row.Lokasi || null,
+        nama:      String(row.nama     || row.Nama     || ''),
+        lat:       Number(row.lat      || row.Lat      || 0),
+        lng:       Number(row.lng      || row.Lng      || 0),
+        tegangan:  String(row.tegangan || row.Tegangan || ''),
+        tipe:      String(row.tipe     || row.Tipe     || ''),
+        kondisi:   String(row.kondisi  || row.Kondisi  || 'normal'),
+        lokasi:    row.lokasi    || row.Lokasi    || null,
+        jalur:     row.jalur     || row.Jalur     || null,
+        nomorUrut: row.nomorUrut ? Number(row.nomorUrut) : null,
       }
       const id = String(row.id || row.ID || '')
       if (!id) continue

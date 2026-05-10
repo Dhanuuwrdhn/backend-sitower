@@ -61,6 +61,8 @@ export class TowersService {
       tipe: t.tipe as 'gardu' | 'SUTET' | 'SUTT' | 'SKTT',
       tegangan: t.tegangan,
       updatedAt: t.updatedAt.toISOString(),
+      jalur: t.jalur ?? null,
+      nomorUrut: t.nomorUrut ?? null,
       kerawanan: t.laporan.map((l) => ({
         kategori: l.jenisGangguan,
         level: l.levelRisiko as 'kritis' | 'sedang' | 'aman',

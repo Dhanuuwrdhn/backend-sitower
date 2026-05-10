@@ -40,4 +40,14 @@ export class CreateTowerDto {
   @IsOptional()
   @IsNumber()
   radius?: number
+
+  @ApiPropertyOptional({ example: 'SUTET 500kV DURIKOSAMBI-KEMBANGAN', description: 'Nama jalur transmisi' })
+  @IsOptional()
+  @IsString()
+  jalur?: string
+
+  @ApiPropertyOptional({ example: 42, description: 'Nomor urut tower dalam jalur' })
+  @IsOptional()
+  @IsNumber()
+  nomorUrut?: number
 }
