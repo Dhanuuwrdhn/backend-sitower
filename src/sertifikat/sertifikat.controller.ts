@@ -48,6 +48,7 @@ export class SertifikatController {
   @Post()
   @Roles('admin')
   @ApiOperation({ summary: 'Buat folder sertifikat baru (admin)' })
+  @ApiBody({ type: CreateFolderDto })
   createFolder(@Body() dto: CreateFolderDto) {
     return this.sertifikatService.createFolder(dto)
   }
@@ -56,6 +57,7 @@ export class SertifikatController {
   @Roles('admin')
   @ApiOperation({ summary: 'Update folder sertifikat (admin)' })
   @ApiParam({ name: 'id', description: 'Folder ID' })
+  @ApiBody({ type: UpdateSertifikatDto })
   updateFolder(@Param('id') id: string, @Body() dto: UpdateSertifikatDto) {
     return this.sertifikatService.updateFolder(id, dto)
   }

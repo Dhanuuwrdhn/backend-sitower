@@ -1,4 +1,4 @@
-import { PartialType } from '@nestjs/mapped-types'
-import { CreateSertifikatDto } from './create-sertifikat.dto'
+import { PartialType } from '@nestjs/swagger'
+import { CreateFolderDto } from './create-sertifikat.dto'
 
-export class UpdateSertifikatDto extends PartialType(CreateSertifikatDto) {}
+export class UpdateSertifikatDto extends PartialType(CreateFolderDto) {}
