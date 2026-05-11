@@ -1,0 +1,10 @@
+CREATE TABLE "JalurKML" (
+  "id" SERIAL NOT NULL,
+  "nama" TEXT NOT NULL,
+  "tipe" TEXT NOT NULL DEFAULT 'SUTT',
+  "warna" TEXT,
+  "path" JSONB NOT NULL,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+  CONSTRAINT "JalurKML_pkey" PRIMARY KEY ("id")
+);

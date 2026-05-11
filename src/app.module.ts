@@ -10,7 +10,8 @@ import { SertifikatModule } from './sertifikat/sertifikat.module'
 import { AsBuiltDrawingModule } from './as-built-drawing/as-built-drawing.module'
 import { PegawaiModule } from './pegawai/pegawai.module'
 import { ImportModule } from './import/import.module'
-//test
+import { JalurKmlModule } from './jalur-kml/jalur-kml.module'
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -22,6 +23,7 @@ import { ImportModule } from './import/import.module'
     AsBuiltDrawingModule,
     PegawaiModule,
     ImportModule,
+    JalurKmlModule,
   ],
   controllers: [AppController],
   providers: [AppService],
