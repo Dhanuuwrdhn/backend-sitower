@@ -94,6 +94,10 @@ export class LaporanService {
 
   async create(dto: CreateLaporanDto, pelaporId: string) {
     const { towerId, tanggal, foto = [], ...rest } = dto
+
+    const tower = await this.prisma.tower.findUnique({ where: { id: towerId } })
+    if (!tower) throw new NotFoundException(`Tower dengan id "${towerId}" tidak ditemukan`)
+
     const result = await this.prisma.laporan.create({
       data: {
         ...rest,

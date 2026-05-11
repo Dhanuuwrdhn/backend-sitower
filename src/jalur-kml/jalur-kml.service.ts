@@ -191,6 +191,7 @@ export class JalurKmlService {
           tipe: pt.tipe,
           tegangan: pt.tegangan,
           kondisi: 'normal',
+          radius: 50,
           jalur: pt.jalur ?? undefined,
         },
       })
