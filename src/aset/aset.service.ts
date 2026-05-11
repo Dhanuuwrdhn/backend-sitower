@@ -9,6 +9,17 @@ import { UpdateTowerAsetDto } from './dto/update-tower-aset.dto'
 import * as XLSX from 'xlsx'
 import * as path from 'path'
 
+const ROUTE_PREFIX: Record<string, string> = {
+  'SUTT KEMBANGAN - PETUKANGAN':                                  'KBG-PTK',
+  'SUTT KEMBANGAN - DURIKOSAMBI':                                 'KBG-DKS',
+  'SUTT GANDUL - KEMBANGAN':                                      'GND-KBG',
+  'SUTT GANDUL - KEMBANGAN + DURIKOSAMBI':                        'GND-KBG-D',
+  'SUTT DURIKOSAMBI - CENGKARENG':                                'DKS-CKG',
+  'SUTT DURIKOSAMBI - TANGERANG LAMA + DURIKOSAMBI - CENGKARENG': 'DKS-TNGL',
+  'SUTT TANGERANG - CENGKARENG':                                  'TNG-CKG',
+  'SUTT CENGKARENG BARU - TANGERANG BARU':                        'CKGB-TNGB',
+}
+
 const ICON_COLOR: Record<string, string> = {
   kritis: '#FF0000',
   sedang: '#FFA500',
@@ -369,7 +380,7 @@ export class AsetService {
       const excelSt   = String(row[4] || 'AMAN')
       const color     = String(row[5] || 'Lime')
 
-      if (!towerCode || isNaN(lat)) continue
+      if (!towerCode || isNaN(lat) || isNaN(lng)) continue
 
       const line1     = desc.split('\n')[0].trim()
       const routeMatch = line1.match(/^(.*?)\s+TOWER/i)
@@ -377,20 +388,23 @@ export class AsetService {
       const routeId    = routeMap[routeName] ?? null
       routeOrderMap[routeName] = (routeOrderMap[routeName] || 0) + 1
 
+      const prefix   = ROUTE_PREFIX[routeName]
+      const towerId  = prefix ? `${prefix}-${towerCode}` : towerCode
+
       const parsed = parseDesc(desc)
       const status = mapExcelStatus(excelSt, color)
 
-      const existing = await this.prisma.tower.findUnique({ where: { id: towerCode } })
+      const existing = await this.prisma.tower.findUnique({ where: { id: towerId } })
       if (existing) {
         await this.prisma.tower.update({
-          where: { id: towerCode },
+          where: { id: towerId },
           data: { nama: line1, lat, lng, jalur: routeName, nomorUrut: routeOrderMap[routeName], routeId, ...status, ...parsed },
         })
         updated++
       } else {
         await this.prisma.tower.create({
           data: {
-            id: towerCode, nama: line1, lat, lng,
+            id: towerId, nama: line1, lat, lng,
             tegangan: '150kV', tipe: 'SUTT', kondisi: 'normal',
             jalur: routeName, nomorUrut: routeOrderMap[routeName], routeId,
             ...status, ...parsed,

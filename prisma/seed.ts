@@ -20,15 +20,19 @@ const GARDU_DATA = [
 ]
 
 const ROUTE_DEFS = [
-  { nama: 'SUTT KEMBANGAN - PETUKANGAN',                                  dari: 'KBG',  ke: 'PTK'  },
-  { nama: 'SUTT KEMBANGAN - DURIKOSAMBI',                                 dari: 'KBG',  ke: 'DKS'  },
-  { nama: 'SUTT GANDUL - KEMBANGAN',                                      dari: 'GND',  ke: 'KBG'  },
-  { nama: 'SUTT GANDUL - KEMBANGAN + DURIKOSAMBI',                        dari: 'GND',  ke: 'KBG'  },
-  { nama: 'SUTT DURIKOSAMBI - CENGKARENG',                                dari: 'DKS',  ke: 'CKG'  },
-  { nama: 'SUTT DURIKOSAMBI - TANGERANG LAMA + DURIKOSAMBI - CENGKARENG', dari: 'DKS',  ke: 'CKGB' },
-  { nama: 'SUTT TANGERANG - CENGKARENG',                                  dari: 'TNGL', ke: 'CKG'  },
-  { nama: 'SUTT CENGKARENG BARU - TANGERANG BARU',                        dari: 'CKGB', ke: 'TNGB' },
+  { nama: 'SUTT KEMBANGAN - PETUKANGAN',                                  dari: 'KBG',  ke: 'PTK',  prefix: 'KBG-PTK'  },
+  { nama: 'SUTT KEMBANGAN - DURIKOSAMBI',                                 dari: 'KBG',  ke: 'DKS',  prefix: 'KBG-DKS'  },
+  { nama: 'SUTT GANDUL - KEMBANGAN',                                      dari: 'GND',  ke: 'KBG',  prefix: 'GND-KBG'  },
+  { nama: 'SUTT GANDUL - KEMBANGAN + DURIKOSAMBI',                        dari: 'GND',  ke: 'KBG',  prefix: 'GND-KBG-D' },
+  { nama: 'SUTT DURIKOSAMBI - CENGKARENG',                                dari: 'DKS',  ke: 'CKG',  prefix: 'DKS-CKG'  },
+  { nama: 'SUTT DURIKOSAMBI - TANGERANG LAMA + DURIKOSAMBI - CENGKARENG', dari: 'DKS',  ke: 'CKGB', prefix: 'DKS-TNGL' },
+  { nama: 'SUTT TANGERANG - CENGKARENG',                                  dari: 'TNGL', ke: 'CKG',  prefix: 'TNG-CKG'  },
+  { nama: 'SUTT CENGKARENG BARU - TANGERANG BARU',                        dari: 'CKGB', ke: 'TNGB', prefix: 'CKGB-TNGB' },
 ]
+
+// maps normalized route name → prefix for tower ID generation
+const ROUTE_PREFIX: Record<string, string> = {}
+ROUTE_DEFS.forEach((r) => { ROUTE_PREFIX[r.nama] = r.prefix })
 
 function normalizeRoute(raw: string): string {
   return raw
@@ -137,12 +141,16 @@ async function main() {
     const desc      = String(row[3] || '')
     const excelSt   = String(row[4] || 'AMAN')
     const color     = String(row[5] || 'Lime')
-    if (!towerCode || !lat) continue
+    if (!towerCode || isNaN(lat) || isNaN(lng)) continue
 
     const line1      = desc.split('\n')[0].trim()
     const routeMatch = line1.match(/^(.*?)\s+TOWER/i)
     const routeName  = routeMatch ? normalizeRoute(routeMatch[1].trim()) : ''
     const routeId    = routeMap[routeName] ?? null
+
+    // prefix ID to avoid duplicates across routes (D10 exists in 3 routes)
+    const prefix    = ROUTE_PREFIX[routeName]
+    const towerId   = prefix ? `${prefix}-${towerCode}` : towerCode
 
     routeOrderMap[routeName] = (routeOrderMap[routeName] || 0) + 1
     const nomorUrut  = routeOrderMap[routeName]
@@ -151,9 +159,9 @@ async function main() {
     const status  = mapStatus(excelSt, color)
 
     await prisma.tower.upsert({
-      where:  { id: towerCode },
+      where:  { id: towerId },
       update: { nama: line1, lat, lng, tegangan: '150kV', tipe: 'SUTT', kondisi: 'normal', jalur: routeName, nomorUrut, routeId, ...status, ...parsed },
-      create: { id: towerCode, nama: line1, lat, lng, tegangan: '150kV', tipe: 'SUTT', kondisi: 'normal', jalur: routeName, nomorUrut, routeId, ...status, ...parsed },
+      create: { id: towerId, nama: line1, lat, lng, tegangan: '150kV', tipe: 'SUTT', kondisi: 'normal', jalur: routeName, nomorUrut, routeId, ...status, ...parsed },
     })
   }
 
