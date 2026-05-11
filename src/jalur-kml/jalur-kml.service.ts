@@ -12,6 +12,7 @@ interface ParsedPoint {
   lng: number
   tipe: string
   tegangan: string
+  jalur: string | null
 }
 
 interface ParsedJalur {
@@ -58,27 +59,45 @@ export class JalurKmlService {
 
   private parsePoints(content: string): ParsedPoint[] {
     const results: ParsedPoint[] = []
-    const placemarkRegex = /<Placemark[\s\S]*?<\/Placemark>/gi
-    const placemarks = content.match(placemarkRegex) ?? []
 
-    for (const placemark of placemarks) {
-      if (!/<Point/i.test(placemark)) continue
+    // Split by Folder to capture folder name (jalur) per group of Placemarks
+    const folderRegex = /<Folder[\s\S]*?<\/Folder>/gi
+    const folders = content.match(folderRegex) ?? []
 
-      const nameMatch = placemark.match(/<name>\s*([\s\S]*?)\s*<\/name>/i)
-      if (!nameMatch) continue
-      const nama = this.parseName(nameMatch[1])
+    // Also parse Placemarks outside folders (no jalur context)
+    const allFolderContent = folders.join('')
+    const sources: Array<{ content: string; jalur: string | null }> = [
+      ...folders.map((f) => {
+        const nameMatch = f.match(/<name>\s*([\s\S]*?)\s*<\/name>/i)
+        const folderName = nameMatch ? this.parseName(nameMatch[1]) : null
+        return { content: f, jalur: folderName }
+      }),
+      { content: content.replace(allFolderContent, ''), jalur: null },
+    ]
 
-      const coordMatch = placemark.match(/<coordinates>\s*([\s\S]*?)\s*<\/coordinates>/i)
-      if (!coordMatch) continue
+    for (const source of sources) {
+      const placemarkRegex = /<Placemark[\s\S]*?<\/Placemark>/gi
+      const placemarks = source.content.match(placemarkRegex) ?? []
 
-      const parts = coordMatch[1].trim().split(',')
-      if (parts.length < 2) continue
-      const lng = parseFloat(parts[0])
-      const lat = parseFloat(parts[1])
-      if (isNaN(lat) || isNaN(lng)) continue
+      for (const placemark of placemarks) {
+        if (!/<Point/i.test(placemark)) continue
 
-      const { tipe, tegangan } = this.detectTowerType(nama)
-      results.push({ nama, lat, lng, tipe, tegangan })
+        const nameMatch = placemark.match(/<name>\s*([\s\S]*?)\s*<\/name>/i)
+        if (!nameMatch) continue
+        const nama = this.parseName(nameMatch[1])
+
+        const coordMatch = placemark.match(/<coordinates>\s*([\s\S]*?)\s*<\/coordinates>/i)
+        if (!coordMatch) continue
+
+        const parts = coordMatch[1].trim().split(',')
+        if (parts.length < 2) continue
+        const lng = parseFloat(parts[0])
+        const lat = parseFloat(parts[1])
+        if (isNaN(lat) || isNaN(lng)) continue
+
+        const { tipe, tegangan } = this.detectTowerType(nama)
+        results.push({ nama, lat, lng, tipe, tegangan, jalur: source.jalur })
+      }
     }
 
     return results
@@ -152,10 +171,15 @@ export class JalurKmlService {
     const towerNames: string[] = []
     for (const pt of points) {
       const existing = await this.prisma.tower.findFirst({ where: { nama: pt.nama } })
-      if (existing) continue
+      if (existing) {
+        // Update jalur field jika sebelumnya kosong
+        if (!existing.jalur && pt.jalur) {
+          await this.prisma.tower.update({ where: { id: existing.id }, data: { jalur: pt.jalur } })
+        }
+        continue
+      }
 
       const id = this.generateTowerId(pt.nama, pt.tipe)
-      // Pastikan id unik dengan tambah suffix jika perlu
       const finalId = await this.ensureUniqueId(id)
 
       await this.prisma.tower.create({
@@ -167,6 +191,7 @@ export class JalurKmlService {
           tipe: pt.tipe,
           tegangan: pt.tegangan,
           kondisi: 'normal',
+          jalur: pt.jalur ?? undefined,
         },
       })
       towerNames.push(pt.nama)
