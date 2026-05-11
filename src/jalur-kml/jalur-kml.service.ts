@@ -1,5 +1,4 @@
 import { Injectable, BadRequestException } from '@nestjs/common'
-import { Prisma } from '@prisma/client'
 import { PrismaService } from '../prisma/prisma.service'
 
 interface CoordPoint {
@@ -177,7 +176,7 @@ export class JalurKmlService {
     const jalurNames: string[] = []
     for (const item of jalurList) {
       await this.prisma.jalurKML.create({
-        data: { nama: item.nama, tipe: item.tipe, warna: item.warna, path: item.path as Prisma.InputJsonValue },
+        data: { nama: item.nama, tipe: item.tipe, warna: item.warna, path: JSON.parse(JSON.stringify(item.path)) },
       })
       jalurNames.push(item.nama)
     }
