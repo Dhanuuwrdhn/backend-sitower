@@ -6,38 +6,100 @@ interface CoordPoint {
   lng: number
 }
 
+interface ParsedPoint {
+  nama: string
+  lat: number
+  lng: number
+  tipe: string
+  tegangan: string
+}
+
+interface ParsedJalur {
+  nama: string
+  tipe: string
+  warna: string | null
+  path: CoordPoint[]
+}
+
 @Injectable()
 export class JalurKmlService {
   constructor(private prisma: PrismaService) {}
 
-  /**
-   * Parse KML XML content and extract all Placemark LineString coordinates.
-   * KML coordinate format: lng,lat,alt per point, separated by whitespace/newline.
-   */
-  private parseKml(content: string): Array<{ nama: string; tipe: string; warna: string | null; path: CoordPoint[] }> {
-    const results: Array<{ nama: string; tipe: string; warna: string | null; path: CoordPoint[] }> = []
+  private parseName(raw: string): string {
+    return raw.trim().replace(/<!\[CDATA\[([\s\S]*?)\]\]>/, '$1').trim()
+  }
 
-    // Extract all <Placemark> blocks
+  private detectTowerType(nama: string): { tipe: string; tegangan: string } {
+    const upper = nama.toUpperCase()
+    if (upper.includes('GI ') || upper.includes('GIS ') || upper.includes('GISTET') || upper.startsWith('GI') || upper.includes('GARDU')) {
+      return { tipe: 'garduInduk', tegangan: '150 kV' }
+    }
+    if (upper.includes('SUTET') || upper.includes('500KV') || upper.includes('500 KV')) {
+      return { tipe: 'SUTET', tegangan: '500 kV' }
+    }
+    if (upper.includes('SKTT')) {
+      return { tipe: 'SKTT', tegangan: '150 kV' }
+    }
+    if (upper.includes('SUTT') || upper.includes('150KV') || upper.includes('150 KV')) {
+      return { tipe: 'SUTT', tegangan: '150 kV' }
+    }
+    return { tipe: 'SUTT', tegangan: '150 kV' }
+  }
+
+  private generateTowerId(nama: string, tipe: string): string {
+    const slug = nama
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, '-')
+      .substring(0, 20)
+      .replace(/^-|-$/g, '')
+    const prefix = tipe === 'garduInduk' ? 'GI' : tipe === 'SUTET' ? 'ST' : tipe === 'SKTT' ? 'SK' : 'TW'
+    return `${prefix}-${slug}`
+  }
+
+  private parsePoints(content: string): ParsedPoint[] {
+    const results: ParsedPoint[] = []
     const placemarkRegex = /<Placemark[\s\S]*?<\/Placemark>/gi
     const placemarks = content.match(placemarkRegex) ?? []
 
     for (const placemark of placemarks) {
-      // Check if this Placemark has a LineString
-      if (!/<LineString/i.test(placemark)) continue
+      if (!/<Point/i.test(placemark)) continue
 
-      // Extract name
       const nameMatch = placemark.match(/<name>\s*([\s\S]*?)\s*<\/name>/i)
-      const nama = nameMatch ? nameMatch[1].trim().replace(/<!\[CDATA\[([\s\S]*?)\]\]>/, '$1').trim() : 'Jalur KML'
+      if (!nameMatch) continue
+      const nama = this.parseName(nameMatch[1])
 
-      // Extract coordinates from LineString
       const coordMatch = placemark.match(/<coordinates>\s*([\s\S]*?)\s*<\/coordinates>/i)
       if (!coordMatch) continue
 
-      const rawCoords = coordMatch[1].trim()
-      const path: CoordPoint[] = []
+      const parts = coordMatch[1].trim().split(',')
+      if (parts.length < 2) continue
+      const lng = parseFloat(parts[0])
+      const lat = parseFloat(parts[1])
+      if (isNaN(lat) || isNaN(lng)) continue
 
-      // Each coordinate entry: lng,lat or lng,lat,alt
-      const coordEntries = rawCoords.split(/[\s\n\r]+/).filter((s) => s.trim().length > 0)
+      const { tipe, tegangan } = this.detectTowerType(nama)
+      results.push({ nama, lat, lng, tipe, tegangan })
+    }
+
+    return results
+  }
+
+  private parseJalur(content: string): ParsedJalur[] {
+    const results: ParsedJalur[] = []
+    const placemarkRegex = /<Placemark[\s\S]*?<\/Placemark>/gi
+    const placemarks = content.match(placemarkRegex) ?? []
+
+    for (const placemark of placemarks) {
+      if (!/<LineString/i.test(placemark)) continue
+
+      const nameMatch = placemark.match(/<name>\s*([\s\S]*?)\s*<\/name>/i)
+      const nama = nameMatch ? this.parseName(nameMatch[1]) : 'Jalur KML'
+
+      const coordMatch = placemark.match(/<coordinates>\s*([\s\S]*?)\s*<\/coordinates>/i)
+      if (!coordMatch) continue
+
+      const path: CoordPoint[] = []
+      const coordEntries = coordMatch[1].trim().split(/[\s\n\r]+/).filter((s) => s.trim().length > 0)
       for (const entry of coordEntries) {
         const parts = entry.trim().split(',')
         if (parts.length < 2) continue
@@ -49,25 +111,16 @@ export class JalurKmlService {
 
       if (path.length < 2) continue
 
-      // Detect transmission type from name
-      const upperNama = nama.toUpperCase()
+      const upper = nama.toUpperCase()
       let tipe = 'SUTT'
-      if (upperNama.includes('SUTET') || upperNama.includes('500KV') || upperNama.includes('500 KV')) {
-        tipe = 'SUTET'
-      } else if (upperNama.includes('SKTT')) {
-        tipe = 'SKTT'
-      }
+      if (upper.includes('SUTET') || upper.includes('500KV') || upper.includes('500 KV')) tipe = 'SUTET'
+      else if (upper.includes('SKTT')) tipe = 'SKTT'
 
-      // Extract color from styleUrl or Style if present
       let warna: string | null = null
       const colorMatch = placemark.match(/<color>\s*([0-9a-fA-F]{8})\s*<\/color>/i)
       if (colorMatch) {
-        // KML color is aabbggrr (alpha, blue, green, red) — convert to #rrggbb
-        const kmlColor = colorMatch[1]
-        const r = kmlColor.substring(6, 8)
-        const g = kmlColor.substring(4, 6)
-        const b = kmlColor.substring(2, 4)
-        warna = `#${r}${g}${b}`
+        const kml = colorMatch[1]
+        warna = `#${kml.substring(6, 8)}${kml.substring(4, 6)}${kml.substring(2, 4)}`
       }
 
       results.push({ nama, tipe, warna, path })
@@ -76,40 +129,72 @@ export class JalurKmlService {
     return results
   }
 
-  async parseAndSave(buffer: Buffer, originalName: string): Promise<{ total: number; jalur: string[] }> {
+  async parseAndSave(buffer: Buffer, originalName: string): Promise<{
+    towers: number
+    jalur: number
+    towerNames: string[]
+    jalurNames: string[]
+  }> {
     const content = buffer.toString('utf-8')
 
     if (!content.includes('<kml') && !content.includes('<KML')) {
       throw new BadRequestException('File bukan format KML yang valid')
     }
 
-    const parsed = this.parseKml(content)
+    const points = this.parsePoints(content)
+    const jalurList = this.parseJalur(content)
 
-    if (parsed.length === 0) {
-      throw new BadRequestException('Tidak ada LineString yang ditemukan dalam file KML')
+    if (points.length === 0 && jalurList.length === 0) {
+      throw new BadRequestException('Tidak ada data tower, gardu, atau jalur yang ditemukan dalam file KML')
     }
 
-    const savedNames: string[] = []
+    // Upsert towers/gardu — skip jika nama sudah ada
+    const towerNames: string[] = []
+    for (const pt of points) {
+      const existing = await this.prisma.tower.findFirst({ where: { nama: pt.nama } })
+      if (existing) continue
 
-    for (const item of parsed) {
-      await this.prisma.jalurKML.create({
+      const id = this.generateTowerId(pt.nama, pt.tipe)
+      // Pastikan id unik dengan tambah suffix jika perlu
+      const finalId = await this.ensureUniqueId(id)
+
+      await this.prisma.tower.create({
         data: {
-          nama: item.nama,
-          tipe: item.tipe,
-          warna: item.warna,
-          path: item.path,
+          id: finalId,
+          nama: pt.nama,
+          lat: pt.lat,
+          lng: pt.lng,
+          tipe: pt.tipe,
+          tegangan: pt.tegangan,
+          kondisi: 'normal',
         },
       })
-      savedNames.push(item.nama)
+      towerNames.push(pt.nama)
     }
 
-    return { total: savedNames.length, jalur: savedNames }
+    // Insert jalur
+    const jalurNames: string[] = []
+    for (const item of jalurList) {
+      await this.prisma.jalurKML.create({
+        data: { nama: item.nama, tipe: item.tipe, warna: item.warna, path: item.path },
+      })
+      jalurNames.push(item.nama)
+    }
+
+    return { towers: towerNames.length, jalur: jalurNames.length, towerNames, jalurNames }
+  }
+
+  private async ensureUniqueId(baseId: string): Promise<string> {
+    let id = baseId
+    let counter = 1
+    while (await this.prisma.tower.findUnique({ where: { id } })) {
+      id = `${baseId}-${counter++}`
+    }
+    return id
   }
 
   async findAll() {
-    return this.prisma.jalurKML.findMany({
-      orderBy: { createdAt: 'desc' },
-    })
+    return this.prisma.jalurKML.findMany({ orderBy: { createdAt: 'desc' } })
   }
 
   async remove(id: number): Promise<void> {
