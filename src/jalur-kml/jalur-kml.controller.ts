@@ -39,7 +39,7 @@ export class JalurKmlController {
     const result = await this.jalurKmlService.parseAndSave(file.buffer, file.originalname)
 
     return {
-      message: `${result.total} jalur berhasil diimport dari KML`,
+      message: `Import KML berhasil: ${result.towers} tower/gardu baru, ${result.jalur} jalur`,
       data: result,
     }
   }
