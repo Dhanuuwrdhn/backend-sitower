@@ -58,7 +58,7 @@ export class TowersService {
       nama: t.nama,
       lat: t.lat,
       lng: t.lng,
-      tipe: t.tipe as 'gardu' | 'SUTET' | 'SUTT' | 'SKTT',
+      tipe: (t.tipe === 'garduInduk' ? 'gardu' : t.tipe) as 'gardu' | 'SUTET' | 'SUTT' | 'SKTT',
       tegangan: t.tegangan,
       updatedAt: t.updatedAt.toISOString(),
       jalur: t.jalur ?? null,
