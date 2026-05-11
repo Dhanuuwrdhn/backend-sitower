@@ -37,6 +37,46 @@ model PasswordChangeRequest {
   reviewedBy      Pegawai?  @relation("ReviewerRequests", fields: [reviewedById], references: [id])
 }
 
+model TransmissionLineType {
+  id        Int      @id @default(autoincrement())
+  kode      String   @unique
+  tegangan  String
+  warna     String
+  lineStyle String   @default("solid")
+  createdAt DateTime @default(now())
+
+  routes TransmissionRoute[]
+}
+
+model GarduInduk {
+  id        Int      @id @default(autoincrement())
+  kode      String   @unique
+  nama      String
+  lat       Float
+  lng       Float
+  tegangan  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  routesDari TransmissionRoute[] @relation("RouteDari")
+  routesKe   TransmissionRoute[] @relation("RouteKe")
+}
+
+model TransmissionRoute {
+  id          Int                  @id @default(autoincrement())
+  nama        String
+  lineTypeId  Int
+  lineType    TransmissionLineType @relation(fields: [lineTypeId], references: [id])
+  garduDariId Int
+  garduDari   GarduInduk           @relation("RouteDari", fields: [garduDariId], references: [id])
+  garduKeId   Int
+  garduKe     GarduInduk           @relation("RouteKe", fields: [garduKeId], references: [id])
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  towers Tower[]
+}
+
 model Tower {
   id        String   @id
   nama      String
@@ -50,8 +90,17 @@ model Tower {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  jalur      String?  // nama jalur transmisi, contoh: "SUTET 500kV DURIKOSAMBI-KEMBANGAN"
-  nomorUrut  Int?     // urutan tower dalam jalur (untuk menggambar polyline berurutan)
+  jalur     String?
+  nomorUrut Int?
+
+  routeId         Int?
+  route           TransmissionRoute? @relation(fields: [routeId], references: [id])
+  statusKerawanan String             @default("aman")
+  jenisKerawanan  String?
+  pplNotes        String?
+  penanggungJawab String?
+  telepon         String?
+  sertifikatLink  String?
 
   laporan        Laporan[]
   sertifikat     Sertifikat[]

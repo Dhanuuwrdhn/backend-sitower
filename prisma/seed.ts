@@ -1,89 +1,164 @@
 import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 import * as bcrypt from 'bcrypt'
+import * as XLSX from 'xlsx'
+import * as path from 'path'
 import 'dotenv/config'
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! })
 const prisma  = new PrismaClient({ adapter } as any)
 
+const GARDU_DATA = [
+  { kode: 'KBG',  nama: 'GI Kembangan',       lat: -6.1880, lng: 106.7200, tegangan: '150kV' },
+  { kode: 'PTK',  nama: 'GI Petukangan',       lat: -6.2620, lng: 106.7430, tegangan: '150kV' },
+  { kode: 'GND',  nama: 'GI Gandul',           lat: -6.3530, lng: 106.7930, tegangan: '150kV' },
+  { kode: 'DKS',  nama: 'GI Durikosambi',      lat: -6.1710, lng: 106.7260, tegangan: '150kV' },
+  { kode: 'CKG',  nama: 'GI Cengkareng',       lat: -6.1510, lng: 106.6590, tegangan: '150kV' },
+  { kode: 'CKGB', nama: 'GI Cengkareng Baru',  lat: -6.1515, lng: 106.6585, tegangan: '150kV' },
+  { kode: 'TNGB', nama: 'GI Tangerang Baru',   lat: -6.1570, lng: 106.6000, tegangan: '150kV' },
+  { kode: 'TNGL', nama: 'GI Tangerang Lama',   lat: -6.2120, lng: 106.6340, tegangan: '150kV' },
+]
+
+const ROUTE_DEFS = [
+  { nama: 'SUTT KEMBANGAN - PETUKANGAN',                                  dari: 'KBG',  ke: 'PTK'  },
+  { nama: 'SUTT KEMBANGAN - DURIKOSAMBI',                                 dari: 'KBG',  ke: 'DKS'  },
+  { nama: 'SUTT GANDUL - KEMBANGAN',                                      dari: 'GND',  ke: 'KBG'  },
+  { nama: 'SUTT GANDUL - KEMBANGAN + DURIKOSAMBI',                        dari: 'GND',  ke: 'KBG'  },
+  { nama: 'SUTT DURIKOSAMBI - CENGKARENG',                                dari: 'DKS',  ke: 'CKG'  },
+  { nama: 'SUTT DURIKOSAMBI - TANGERANG LAMA + DURIKOSAMBI - CENGKARENG', dari: 'DKS',  ke: 'CKGB' },
+  { nama: 'SUTT TANGERANG - CENGKARENG',                                  dari: 'TNGL', ke: 'CKG'  },
+  { nama: 'SUTT CENGKARENG BARU - TANGERANG BARU',                        dari: 'CKGB', ke: 'TNGB' },
+]
+
+function normalizeRoute(raw: string): string {
+  return raw
+    .replace('SUTTTANGERANG', 'SUTT TANGERANG')
+    .replace(/TANGERANG-\s/, 'TANGERANG - ')
+    .replace(/DURIKOSAMBI-TANGERANG LAMA/, 'DURIKOSAMBI - TANGERANG LAMA')
+    .replace(/\s*\+\s*/g, ' + ')
+    .trim()
+}
+
+function parseDescription(desc: string) {
+  const lines = desc.split('\n').map((l) => l.trim()).filter(Boolean)
+  let pplNotes: string | null = null
+  let penanggungJawab: string | null = null
+  let telepon: string | null = null
+  let sertifikatLink: string | null = null
+
+  for (const line of lines) {
+    if (line.startsWith('https://drive.google.com')) {
+      sertifikatLink = line
+    } else if (/^Penanggung Jawab\s*:/i.test(line)) {
+      const val = line.replace(/^Penanggung Jawab\s*:\s*/i, '').trim()
+      // match trailing (phone) — handles "(0811103317)" and "((021) 58356234)"
+      const m = val.match(/\((\(?\d[\d\s\-\(\)]+)\)\s*$/)
+      if (m) {
+        penanggungJawab = val.replace(m[0], '').trim()
+        telepon = m[1].replace(/[()]/g, '').trim()
+      } else {
+        penanggungJawab = val
+      }
+    } else if (line.startsWith('- ') && !line.includes('drive.google.com')) {
+      const note = line.substring(2).trim()
+      pplNotes = pplNotes ? `${pplNotes}; ${note}` : note
+    }
+  }
+
+  return { pplNotes, penanggungJawab, telepon, sertifikatLink }
+}
+
+function mapStatus(excelStatus: string, color: string) {
+  const s = (excelStatus || 'AMAN').toUpperCase().trim()
+  const c = (color || 'Lime').toLowerCase()
+  if (s === 'PPL') {
+    return { statusKerawanan: c === 'red' ? 'kritis' : 'sedang', jenisKerawanan: 'ppl' }
+  }
+  if (s.startsWith('LAYANG')) {
+    return { statusKerawanan: 'sedang', jenisKerawanan: 'layangan' }
+  }
+  return { statusKerawanan: 'aman', jenisKerawanan: null as string | null }
+}
+
 async function main() {
+  // Pegawai
   const adminPass   = await bcrypt.hash('admin123', 10)
   const teknisiPass = await bcrypt.hash('teknisi123', 10)
-
-  const pegawai = [
-    { nik:'1234567890123456', nama:'Budi Santoso',  jabatan:'Supervisor Transmisi', unit:'UP3 Banten',    role:'admin',   password:adminPass,   aktif:true },
-    { nik:'9876543210987654', nama:'Siti Rahayu',   jabatan:'Teknisi Senior',       unit:'UP3 Tangerang', role:'teknisi', password:teknisiPass, aktif:true },
-    { nik:'1122334455667788', nama:'Ahmad Fauzi',   jabatan:'Teknisi Lapangan',     unit:'UIW Banten',    role:'teknisi', password:teknisiPass, aktif:true },
-  ]
-  for (const p of pegawai) {
-    await prisma.pegawai.upsert({ where:{nik:p.nik}, update:p, create:p })
+  for (const p of [
+    { nik: '1234567890123456', nama: 'Budi Santoso', jabatan: 'Supervisor Transmisi', unit: 'UP3 Banten',    role: 'admin',   password: adminPass,   aktif: true },
+    { nik: '9876543210987654', nama: 'Siti Rahayu',  jabatan: 'Teknisi Senior',       unit: 'UP3 Tangerang', role: 'teknisi', password: teknisiPass, aktif: true },
+    { nik: '1122334455667788', nama: 'Ahmad Fauzi',  jabatan: 'Teknisi Lapangan',     unit: 'UIW Banten',    role: 'teknisi', password: teknisiPass, aktif: true },
+  ]) {
+    await prisma.pegawai.upsert({ where: { nik: p.nik }, update: p, create: p })
   }
 
-  const towers = [
-    { id:'GI-001', nama:'GIS Lontar',                            lat:-6.060055, lng:106.463862, tegangan:'500 kV', tipe:'gardu', kondisi:'normal',      lokasi:'Lontar, Jakarta Utara' },
-    { id:'GI-002', nama:'GISTET Kembangan',                      lat:-6.188128, lng:106.719739, tegangan:'500 kV', tipe:'gardu', kondisi:'normal',      lokasi:'Kembangan, Jakarta Barat' },
-    { id:'GI-003', nama:'GI Angke',                              lat:-6.134313, lng:106.791144, tegangan:'150 kV', tipe:'gardu', kondisi:'normal',      lokasi:'Angke, Jakarta Barat' },
-    { id:'GI-004', nama:'GI Durikosambi',                        lat:-6.170969, lng:106.725938, tegangan:'150 kV', tipe:'gardu', kondisi:'normal',      lokasi:'Durikosambi, Jakarta Barat' },
-    { id:'GI-005', nama:'GIS Grogol',                            lat:-6.166449, lng:106.783709, tegangan:'150 kV', tipe:'gardu', kondisi:'normal',      lokasi:'Grogol, Jakarta Barat' },
-    { id:'ST-001', nama:'TOWER SUTET KMBGN-DKSBI 500kV #P1A',   lat:-6.173349, lng:106.727639, tegangan:'500 kV', tipe:'SUTET', kondisi:'normal',      lokasi:'Kembangan, Jakarta Barat' },
-    { id:'ST-002', nama:'TOWER SUTET KMBGN-DKSBI 500kV #P3',    lat:-6.190810, lng:106.731096, tegangan:'500 kV', tipe:'SUTET', kondisi:'waspada',     lokasi:'Kembangan, Jakarta Barat' },
-    { id:'ST-003', nama:'TOWER SUTET BLRJA-JAWA7 500kV #001',   lat:-6.182300, lng:106.510200, tegangan:'500 kV', tipe:'SUTET', kondisi:'gangguan',    lokasi:'Balaraja, Tangerang' },
-    { id:'TT-001', nama:'TOWER SUTT 150kV LNTAR-TLKGA #EA1',    lat:-6.060488, lng:106.463956, tegangan:'150 kV', tipe:'SUTT',  kondisi:'normal',      lokasi:'Lontar, Jakarta Utara' },
-    { id:'TT-002', nama:'TOWER SUTT 150kV DKSBI-KMBNG #001',    lat:-6.172100, lng:106.726800, tegangan:'150 kV', tipe:'SUTT',  kondisi:'waspada',     lokasi:'Durikosambi, Jakarta Barat' },
-    { id:'TT-003', nama:'TOWER SUTT 150kV GMKRU-PINKA #EA1A',   lat:-6.112300, lng:106.778900, tegangan:'150 kV', tipe:'SUTT',  kondisi:'maintenance', lokasi:'Gajah Mada, Tangerang' },
-    { id:'SK-001', nama:'SKTT METLAND - KEMBANGAN #1',           lat:-6.188500, lng:106.740200, tegangan:'150 kV', tipe:'SKTT', kondisi:'normal',      lokasi:'Metland, Jakarta Barat' },
-  ]
-  for (const t of towers) {
-    await prisma.tower.upsert({ where:{id:t.id}, update:t, create:t })
+  // TransmissionLineType
+  const lineTypes = await Promise.all([
+    prisma.transmissionLineType.upsert({ where: { kode: 'SUTT'  }, update: {}, create: { kode: 'SUTT',  tegangan: '150kV', warna: '#0000FF', lineStyle: 'solid'  } }),
+    prisma.transmissionLineType.upsert({ where: { kode: 'SUTET' }, update: {}, create: { kode: 'SUTET', tegangan: '500kV', warna: '#FF0000', lineStyle: 'solid'  } }),
+    prisma.transmissionLineType.upsert({ where: { kode: 'SKTT'  }, update: {}, create: { kode: 'SKTT',  tegangan: '150kV', warna: '#800080', lineStyle: 'dashed' } }),
+  ])
+  const suttId = lineTypes[0].id
+
+  // GarduInduk
+  const garduMap: Record<string, number> = {}
+  for (const g of GARDU_DATA) {
+    const rec = await prisma.garduInduk.upsert({
+      where:  { kode: g.kode },
+      update: { nama: g.nama, lat: g.lat, lng: g.lng, tegangan: g.tegangan },
+      create: g,
+    })
+    garduMap[g.kode] = rec.id
   }
 
-  const siti  = await prisma.pegawai.findUnique({ where:{nik:'9876543210987654'} })
-  const ahmad = await prisma.pegawai.findUnique({ where:{nik:'1122334455667788'} })
+  // TransmissionRoute
+  const routeMap: Record<string, number> = {}
+  for (const r of ROUTE_DEFS) {
+    const existing = await prisma.transmissionRoute.findFirst({ where: { nama: r.nama } })
+    const rec = existing ?? await prisma.transmissionRoute.create({
+      data: { nama: r.nama, lineTypeId: suttId, garduDariId: garduMap[r.dari], garduKeId: garduMap[r.ke] },
+    })
+    routeMap[r.nama] = rec.id
+  }
 
-  await prisma.laporan.createMany({ skipDuplicates:true, data:[
-    // PPL
-    { towerId:'ST-003', pelaporId:siti!.id,  jenisGangguan:'pekerjaan_pihak_lain', deskripsi:'Proyek jalan tol memotong area ROW tower',         levelRisiko:'tinggi', status:'berlangsung', tanggal:new Date('2025-05-01T09:00:00'), lokasiDetail:'Balaraja, Tangerang', foto:[] },
-    { towerId:'TT-002', pelaporId:ahmad!.id, jenisGangguan:'pekerjaan_pihak_lain', deskripsi:'Galian pipa PDAM dekat fondasi tower',              levelRisiko:'sedang', status:'ditangani',   tanggal:new Date('2025-04-28T10:00:00'), lokasiDetail:'Durikosambi, Jakarta Barat', foto:[] },
-    // Kebakaran
-    { towerId:'ST-002', pelaporId:siti!.id,  jenisGangguan:'kebakaran',            deskripsi:'Kebakaran semak belukar di bawah tower',            levelRisiko:'tinggi', status:'berlangsung', tanggal:new Date('2025-05-01T14:30:00'), lokasiDetail:'Kembangan, Jakarta Barat', foto:[] },
-    { towerId:'TT-003', pelaporId:ahmad!.id, jenisGangguan:'kebakaran',            deskripsi:'Asap dari pembakaran sampah dekat tower',           levelRisiko:'sedang', status:'selesai',     tanggal:new Date('2025-04-25T11:00:00'), lokasiDetail:'Gajah Mada, Tangerang', foto:[] },
-    // Layangan
-    { towerId:'TT-001', pelaporId:siti!.id,  jenisGangguan:'layangan',             deskripsi:'Layangan tersangkut kawat fasa tengah',             levelRisiko:'sedang', status:'ditangani',   tanggal:new Date('2025-04-30T16:00:00'), lokasiDetail:'Lontar, Jakarta Utara', foto:[] },
-    { towerId:'GI-003', pelaporId:ahmad!.id, jenisGangguan:'layangan',             deskripsi:'Benang layangan melilit isolator',                  levelRisiko:'rendah', status:'selesai',     tanggal:new Date('2025-04-27T15:00:00'), lokasiDetail:'Angke, Jakarta Barat', foto:[] },
-    // Pencurian
-    { towerId:'ST-003', pelaporId:ahmad!.id, jenisGangguan:'pencurian',            deskripsi:'Pencurian kawat konduktor tembaga',                 levelRisiko:'tinggi', status:'eskalasi',    tanggal:new Date('2025-04-29T22:00:00'), lokasiDetail:'Balaraja, Tangerang', foto:[] },
-    { towerId:'TT-002', pelaporId:siti!.id,  jenisGangguan:'pencurian',            deskripsi:'Upaya pencurian baut fondasi tower',                levelRisiko:'sedang', status:'pemantauan',  tanggal:new Date('2025-04-26T08:00:00'), lokasiDetail:'Durikosambi, Jakarta Barat', foto:[] },
-    // Pemanfaatan
-    { towerId:'GI-004', pelaporId:ahmad!.id, jenisGangguan:'pemanfaatan',          deskripsi:'Warga mendirikan warung di dalam ROW',              levelRisiko:'rendah', status:'pemantauan',  tanggal:new Date('2025-04-24T10:00:00'), lokasiDetail:'Durikosambi, Jakarta Barat', foto:[] },
-    { towerId:'SK-001', pelaporId:siti!.id,  jenisGangguan:'pemanfaatan',          deskripsi:'Kandang ayam di bawah jalur SKTT',                  levelRisiko:'sedang', status:'menunggu',    tanggal:new Date('2025-04-22T09:00:00'), lokasiDetail:'Metland, Jakarta Barat', foto:[] },
-    // Gangguan Teknis
-    { towerId:'ST-003', pelaporId:siti!.id,  jenisGangguan:'gangguan',             deskripsi:'Gangguan tegangan akibat sambaran petir',           levelRisiko:'tinggi', status:'berlangsung', tanggal:new Date('2025-05-01T04:22:00'), lokasiDetail:'Balaraja, Tangerang', penyebab:'Sambaran Petir', durasi:'—', foto:[] },
-    { towerId:'ST-002', pelaporId:ahmad!.id, jenisGangguan:'gangguan',             deskripsi:'Trip saluran akibat angin kencang',                 levelRisiko:'sedang', status:'selesai',     tanggal:new Date('2025-04-26T14:10:00'), lokasiDetail:'Kembangan, Jakarta Barat', penyebab:'Angin Kencang', durasi:'2j 15m', foto:[] },
-    // CUI
-    { towerId:'ST-002', pelaporId:siti!.id,  jenisGangguan:'cui',                  deskripsi:'Climb Up Inspection rutin tower SUTET',             levelRisiko:'rendah', status:'selesai',     tanggal:new Date('2025-04-18T08:00:00'), lokasiDetail:'Kembangan, Jakarta Barat', teknisi:'Tim A — Rudi S.', temuan:'Korosi pada baut tower lantai 3', hasil:'Perlu penggantian segera', noSpk:'SPK-2025-0381', foto:[] },
-    { towerId:'TT-003', pelaporId:ahmad!.id, jenisGangguan:'cui',                  deskripsi:'CUI pasca gangguan angin',                          levelRisiko:'rendah', status:'selesai',     tanggal:new Date('2025-04-20T09:00:00'), lokasiDetail:'Gajah Mada, Tangerang', teknisi:'Tim B — Hendra L.', temuan:'Tidak ada kerusakan signifikan', hasil:'Kondisi baik', noSpk:'SPK-2025-0390', foto:[] },
-    // Cleanup
-    { towerId:'TT-003', pelaporId:siti!.id,  jenisGangguan:'cleanup',              deskripsi:'Clean up isolator pasca hujan abu',                 levelRisiko:'rendah', status:'selesai',     tanggal:new Date('2025-04-15T07:00:00'), lokasiDetail:'Gajah Mada, Tangerang', teknisi:'Tim B — Hendra L.', noSpk:'SPK-2025-0370', foto:[] },
-    { towerId:'SK-001', pelaporId:ahmad!.id, jenisGangguan:'cleanup',              deskripsi:'Pembersihan ROW dari vegetasi liar',                levelRisiko:'rendah', status:'menunggu',    tanggal:new Date('2025-05-05T07:00:00'), lokasiDetail:'Metland, Jakarta Barat', teknisi:'TBD', noSpk:'SPK-2025-0430', foto:[] },
-  ]})
+  // Towers from Excel
+  const excelPath = path.join(__dirname, 'data', 'EXCELL SENSITIF PLN ULTG DKSBI.xls')
+  const wb   = XLSX.readFile(excelPath)
+  const ws   = wb.Sheets[wb.SheetNames[0]]
+  const rows = XLSX.utils.sheet_to_json<any[]>(ws, { header: 1 }) as any[][]
+  const routeOrderMap: Record<string, number> = {}
 
-  await prisma.sertifikat.createMany({ skipDuplicates:true, data:[
-    { towerId:'ST-003', kategori:'Kelayakan',   nama:'SLO Tower SUTET Balaraja',             berlakuHingga:new Date('2026-12-31'), status:'berlaku' },
-    { towerId:'GI-002', kategori:'Grounding',   nama:'Uji Tahanan Pentanahan GIS Kembangan', berlakuHingga:new Date('2025-06-30'), status:'berlaku' },
-    { towerId:'GI-004', kategori:'Konstruksi',  nama:'Izin Konstruksi GI Durikosambi',       berlakuHingga:new Date('2025-03-15'), status:'expired' },
-    { towerId:'TT-001', kategori:'K3',          nama:'Sertifikat K3 Tower Lontar',           berlakuHingga:new Date('2027-01-01'), status:'berlaku' },
-    { towerId:'GI-001', kategori:'Lingkungan',  nama:'AMDAL GIS Lontar',                     berlakuHingga:new Date('2026-10-20'), status:'berlaku' },
-    { towerId:'ST-002', kategori:'K3',          nama:'Sertifikat K3 Tower Kembangan',        berlakuHingga:new Date('2024-12-31'), status:'expired' },
-  ]})
+  for (let i = 6; i < rows.length; i++) {
+    const row       = rows[i]
+    if (!row[0] && !row[2]) continue
+    const lat       = row[0] as number
+    const lng       = row[1] as number
+    const towerCode = String(row[2] || '').trim()
+    const desc      = String(row[3] || '')
+    const excelSt   = String(row[4] || 'AMAN')
+    const color     = String(row[5] || 'Lime')
+    if (!towerCode || !lat) continue
 
-  await prisma.asBuiltDrawing.createMany({ skipDuplicates:true, data:[
-    { towerId:'ST-003', namaFile:'ABD-ST003-Balaraja-2023.pdf',    tipe:'Single Line Diagram', tahun:2023, versi:'v2.1' },
-    { towerId:'GI-002', namaFile:'ABD-GI002-Kembangan-2022.pdf',   tipe:'Layout Plan',         tahun:2022, versi:'v1.0' },
-    { towerId:'GI-004', namaFile:'ABD-GI004-Durikosambi-2024.pdf', tipe:'Foundation Drawing',  tahun:2024, versi:'v1.3' },
-    { towerId:'TT-001', namaFile:'ABD-TT001-Lontar-2021.pdf',      tipe:'Tower Assembly',      tahun:2021, versi:'v2.0' },
-  ]})
+    const line1      = desc.split('\n')[0].trim()
+    const routeMatch = line1.match(/^(.*?)\s+TOWER/i)
+    const routeName  = routeMatch ? normalizeRoute(routeMatch[1].trim()) : ''
+    const routeId    = routeMap[routeName] ?? null
 
-  console.log('Seed selesai!')
+    routeOrderMap[routeName] = (routeOrderMap[routeName] || 0) + 1
+    const nomorUrut  = routeOrderMap[routeName]
+
+    const parsed  = parseDescription(desc)
+    const status  = mapStatus(excelSt, color)
+
+    await prisma.tower.upsert({
+      where:  { id: towerCode },
+      update: { nama: line1, lat, lng, tegangan: '150kV', tipe: 'SUTT', kondisi: 'normal', jalur: routeName, nomorUrut, routeId, ...status, ...parsed },
+      create: { id: towerCode, nama: line1, lat, lng, tegangan: '150kV', tipe: 'SUTT', kondisi: 'normal', jalur: routeName, nomorUrut, routeId, ...status, ...parsed },
+    })
+  }
+
+  const towerCount = await prisma.tower.count()
+  console.log(`✓ Seed selesai: ${towerCount} tower, ${Object.keys(routeMap).length} jalur, ${GARDU_DATA.length} gardu induk`)
 }
 
 main().catch(console.error).finally(() => prisma.$disconnect())
