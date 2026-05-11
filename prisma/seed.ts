@@ -131,8 +131,8 @@ async function main() {
   for (let i = 6; i < rows.length; i++) {
     const row       = rows[i]
     if (!row[0] && !row[2]) continue
-    const lat       = row[0] as number
-    const lng       = row[1] as number
+    const lat       = parseFloat(String(row[0]).trim())
+    const lng       = parseFloat(String(row[1]).trim())
     const towerCode = String(row[2] || '').trim()
     const desc      = String(row[3] || '')
     const excelSt   = String(row[4] || 'AMAN')

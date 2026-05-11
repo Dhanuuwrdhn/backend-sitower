@@ -362,8 +362,8 @@ export class AsetService {
     for (let i = dataStart; i < rows.length; i++) {
       const row = rows[i]
       if (!row[0] && !row[2]) continue
-      const lat       = Number(row[0])
-      const lng       = Number(row[1])
+      const lat       = parseFloat(String(row[0]).trim())
+      const lng       = parseFloat(String(row[1]).trim())
       const towerCode = String(row[2] || '').trim()
       const desc      = String(row[3] || '')
       const excelSt   = String(row[4] || 'AMAN')
