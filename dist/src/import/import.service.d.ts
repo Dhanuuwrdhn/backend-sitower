@@ -2,6 +2,7 @@ import { PrismaService } from '../prisma/prisma.service';
 export declare class ImportService {
     private prisma;
     constructor(prisma: PrismaService);
+    generateTowerTemplate(): Promise<Buffer>;
     importFile(type: string, buffer: Buffer): Promise<{
         message: string;
         total: number;

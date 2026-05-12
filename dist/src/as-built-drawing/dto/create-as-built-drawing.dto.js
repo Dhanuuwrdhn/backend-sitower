@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateAsBuiltDrawingDto = exports.CreateFolderDto = void 0;
 const class_validator_1 = require("class-validator");
 const class_transformer_1 = require("class-transformer");
+const swagger_1 = require("@nestjs/swagger");
 class CreateFolderDto {
     nama;
     tipe;
@@ -21,25 +22,30 @@ class CreateFolderDto {
 }
 exports.CreateFolderDto = CreateFolderDto;
 __decorate([
+    (0, swagger_1.ApiProperty)({ example: 'Drawing Tower T-23 2024' }),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateFolderDto.prototype, "nama", void 0);
 __decorate([
+    (0, swagger_1.ApiProperty)({ enum: ['Electrical', 'Mechanical', 'Civil', 'Grounding', 'Lainnya'], example: 'Electrical' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsIn)(['Electrical', 'Mechanical', 'Civil', 'Grounding', 'Lainnya']),
     __metadata("design:type", String)
 ], CreateFolderDto.prototype, "tipe", void 0);
 __decorate([
+    (0, swagger_1.ApiProperty)({ example: 2024 }),
     (0, class_validator_1.IsNumber)(),
     (0, class_transformer_1.Type)(() => Number),
     __metadata("design:type", Number)
 ], CreateFolderDto.prototype, "tahun", void 0);
 __decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: 'T-23', description: 'ID tower (opsional)' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateFolderDto.prototype, "towerId", void 0);
 __decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: 'Drawing hasil revisi 2024' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)

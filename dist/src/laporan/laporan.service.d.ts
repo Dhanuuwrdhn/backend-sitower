@@ -16,29 +16,10 @@ export declare class LaporanService {
         total: number;
         berlangsung: number;
     }>;
+    private syncTowerStatus;
     create(dto: CreateLaporanDto, pelaporId: string): Promise<any>;
     update(id: string, dto: UpdateLaporanDto): Promise<any>;
-    remove(id: string): Promise<{
-        id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        foto: string[];
-        teknisi: string | null;
-        towerId: string;
-        pelaporId: string;
-        jenisGangguan: string;
-        deskripsi: string;
-        levelRisiko: string;
-        status: string;
-        tanggal: Date;
-        lokasiDetail: string | null;
-        keterangan: string | null;
-        noSpk: string | null;
-        temuan: string | null;
-        hasil: string | null;
-        penyebab: string | null;
-        durasi: string | null;
-    }>;
+    remove(id: string): Promise<void>;
     updateFotoUrls(id: string, urls: string[]): Promise<{
         id: string;
         createdAt: Date;

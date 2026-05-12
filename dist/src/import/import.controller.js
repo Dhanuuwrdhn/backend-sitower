@@ -24,13 +24,31 @@ let ImportController = class ImportController {
     constructor(importService) {
         this.importService = importService;
     }
+    async downloadTowerTemplate(res) {
+        const buffer = await this.importService.generateTowerTemplate();
+        res.set({
+            'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition': 'attachment; filename="template-import-tower.xlsx"',
+            'Content-Length': buffer.length,
+        });
+        res.end(buffer);
+    }
     importFile(type, file) {
         return this.importService.importFile(type, file.buffer);
     }
 };
 exports.ImportController = ImportController;
 __decorate([
+    (0, common_1.Get)('template/towers'),
+    __param(0, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], ImportController.prototype, "downloadTowerTemplate", null);
+__decorate([
     (0, common_1.Post)(':type'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('admin'),
     (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file')),
     __param(0, (0, common_1.Param)('type')),
     __param(1, (0, common_1.UploadedFile)()),
@@ -40,8 +58,6 @@ __decorate([
 ], ImportController.prototype, "importFile", null);
 exports.ImportController = ImportController = __decorate([
     (0, common_1.Controller)('import'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    (0, roles_decorator_1.Roles)('admin'),
     __metadata("design:paramtypes", [import_service_1.ImportService])
 ], ImportController);
 //# sourceMappingURL=import.controller.js.map

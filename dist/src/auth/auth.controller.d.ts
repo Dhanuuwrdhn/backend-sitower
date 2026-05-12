@@ -1,6 +1,7 @@
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { RequestChangePasswordDto } from './dto/request-change-password.dto';
 export declare class AuthController {
     private authService;
     constructor(authService: AuthService);
@@ -18,6 +19,36 @@ export declare class AuthController {
     }>;
     profile(req: any): any;
     changePassword(dto: ChangePasswordDto, req: any): Promise<{
+        message: string;
+    }>;
+    requestChangePassword(dto: RequestChangePasswordDto, req: any): Promise<{
+        message: string;
+    }>;
+    listRequests(): Promise<{
+        newPasswordHash: undefined;
+        status: string;
+        pegawai: {
+            id: string;
+            nama: string;
+            nik: string;
+            jabatan: string;
+            unit: string;
+        };
+        reviewedBy: {
+            id: string;
+            nama: string;
+        } | null;
+        id: string;
+        pegawaiId: string;
+        requestedAt: Date;
+        expiredAt: Date;
+        reviewedAt: Date | null;
+        reviewedById: string | null;
+    }[]>;
+    approveRequest(id: string, req: any): Promise<{
+        message: string;
+    }>;
+    rejectRequest(id: string, req: any): Promise<{
         message: string;
     }>;
 }

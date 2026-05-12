@@ -156,6 +156,7 @@ export class LaporanController {
   }
 
   @Delete(':id/progress/:progressId')
+  @Roles('admin')
   @ApiOperation({ summary: 'Hapus satu dokumen progress' })
   deleteProgress(@Param('id') id: string, @Param('progressId') progressId: string) {
     return this.progressService.deleteProgress(id, progressId)

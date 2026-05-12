@@ -210,8 +210,9 @@ export class ImportService {
     console.log(`[Import] Total rows: ${rows.length}, Valid rows: ${validRows.length}`)
 
     for (const r of validRows) {
-      let rawTowerId = String(r.towerId || r['NO. TOWER'] || r['SPAN'] || 'UNKNOWN-TOWER')
-      let rawPelapor = String(r.pelaporId || r['PETUGAS LW'] || 'Teknisi Default')
+      const rawRuas   = String(r['RUAS'] || '').trim()
+      const rawSpan   = String(r['SPAN'] || r['NO. TOWER'] || '').trim()
+      let rawPelapor  = String(r.pelaporId || r['PETUGAS LW'] || 'Teknisi Default').trim() || 'Teknisi Default'
 
       // Normalisasi jenis & status dari nilai Excel
       const rawJenis = String(r.jenisGangguan || r.kategori || r['KLASIFIKASI '] || r['KLASIFIKASI'] || '')
@@ -229,7 +230,32 @@ export class ImportService {
       const levelRisiko = String(r.levelRisiko || r.level || 'aman')
       const tanggal = r.tanggal ? new Date(r.tanggal) : new Date()
 
-      rawPelapor = rawPelapor.trim() || 'Teknisi Default'
+      // ── Cari tower berdasarkan jalur (RUAS), bukan SPAN ────────────────────
+      let tower = rawRuas
+        ? await this.prisma.tower.findFirst({
+            where: { jalur: { contains: rawRuas, mode: 'insensitive' } },
+            orderBy: { nomorUrut: 'asc' },
+          })
+        : null
+
+      if (!tower) {
+        // Buat placeholder tower dengan jalur dari RUAS
+        const placeholderId = `RUAS-${rawRuas.replace(/\s+/g, '-').toUpperCase().slice(0, 40)}`
+        tower = await this.prisma.tower.findUnique({ where: { id: placeholderId } })
+        if (!tower) {
+          tower = await this.prisma.tower.create({
+            data: {
+              id: placeholderId,
+              nama: rawRuas || 'Ruas Tidak Dikenal',
+              lat: 0, lng: 0,
+              tegangan: '150 kV',
+              tipe: 'other',
+              jalur: rawRuas || null,
+            },
+          })
+        }
+      }
+
       let pegawai = await this.prisma.pegawai.findFirst({ where: { nama: rawPelapor } })
       if (!pegawai) {
         pegawai = await this.prisma.pegawai.create({
@@ -240,23 +266,7 @@ export class ImportService {
             unit: 'ULTG',
             role: 'teknisi',
             password: 'password123',
-          }
-        })
-      }
-
-      rawTowerId = rawTowerId.trim()
-      let tower = await this.prisma.tower.findUnique({ where: { id: rawTowerId } })
-      if (!tower) {
-        const ruas = r['RUAS'] ? ` (${r['RUAS']})` : ''
-        tower = await this.prisma.tower.create({
-          data: {
-            id: rawTowerId,
-            nama: `Tower/Span ${rawTowerId}${ruas}`,
-            lat: 0,
-            lng: 0,
-            tegangan: '150 kV',
-            tipe: 'other',
-          }
+          },
         })
       }
 

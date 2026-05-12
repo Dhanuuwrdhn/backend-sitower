@@ -133,6 +133,27 @@ model Laporan {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  progress    ProgressLaporan[]
+  fotoHistory FotoHistory[]
+}
+
+model ProgressLaporan {
+  id        String   @id @default(cuid())
+  laporanId String
+  laporan   Laporan  @relation(fields: [laporanId], references: [id], onDelete: Cascade)
+  tipe      String   // spanduk | brosur | laporan_baru | berita_acara
+  fileUrl   String
+  namaFile  String
+  createdAt DateTime @default(now())
+}
+
+model FotoHistory {
+  id        String   @id @default(cuid())
+  laporanId String
+  laporan   Laporan  @relation(fields: [laporanId], references: [id], onDelete: Cascade)
+  urls      String[]
+  createdAt DateTime @default(now())
 }
 
 model Sertifikat {

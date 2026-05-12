@@ -8,4 +8,13 @@ export declare class CreateTowerDto {
     kondisi?: string;
     lokasi?: string;
     radius?: number;
+    jalur?: string;
+    nomorUrut?: number;
+    routeId?: number;
+    statusKerawanan?: string;
+    jenisKerawanan?: string;
+    pplNotes?: string;
+    penanggungJawab?: string;
+    telepon?: string;
+    sertifikatLink?: string;
 }

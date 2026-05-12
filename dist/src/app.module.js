@@ -19,6 +19,8 @@ const sertifikat_module_1 = require("./sertifikat/sertifikat.module");
 const as_built_drawing_module_1 = require("./as-built-drawing/as-built-drawing.module");
 const pegawai_module_1 = require("./pegawai/pegawai.module");
 const import_module_1 = require("./import/import.module");
+const jalur_kml_module_1 = require("./jalur-kml/jalur-kml.module");
+const aset_module_1 = require("./aset/aset.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -34,6 +36,8 @@ exports.AppModule = AppModule = __decorate([
             as_built_drawing_module_1.AsBuiltDrawingModule,
             pegawai_module_1.PegawaiModule,
             import_module_1.ImportModule,
+            jalur_kml_module_1.JalurKmlModule,
+            aset_module_1.AsetModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

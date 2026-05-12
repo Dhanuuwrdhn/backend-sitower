@@ -1,1 +1,1 @@
-{"version":3,"file":"update-laporan.dto.js","sourceRoot":"","sources":["../../../../src/laporan/dto/update-laporan.dto.ts"],"names":[],"mappings":";;;AAAA,uDAAkD;AAClD,6DAAuD;AAEvD,MAAa,gBAAiB,SAAQ,IAAA,0BAAW,EAAC,qCAAgB,CAAC;CAAG;AAAtE,4CAAsE"}
+{"version":3,"file":"update-laporan.dto.js","sourceRoot":"","sources":["../../../../src/laporan/dto/update-laporan.dto.ts"],"names":[],"mappings":";;;AAAA,6CAA6C;AAC7C,6DAAuD;AAEvD,MAAa,gBAAiB,SAAQ,IAAA,qBAAW,EAAC,qCAAgB,CAAC;CAAG;AAAtE,4CAAsE"}
