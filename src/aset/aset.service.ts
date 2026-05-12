@@ -359,9 +359,11 @@ export class AsetService {
 
     return {
       total,
-      aman:              statusMap['aman']   ?? 0,
-      sedang:            statusMap['sedang'] ?? 0,
-      kritis:            statusMap['kritis'] ?? 0,
+      aman:                   statusMap['aman']                   ?? 0,
+      sedang:                 statusMap['sedang']                 ?? 0,
+      kritis_terpenuhi:       statusMap['kritis_terpenuhi']       ?? 0,
+      kritis_tidak_terpenuhi: statusMap['kritis_tidak_terpenuhi'] ?? 0,
+      kritis:                 statusMap['kritis']                 ?? 0, // legacy
       ppl:               jenisMap['ppl']                ?? 0,
       layangan:          jenisMap['layangan']           ?? 0,
       kebakaran:         jenisMap['kebakaran']          ?? 0,
