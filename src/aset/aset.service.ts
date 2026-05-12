@@ -239,11 +239,11 @@ export class AsetService {
         where:   { lat: { not: 0 }, lng: { not: 0 } },
         orderBy: [{ jalur: 'asc' }, { nomorUrut: 'asc' }],
         select:  {
-          id: true, nama: true, lat: true, lng: true,
+          id: true, nama: true, lat: true, lng: true, updatedAt: true,
           statusKerawanan: true, jenisKerawanan: true, routeId: true,
           laporan: {
             where:  { status: 'berlangsung' },
-            select: { jenisGangguan: true, levelRisiko: true },
+            select: { jenisGangguan: true, levelRisiko: true, updatedAt: true },
           },
         },
       }),
@@ -288,6 +288,9 @@ export class AsetService {
         )],
         icon_color:     ICON_COLOR[t.statusKerawanan] ?? '#00CC00',
         route_id:       t.routeId,
+        updated_at:     t.laporan.length > 0
+          ? t.laporan.reduce((latest, l) => l.updatedAt > latest ? l.updatedAt : latest, t.laporan[0].updatedAt)
+          : t.updatedAt,
       })),
     }
   }
