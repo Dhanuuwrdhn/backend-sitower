@@ -99,19 +99,7 @@ __decorate([
     (0, common_1.Post)(),
     (0, roles_decorator_1.Roles)('admin'),
     (0, swagger_1.ApiOperation)({ summary: 'Buat folder as-built drawing baru (admin)' }),
-    (0, swagger_1.ApiBody)({
-        schema: {
-            type: 'object',
-            required: ['nama', 'tipe', 'tahun'],
-            properties: {
-                nama: { type: 'string', example: 'Drawing Tower T-23 2024' },
-                tipe: { type: 'string', enum: ['Electrical', 'Mechanical', 'Civil', 'Grounding', 'Lainnya'], example: 'Electrical' },
-                tahun: { type: 'number', example: 2024 },
-                towerId: { type: 'string', example: 'T-23', description: 'Opsional' },
-                keterangan: { type: 'string', example: 'Drawing hasil revisi 2024', description: 'Opsional' },
-            },
-        },
-    }),
+    (0, swagger_1.ApiBody)({ type: create_as_built_drawing_dto_1.CreateFolderDto }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [create_as_built_drawing_dto_1.CreateFolderDto]),
@@ -122,18 +110,7 @@ __decorate([
     (0, roles_decorator_1.Roles)('admin'),
     (0, swagger_1.ApiOperation)({ summary: 'Update folder (admin)' }),
     (0, swagger_1.ApiParam)({ name: 'id', description: 'Folder ID' }),
-    (0, swagger_1.ApiBody)({
-        schema: {
-            type: 'object',
-            properties: {
-                nama: { type: 'string', example: 'Drawing Tower T-23 2024 (rev)' },
-                tipe: { type: 'string', enum: ['Electrical', 'Mechanical', 'Civil', 'Grounding', 'Lainnya'] },
-                tahun: { type: 'number', example: 2024 },
-                towerId: { type: 'string', example: 'T-23' },
-                keterangan: { type: 'string', example: 'Catatan revisi' },
-            },
-        },
-    }),
+    (0, swagger_1.ApiBody)({ type: update_as_built_drawing_dto_1.UpdateAsBuiltDrawingDto }),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),

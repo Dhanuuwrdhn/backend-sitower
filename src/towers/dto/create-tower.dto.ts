@@ -1,4 +1,4 @@
-import { IsString, IsNumber, IsOptional } from 'class-validator'
+import { IsString, IsNumber, IsOptional, IsInt } from 'class-validator'
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
 
 export class CreateTowerDto {
@@ -50,4 +50,39 @@ export class CreateTowerDto {
   @IsOptional()
   @IsNumber()
   nomorUrut?: number
+
+  @ApiPropertyOptional({ example: 1, description: 'ID TransmissionRoute' })
+  @IsOptional()
+  @IsInt()
+  routeId?: number
+
+  @ApiPropertyOptional({ example: 'aman', enum: ['aman', 'sedang', 'kritis'] })
+  @IsOptional()
+  @IsString()
+  statusKerawanan?: string
+
+  @ApiPropertyOptional({ example: 'ppl', enum: ['ppl', 'layangan', 'kebakaran', 'pencurian', 'pemanfaatan_lahan'] })
+  @IsOptional()
+  @IsString()
+  jenisKerawanan?: string
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  pplNotes?: string
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  penanggungJawab?: string
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  telepon?: string
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  sertifikatLink?: string
 }

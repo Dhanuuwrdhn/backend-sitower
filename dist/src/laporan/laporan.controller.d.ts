@@ -1,10 +1,12 @@
 import { LaporanService } from './laporan.service';
+import { ProgressService } from './progress.service';
 import { CreateLaporanDto } from './dto/create-laporan.dto';
 import { UpdateLaporanDto } from './dto/update-laporan.dto';
 import { QueryLaporanDto } from './dto/query-laporan.dto';
 export declare class LaporanController {
     private laporanService;
-    constructor(laporanService: LaporanService);
+    private progressService;
+    constructor(laporanService: LaporanService, progressService: ProgressService);
     findAll(query: QueryLaporanDto): Promise<{
         data: any[];
         total: number;
@@ -21,25 +23,41 @@ export declare class LaporanController {
         urls: string[];
     }>;
     update(id: string, dto: UpdateLaporanDto): Promise<any>;
-    remove(id: string): Promise<{
+    remove(id: string): Promise<void>;
+    getProgress(id: string): Promise<Record<string, {
+        id: string;
+        tipe: string;
+        createdAt: Date;
+        namaFile: string;
+        fileUrl: string;
+        laporanId: string;
+    }[]>>;
+    uploadProgress(id: string, file: Express.Multer.File, tipe: string, req: any): Promise<{
+        id: string;
+        tipe: string;
+        createdAt: Date;
+        namaFile: string;
+        fileUrl: string;
+        laporanId: string;
+    }>;
+    deleteProgress(id: string, progressId: string): Promise<{
+        id: string;
+        tipe: string;
+        createdAt: Date;
+        namaFile: string;
+        fileUrl: string;
+        laporanId: string;
+    }>;
+    getFotoHistory(id: string): Promise<{
         id: string;
         createdAt: Date;
-        updatedAt: Date;
-        foto: string[];
-        teknisi: string | null;
-        towerId: string;
-        pelaporId: string;
-        jenisGangguan: string;
-        deskripsi: string;
-        levelRisiko: string;
-        status: string;
-        tanggal: Date;
-        lokasiDetail: string | null;
-        keterangan: string | null;
-        noSpk: string | null;
-        temuan: string | null;
-        hasil: string | null;
-        penyebab: string | null;
-        durasi: string | null;
+        laporanId: string;
+        urls: string[];
+    }[]>;
+    uploadFotoUpdate(id: string, files: Express.Multer.File[], req: any): Promise<{
+        id: string;
+        createdAt: Date;
+        laporanId: string;
+        urls: string[];
     }>;
 }

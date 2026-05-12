@@ -16,10 +16,28 @@ const INCLUDE_FULL = {
     tower: { select: { id: true, nama: true, tipe: true, tegangan: true, lokasi: true } },
     pelapor: { select: { id: true, nama: true, jabatan: true, unit: true } },
 };
+const INCLUDE_LIST = {
+    ...INCLUDE_FULL,
+    progress: { orderBy: { createdAt: 'desc' }, take: 1, select: { tipe: true } },
+};
+const LEVEL_PRIORITY = {
+    kritis_tidak_terpenuhi: 4,
+    kritis_terpenuhi: 3,
+    kritis: 3,
+    sedang: 2,
+    aman: 1,
+};
+const KERAWANAN_TYPES = new Set([
+    'pekerjaan_pihak_lain', 'kebakaran', 'layangan', 'pencurian', 'pemanfaatan_lahan',
+]);
 function mapLaporan(l) {
     if (!l)
         return l;
-    return { ...l, tower: l.tower ? { ...l.tower, nomorTower: l.tower.id } : null };
+    return {
+        ...l,
+        tower: l.tower ? { ...l.tower, nomorTower: l.tower.id } : null,
+        latestProgressTipe: l.progress?.[0]?.tipe ?? null,
+    };
 }
 let LaporanService = class LaporanService {
     prisma;
@@ -57,7 +75,7 @@ let LaporanService = class LaporanService {
         const [data, total] = await Promise.all([
             this.prisma.laporan.findMany({
                 where,
-                include: INCLUDE_FULL,
+                include: INCLUDE_LIST,
                 orderBy: { tanggal: 'desc' },
                 skip,
                 take: limit,
@@ -94,8 +112,39 @@ let LaporanService = class LaporanService {
         ]);
         return { ...result, total, berlangsung };
     }
+    async syncTowerStatus(towerId) {
+        const active = await this.prisma.laporan.findMany({
+            where: { towerId, status: 'berlangsung' },
+            select: { levelRisiko: true, jenisGangguan: true },
+        });
+        if (active.length === 0) {
+            await this.prisma.tower.update({
+                where: { id: towerId },
+                data: { statusKerawanan: 'aman', jenisKerawanan: null },
+            });
+            return;
+        }
+        let worstLevel = 'aman';
+        let worstPriority = 0;
+        let worstJenis = null;
+        for (const l of active) {
+            const p = LEVEL_PRIORITY[l.levelRisiko] ?? 1;
+            if (p > worstPriority) {
+                worstPriority = p;
+                worstLevel = l.levelRisiko;
+                worstJenis = KERAWANAN_TYPES.has(l.jenisGangguan) ? l.jenisGangguan : worstJenis;
+            }
+        }
+        await this.prisma.tower.update({
+            where: { id: towerId },
+            data: { statusKerawanan: worstLevel, jenisKerawanan: worstJenis },
+        });
+    }
     async create(dto, pelaporId) {
         const { towerId, tanggal, foto = [], ...rest } = dto;
+        const tower = await this.prisma.tower.findUnique({ where: { id: towerId } });
+        if (!tower)
+            throw new common_1.NotFoundException(`Tower dengan id "${towerId}" tidak ditemukan`);
         const result = await this.prisma.laporan.create({
             data: {
                 ...rest,
@@ -106,10 +155,11 @@ let LaporanService = class LaporanService {
             },
             include: INCLUDE_FULL,
         });
+        await this.syncTowerStatus(towerId);
         return mapLaporan(result);
     }
     async update(id, dto) {
-        await this.findOne(id);
+        const existing = await this.findOne(id);
         const { towerId, tanggal, pelaporId: _, ...rest } = dto;
         const result = await this.prisma.laporan.update({
             where: { id },
@@ -120,11 +170,16 @@ let LaporanService = class LaporanService {
             },
             include: INCLUDE_FULL,
         });
+        await this.syncTowerStatus(towerId ?? existing.towerId);
+        if (towerId && towerId !== existing.towerId) {
+            await this.syncTowerStatus(existing.towerId);
+        }
         return mapLaporan(result);
     }
     async remove(id) {
-        await this.findOne(id);
-        return this.prisma.laporan.delete({ where: { id } });
+        const existing = await this.findOne(id);
+        await this.prisma.laporan.delete({ where: { id } });
+        await this.syncTowerStatus(existing.towerId);
     }
     async updateFotoUrls(id, urls) {
         return this.prisma.laporan.update({

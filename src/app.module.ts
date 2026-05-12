@@ -11,6 +11,7 @@ import { AsBuiltDrawingModule } from './as-built-drawing/as-built-drawing.module
 import { PegawaiModule } from './pegawai/pegawai.module'
 import { ImportModule } from './import/import.module'
 import { JalurKmlModule } from './jalur-kml/jalur-kml.module'
+import { AsetModule } from './aset/aset.module'
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { JalurKmlModule } from './jalur-kml/jalur-kml.module'
     PegawaiModule,
     ImportModule,
     JalurKmlModule,
+    AsetModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreatePegawaiDto = void 0;
 const class_validator_1 = require("class-validator");
+const swagger_1 = require("@nestjs/swagger");
 class CreatePegawaiDto {
     nik;
     nama;
@@ -23,37 +24,45 @@ class CreatePegawaiDto {
 }
 exports.CreatePegawaiDto = CreatePegawaiDto;
 __decorate([
+    (0, swagger_1.ApiProperty)({ example: '199001010001' }),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreatePegawaiDto.prototype, "nik", void 0);
 __decorate([
+    (0, swagger_1.ApiProperty)({ example: 'Budi Santoso' }),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreatePegawaiDto.prototype, "nama", void 0);
 __decorate([
+    (0, swagger_1.ApiProperty)({ example: 'Teknisi Jaringan' }),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreatePegawaiDto.prototype, "jabatan", void 0);
 __decorate([
+    (0, swagger_1.ApiProperty)({ example: 'UIW Banten' }),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreatePegawaiDto.prototype, "unit", void 0);
 __decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: 'teknisi', enum: ['admin', 'teknisi', 'viewer'] }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreatePegawaiDto.prototype, "role", void 0);
 __decorate([
+    (0, swagger_1.ApiProperty)({ example: 'password123', minLength: 6 }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.MinLength)(6),
     __metadata("design:type", String)
 ], CreatePegawaiDto.prototype, "password", void 0);
 __decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: true }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsBoolean)(),
     __metadata("design:type", Boolean)
 ], CreatePegawaiDto.prototype, "aktif", void 0);
 __decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: 'https://example.com/foto.jpg' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)

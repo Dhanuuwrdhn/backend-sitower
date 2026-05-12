@@ -10,13 +10,14 @@ exports.LaporanModule = void 0;
 const common_1 = require("@nestjs/common");
 const laporan_service_1 = require("./laporan.service");
 const laporan_controller_1 = require("./laporan.controller");
+const progress_service_1 = require("./progress.service");
 let LaporanModule = class LaporanModule {
 };
 exports.LaporanModule = LaporanModule;
 exports.LaporanModule = LaporanModule = __decorate([
     (0, common_1.Module)({
         controllers: [laporan_controller_1.LaporanController],
-        providers: [laporan_service_1.LaporanService],
+        providers: [laporan_service_1.LaporanService, progress_service_1.ProgressService],
     })
 ], LaporanModule);
 //# sourceMappingURL=laporan.module.js.map

@@ -44,6 +44,20 @@ export class JalurKmlController {
     }
   }
 
+  /** POST /jalur-kml/import-sktt — import SKTT coordinates from Excel */
+  @Post('import-sktt')
+  @UseGuards(RolesGuard)
+  @Roles('admin')
+  @UseInterceptors(FileInterceptor('file'))
+  async importSktt(@UploadedFile() file: Express.Multer.File) {
+    if (!file) throw new BadRequestException('File tidak ditemukan')
+    const ext = file.originalname.toLowerCase()
+    if (!ext.endsWith('.xlsx') && !ext.endsWith('.xls'))
+      throw new BadRequestException('Hanya file .xlsx/.xls yang diperbolehkan')
+    const result = await this.jalurKmlService.importSkttFromExcel(file.buffer)
+    return { message: `Import SKTT selesai: ${result.created} baru, ${result.updated} diperbarui`, data: result }
+  }
+
   /** GET /jalur-kml — ambil semua jalur */
   @Get()
   async findAll() {

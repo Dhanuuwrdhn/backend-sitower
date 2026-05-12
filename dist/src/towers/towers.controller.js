@@ -14,6 +14,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TowersController = void 0;
 const common_1 = require("@nestjs/common");
+const swagger_1 = require("@nestjs/swagger");
 const towers_service_1 = require("./towers.service");
 const create_tower_dto_1 = require("./dto/create-tower.dto");
 const update_tower_dto_1 = require("./dto/update-tower.dto");
@@ -50,6 +51,12 @@ let TowersController = class TowersController {
 exports.TowersController = TowersController;
 __decorate([
     (0, common_1.Get)(),
+    (0, swagger_1.ApiOperation)({ summary: 'List semua tower dengan filter' }),
+    (0, swagger_1.ApiQuery)({ name: 'tipe', required: false, enum: ['SUTET', 'SUTT', 'SKTT', 'garduInduk'] }),
+    (0, swagger_1.ApiQuery)({ name: 'kondisi', required: false, enum: ['baik', 'sedang', 'buruk'] }),
+    (0, swagger_1.ApiQuery)({ name: 'search', required: false }),
+    (0, swagger_1.ApiQuery)({ name: 'page', required: false }),
+    (0, swagger_1.ApiQuery)({ name: 'limit', required: false }),
     __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -57,18 +64,22 @@ __decorate([
 ], TowersController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Get)('map'),
+    (0, swagger_1.ApiOperation)({ summary: 'Data tower untuk peta (koordinat + kondisi)' }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], TowersController.prototype, "findAllForMap", null);
 __decorate([
     (0, common_1.Get)('dropdown'),
+    (0, swagger_1.ApiOperation)({ summary: 'Dropdown tower (id, nomorTower, garduInduk, tipe, koordinat, radius)' }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], TowersController.prototype, "findAllForDropdown", null);
 __decorate([
     (0, common_1.Get)(':id'),
+    (0, swagger_1.ApiOperation)({ summary: 'Detail satu tower' }),
+    (0, swagger_1.ApiParam)({ name: 'id', description: 'Tower ID (e.g. T-23)' }),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
@@ -77,6 +88,8 @@ __decorate([
 __decorate([
     (0, common_1.Post)(),
     (0, roles_decorator_1.Roles)('admin'),
+    (0, swagger_1.ApiOperation)({ summary: 'Tambah tower baru (admin)' }),
+    (0, swagger_1.ApiBody)({ type: create_tower_dto_1.CreateTowerDto }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [create_tower_dto_1.CreateTowerDto]),
@@ -85,6 +98,9 @@ __decorate([
 __decorate([
     (0, common_1.Put)(':id'),
     (0, roles_decorator_1.Roles)('admin'),
+    (0, swagger_1.ApiOperation)({ summary: 'Update data tower (admin)' }),
+    (0, swagger_1.ApiParam)({ name: 'id', description: 'Tower ID' }),
+    (0, swagger_1.ApiBody)({ type: update_tower_dto_1.UpdateTowerDto }),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -94,12 +110,16 @@ __decorate([
 __decorate([
     (0, common_1.Delete)(':id'),
     (0, roles_decorator_1.Roles)('admin'),
+    (0, swagger_1.ApiOperation)({ summary: 'Hapus tower (admin)' }),
+    (0, swagger_1.ApiParam)({ name: 'id', description: 'Tower ID' }),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], TowersController.prototype, "remove", null);
 exports.TowersController = TowersController = __decorate([
+    (0, swagger_1.ApiTags)('Towers'),
+    (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.Controller)('towers'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     __metadata("design:paramtypes", [towers_service_1.TowersService])

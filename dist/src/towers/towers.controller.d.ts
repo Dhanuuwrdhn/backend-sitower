@@ -23,6 +23,15 @@ export declare class TowersController {
             radius: number;
             createdAt: Date;
             updatedAt: Date;
+            jalur: string | null;
+            nomorUrut: number | null;
+            routeId: number | null;
+            statusKerawanan: string;
+            jenisKerawanan: string | null;
+            pplNotes: string | null;
+            penanggungJawab: string | null;
+            telepon: string | null;
+            sertifikatLink: string | null;
         }[];
         total: number;
         page: number;
@@ -36,9 +45,11 @@ export declare class TowersController {
         tipe: "gardu" | "SUTET" | "SUTT" | "SKTT";
         tegangan: string;
         updatedAt: string;
+        jalur: string | null;
+        nomorUrut: number | null;
         kerawanan: {
             kategori: string;
-            level: "tinggi" | "sedang" | "rendah";
+            level: "kritis" | "sedang" | "aman";
             status: string;
         }[];
     }[]>;
@@ -115,6 +126,15 @@ export declare class TowersController {
         radius: number;
         createdAt: Date;
         updatedAt: Date;
+        jalur: string | null;
+        nomorUrut: number | null;
+        routeId: number | null;
+        statusKerawanan: string;
+        jenisKerawanan: string | null;
+        pplNotes: string | null;
+        penanggungJawab: string | null;
+        telepon: string | null;
+        sertifikatLink: string | null;
     }>;
     create(dto: CreateTowerDto): import("@prisma/client").Prisma.Prisma__TowerClient<{
         id: string;
@@ -128,6 +148,15 @@ export declare class TowersController {
         radius: number;
         createdAt: Date;
         updatedAt: Date;
+        jalur: string | null;
+        nomorUrut: number | null;
+        routeId: number | null;
+        statusKerawanan: string;
+        jenisKerawanan: string | null;
+        pplNotes: string | null;
+        penanggungJawab: string | null;
+        telepon: string | null;
+        sertifikatLink: string | null;
     }, never, import("@prisma/client/runtime/client").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
     update(id: string, dto: UpdateTowerDto): Promise<{
         id: string;
@@ -141,6 +170,15 @@ export declare class TowersController {
         radius: number;
         createdAt: Date;
         updatedAt: Date;
+        jalur: string | null;
+        nomorUrut: number | null;
+        routeId: number | null;
+        statusKerawanan: string;
+        jenisKerawanan: string | null;
+        pplNotes: string | null;
+        penanggungJawab: string | null;
+        telepon: string | null;
+        sertifikatLink: string | null;
     }>;
     remove(id: string): Promise<{
         id: string;
@@ -154,5 +192,14 @@ export declare class TowersController {
         radius: number;
         createdAt: Date;
         updatedAt: Date;
+        jalur: string | null;
+        nomorUrut: number | null;
+        routeId: number | null;
+        statusKerawanan: string;
+        jenisKerawanan: string | null;
+        pplNotes: string | null;
+        penanggungJawab: string | null;
+        telepon: string | null;
+        sertifikatLink: string | null;
     }>;
 }

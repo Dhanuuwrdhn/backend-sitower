@@ -56,9 +56,11 @@ let TowersService = class TowersService {
             nama: t.nama,
             lat: t.lat,
             lng: t.lng,
-            tipe: t.tipe,
+            tipe: (t.tipe === 'garduInduk' ? 'gardu' : t.tipe),
             tegangan: t.tegangan,
             updatedAt: t.updatedAt.toISOString(),
+            jalur: t.jalur ?? null,
+            nomorUrut: t.nomorUrut ?? null,
             kerawanan: t.laporan.map((l) => ({
                 kategori: l.jenisGangguan,
                 level: l.levelRisiko,

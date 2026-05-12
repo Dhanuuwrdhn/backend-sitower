@@ -19,4 +19,34 @@ export declare class AuthService {
     changePassword(userId: string, passwordLama: string, passwordBaru: string): Promise<{
         message: string;
     }>;
+    requestChangePassword(userId: string, passwordLama: string, passwordBaru: string, konfirmasiPasswordBaru: string): Promise<{
+        message: string;
+    }>;
+    listPasswordChangeRequests(): Promise<{
+        newPasswordHash: undefined;
+        status: string;
+        pegawai: {
+            id: string;
+            nama: string;
+            nik: string;
+            jabatan: string;
+            unit: string;
+        };
+        reviewedBy: {
+            id: string;
+            nama: string;
+        } | null;
+        id: string;
+        pegawaiId: string;
+        requestedAt: Date;
+        expiredAt: Date;
+        reviewedAt: Date | null;
+        reviewedById: string | null;
+    }[]>;
+    approvePasswordChangeRequest(requestId: string, adminId: string): Promise<{
+        message: string;
+    }>;
+    rejectPasswordChangeRequest(requestId: string, adminId: string): Promise<{
+        message: string;
+    }>;
 }
