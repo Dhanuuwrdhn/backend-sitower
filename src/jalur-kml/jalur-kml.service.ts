@@ -235,45 +235,65 @@ export class JalurKmlService {
 
     const rows: any[] = XLSX.utils.sheet_to_json(wb.Sheets[sheetName])
 
-    // Group by RUAS, deduplicate by lat/lng, preserve order by row sequence
-    const routeMap = new Map<string, Map<string, { lat: number; lng: number; isMarker: boolean }>>()
+    // Handle Indonesian decimal comma (e.g. "-6,243" → -6.243)
+    function parseNum(val: any): number {
+      if (typeof val === 'number') return val
+      return parseFloat(String(val).replace(',', '.'))
+    }
+
+    // Group by RUAS + NOSIRKIT, keyed by joint number from BAY_PENGHANTAR (#0001, #0002…)
+    const routeMap = new Map<string, Map<number, { lat: number; lng: number }>>()
+    const routeMeta = new Map<string, { ruas: string; sirkit: string }>()
 
     for (const r of rows) {
-      const ruas = String(r['RUAS'] || '').trim()
-      const lat  = Number(r['KOORDINAT_X'])
-      const lng  = Number(r['KOORDINAT_Y'])
-      if (!ruas || isNaN(lat) || isNaN(lng) || lat === 0 || lng === 0) continue
+      const ruas   = String(r['RUAS'] || '').trim()
+      const bay    = String(r['BAY_PENGHANTAR'] || '').trim()
+      const sirkit = String(r['NOSIRKIT'] || '').trim()
+      const lat    = parseNum(r['KOORDINAT_X'])
+      const lng    = parseNum(r['KOORDINAT_Y'])
 
-      if (!routeMap.has(ruas)) routeMap.set(ruas, new Map())
-      const key = `${lat.toFixed(7)},${lng.toFixed(7)}`
-      if (!routeMap.get(ruas)!.has(key)) {
-        routeMap.get(ruas)!.set(key, { lat, lng, isMarker: true })
+      if (!ruas || !bay || isNaN(lat) || isNaN(lng) || lat === 0 || lng === 0) continue
+
+      // Extract joint sequence number: "JOINT SKTT … #0001" → 1
+      const noMatch = bay.match(/#(\d+)/)
+      if (!noMatch) continue
+      const jointNo = parseInt(noMatch[1], 10)
+
+      const key = `${ruas}||${sirkit}`
+      if (!routeMap.has(key)) {
+        routeMap.set(key, new Map())
+        routeMeta.set(key, { ruas, sirkit })
+      }
+      // Deduplicate by joint number — keep first occurrence
+      if (!routeMap.get(key)!.has(jointNo)) {
+        routeMap.get(key)!.set(jointNo, { lat, lng })
       }
     }
 
-    let created = 0, updated = 0
+    // Delete existing SKTT routes before full re-import
+    await this.prisma.jalurKML.deleteMany({ where: { tipe: 'SKTT' } })
+
+    let created = 0
     const routeNames: string[] = []
 
-    for (const [nama, ptsMap] of routeMap) {
-      const path = [...ptsMap.values()]
+    for (const key of Array.from(routeMap.keys())) {
+      const jointMap = routeMap.get(key)!
+      const meta = routeMeta.get(key)!
+
+      const path = Array.from(jointMap.entries())
+        .sort(([a], [b]) => a - b)
+        .map(([, pt]) => ({ lat: pt.lat, lng: pt.lng, isMarker: true }))
+
       if (path.length < 1) continue
 
-      const existing = await this.prisma.jalurKML.findFirst({ where: { nama, tipe: 'SKTT' } })
-      if (existing) {
-        await this.prisma.jalurKML.update({
-          where: { id: existing.id },
-          data: { path: JSON.parse(JSON.stringify(path)), warna: '#FF00FF' },
-        })
-        updated++
-      } else {
-        await this.prisma.jalurKML.create({
-          data: { nama, tipe: 'SKTT', warna: '#FF00FF', path: JSON.parse(JSON.stringify(path)) },
-        })
-        created++
-      }
+      const nama = `${meta.ruas} (${meta.sirkit})`
+      await this.prisma.jalurKML.create({
+        data: { nama, tipe: 'SKTT', warna: '#FF00FF', path: JSON.parse(JSON.stringify(path)) },
+      })
+      created++
       routeNames.push(nama)
     }
 
-    return { created, updated, routes: routeNames }
+    return { created, updated: 0, routes: routeNames }
   }
 }
