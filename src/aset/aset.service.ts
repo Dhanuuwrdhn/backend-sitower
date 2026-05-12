@@ -21,9 +21,11 @@ const ROUTE_PREFIX: Record<string, string> = {
 }
 
 const ICON_COLOR: Record<string, string> = {
-  kritis: '#FF0000',
-  sedang: '#FFA500',
-  aman:   '#00CC00',
+  kritis_tidak_terpenuhi: '#FF0000',
+  kritis_terpenuhi:       '#FF0000',
+  kritis:                 '#FF0000', // legacy
+  sedang:                 '#FFA500',
+  aman:                   '#00CC00',
 }
 
 function normalizeRoute(raw: string): string {

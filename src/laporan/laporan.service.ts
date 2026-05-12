@@ -9,8 +9,19 @@ const INCLUDE_FULL = {
   pelapor: { select: { id: true, nama: true, jabatan: true, unit: true } },
 }
 
+const INCLUDE_LIST = {
+  ...INCLUDE_FULL,
+  progress: { orderBy: { createdAt: 'desc' as const }, take: 1, select: { tipe: true } },
+}
+
 // Map levelRisiko → statusKerawanan priority (higher = worse)
-const LEVEL_PRIORITY: Record<string, number> = { kritis: 3, sedang: 2, aman: 1 }
+const LEVEL_PRIORITY: Record<string, number> = {
+  kritis_tidak_terpenuhi: 4,
+  kritis_terpenuhi:       3,
+  kritis:                 3, // legacy fallback
+  sedang:                 2,
+  aman:                   1,
+}
 
 // Map jenisGangguan → jenisKerawanan on tower (only kerawanan types)
 const KERAWANAN_TYPES = new Set([
@@ -19,7 +30,11 @@ const KERAWANAN_TYPES = new Set([
 
 function mapLaporan(l: any) {
   if (!l) return l
-  return { ...l, tower: l.tower ? { ...l.tower, nomorTower: l.tower.id } : null }
+  return {
+    ...l,
+    tower: l.tower ? { ...l.tower, nomorTower: l.tower.id } : null,
+    latestProgressTipe: l.progress?.[0]?.tipe ?? null,
+  }
 }
 
 @Injectable()
@@ -56,7 +71,7 @@ export class LaporanService {
     const [data, total] = await Promise.all([
       this.prisma.laporan.findMany({
         where,
-        include: INCLUDE_FULL,
+        include: INCLUDE_LIST,
         orderBy: { tanggal: 'desc' },
         skip,
         take: limit,
