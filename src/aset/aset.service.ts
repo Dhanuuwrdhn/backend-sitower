@@ -236,8 +236,19 @@ export class AsetService {
       this.prisma.tower.findMany({
         where:   { lat: { not: 0 }, lng: { not: 0 } },
         orderBy: [{ jalur: 'asc' }, { nomorUrut: 'asc' }],
-        select:  { id: true, nama: true, lat: true, lng: true, statusKerawanan: true, jenisKerawanan: true, routeId: true },
+        select:  {
+          id: true, nama: true, lat: true, lng: true,
+          statusKerawanan: true, jenisKerawanan: true, routeId: true,
+          laporan: {
+            where:  { status: 'berlangsung' },
+            select: { jenisGangguan: true, levelRisiko: true },
+          },
+        },
       }),
+    ])
+
+    const KERAWANAN_JENIS = new Set([
+      'pekerjaan_pihak_lain', 'kebakaran', 'layangan', 'pencurian', 'pemanfaatan_lahan',
     ])
 
     return {
@@ -268,6 +279,11 @@ export class AsetService {
         lng:            t.lng,
         status:         t.statusKerawanan,
         kerawanan_type: t.jenisKerawanan,
+        kerawanan_types: [...new Set(
+          t.laporan
+            .filter((l) => KERAWANAN_JENIS.has(l.jenisGangguan))
+            .map((l) => l.jenisGangguan)
+        )],
         icon_color:     ICON_COLOR[t.statusKerawanan] ?? '#00CC00',
         route_id:       t.routeId,
       })),
