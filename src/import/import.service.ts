@@ -188,8 +188,37 @@ export class ImportService {
     return 'pekerjaan_pihak_lain'
   }
 
+  private readonly LEVEL_PRIORITY: Record<string, number> = {
+    kritis_tidak_terpenuhi: 4, kritis_terpenuhi: 3, kritis: 3, sedang: 2, aman: 1,
+  }
+  private readonly KERAWANAN_TYPES = new Set([
+    'pekerjaan_pihak_lain', 'kebakaran', 'layangan', 'pencurian', 'pemanfaatan_lahan',
+  ])
+
+  private async syncTowerStatus(towerId: string) {
+    const active = await this.prisma.laporan.findMany({
+      where: { towerId, status: 'berlangsung' },
+      select: { levelRisiko: true, jenisGangguan: true },
+    })
+    if (active.length === 0) {
+      await this.prisma.tower.update({ where: { id: towerId }, data: { statusKerawanan: 'aman', jenisKerawanan: null } })
+      return
+    }
+    let worstLevel = 'aman', worstPriority = 0, worstJenis: string | null = null
+    for (const l of active) {
+      const p = this.LEVEL_PRIORITY[l.levelRisiko] ?? 1
+      if (p > worstPriority) {
+        worstPriority = p
+        worstLevel = l.levelRisiko
+        worstJenis = this.KERAWANAN_TYPES.has(l.jenisGangguan) ? l.jenisGangguan : worstJenis
+      }
+    }
+    await this.prisma.tower.update({ where: { id: towerId }, data: { statusKerawanan: worstLevel, jenisKerawanan: worstJenis } })
+  }
+
   private async importLaporan(rows: any[]) {
     let createdCount = 0
+    const affectedTowerIds = new Set<string>()
 
     // Filter valid rows: abaikan baris instruksi/panduan/header
     const validRows = rows.filter(r => {
@@ -297,7 +326,11 @@ export class ImportService {
         })
         createdCount++
       }
+      affectedTowerIds.add(tower.id)
     }
+
+    // Sync statusKerawanan for all affected towers
+    await Promise.all([...affectedTowerIds].map(id => this.syncTowerStatus(id)))
 
     return { message: 'Import laporan selesai', total: createdCount }
   }
