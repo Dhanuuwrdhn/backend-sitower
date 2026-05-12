@@ -1,5 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
+import * as XLSX from 'xlsx'
 
 interface CoordPoint {
   lat: number
@@ -225,5 +226,54 @@ export class JalurKmlService {
 
   async remove(id: number): Promise<void> {
     await this.prisma.jalurKML.delete({ where: { id } })
+  }
+
+  async importSkttFromExcel(buffer: Buffer): Promise<{ created: number; updated: number; routes: string[] }> {
+    const wb = XLSX.read(buffer, { type: 'buffer' })
+    const sheetName = wb.SheetNames.find(s => s.toUpperCase().includes('KOORDINAT SKTT'))
+    if (!sheetName) throw new BadRequestException('Sheet "KOORDINAT SKTT" tidak ditemukan')
+
+    const rows: any[] = XLSX.utils.sheet_to_json(wb.Sheets[sheetName])
+
+    // Group by RUAS, deduplicate by lat/lng, preserve order by row sequence
+    const routeMap = new Map<string, Map<string, { lat: number; lng: number; isMarker: boolean }>>()
+
+    for (const r of rows) {
+      const ruas = String(r['RUAS'] || '').trim()
+      const lat  = Number(r['KOORDINAT_X'])
+      const lng  = Number(r['KOORDINAT_Y'])
+      if (!ruas || isNaN(lat) || isNaN(lng) || lat === 0 || lng === 0) continue
+
+      if (!routeMap.has(ruas)) routeMap.set(ruas, new Map())
+      const key = `${lat.toFixed(7)},${lng.toFixed(7)}`
+      if (!routeMap.get(ruas)!.has(key)) {
+        routeMap.get(ruas)!.set(key, { lat, lng, isMarker: true })
+      }
+    }
+
+    let created = 0, updated = 0
+    const routeNames: string[] = []
+
+    for (const [nama, ptsMap] of routeMap) {
+      const path = [...ptsMap.values()]
+      if (path.length < 1) continue
+
+      const existing = await this.prisma.jalurKML.findFirst({ where: { nama, tipe: 'SKTT' } })
+      if (existing) {
+        await this.prisma.jalurKML.update({
+          where: { id: existing.id },
+          data: { path: JSON.parse(JSON.stringify(path)), warna: '#FF00FF' },
+        })
+        updated++
+      } else {
+        await this.prisma.jalurKML.create({
+          data: { nama, tipe: 'SKTT', warna: '#FF00FF', path: JSON.parse(JSON.stringify(path)) },
+        })
+        created++
+      }
+      routeNames.push(nama)
+    }
+
+    return { created, updated, routes: routeNames }
   }
 }
