@@ -191,20 +191,21 @@ export class ImportService {
   private async importLaporan(rows: any[]) {
     let createdCount = 0
 
-    // Filter valid rows: abaikan baris instruksi/header
+    // Filter valid rows: abaikan baris instruksi/panduan/header
     const validRows = rows.filter(r => {
-      const isInstruction =
-        r['RUAS'] === 'Otomatis by foto lokasi' ||
-        r['URAIAN PEKERJAAN'] === 'Input manual' ||
-        String(r['NO']).toLowerCase() === 'no'
+      const ruas   = String(r['RUAS']             || '').trim()
+      const uraian = String(r['URAIAN PEKERJAAN'] || '').trim()
+      const klas   = String(r['KLASIFIKASI ']     || r['KLASIFIKASI'] || '').trim()
+      const no     = String(r['NO']               || '').trim().toLowerCase()
 
-      // Terima jika ada SPAN, NO. TOWER, RUAS, KLASIFIKASI, atau URAIAN
-      const hasContent =
-        r['SPAN'] || r['NO. TOWER'] || r['RUAS'] ||
-        r['KLASIFIKASI '] || r['KLASIFIKASI'] ||
-        r['URAIAN PEKERJAAN']
+      // Baris instruksi/panduan
+      if (ruas   === 'Otomatis by foto lokasi') return false
+      if (uraian === 'Input manual')            return false
+      if (no     === 'no')                      return false
+      // Baris yang isinya daftar pilihan (multi-line \n)
+      if (klas.includes('\n') || klas.includes('\r')) return false
 
-      return !isInstruction && !!hasContent
+      return !!(ruas || r['SPAN'] || r['NO. TOWER'] || uraian)
     })
 
     console.log(`[Import] Total rows: ${rows.length}, Valid rows: ${validRows.length}`)
@@ -289,7 +290,7 @@ export class ImportService {
             levelRisiko: levelRisiko,
             status: statusStr,
             tanggal: tanggal,
-            lokasiDetail: r.lokasiDetail || r.lokasi || r['RUAS'] || null,
+            lokasiDetail: r.lokasiDetail || r.lokasi || (rawSpan ? `Span ${rawSpan}` : null) || rawRuas || null,
             keterangan: keterangan,
             foto: r.foto ? String(r.foto).split(',').map((s: string) => s.trim()) : [],
           }
