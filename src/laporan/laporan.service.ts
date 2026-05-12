@@ -9,6 +9,14 @@ const INCLUDE_FULL = {
   pelapor: { select: { id: true, nama: true, jabatan: true, unit: true } },
 }
 
+// Map levelRisiko → statusKerawanan priority (higher = worse)
+const LEVEL_PRIORITY: Record<string, number> = { kritis: 3, sedang: 2, aman: 1 }
+
+// Map jenisGangguan → jenisKerawanan on tower (only kerawanan types)
+const KERAWANAN_TYPES = new Set([
+  'pekerjaan_pihak_lain', 'kebakaran', 'layangan', 'pencurian', 'pemanfaatan_lahan',
+])
+
 function mapLaporan(l: any) {
   if (!l) return l
   return { ...l, tower: l.tower ? { ...l.tower, nomorTower: l.tower.id } : null }
@@ -92,6 +100,41 @@ export class LaporanService {
     return { ...result, total, berlangsung }
   }
 
+  // Recalculate tower statusKerawanan from its active laporan
+  private async syncTowerStatus(towerId: string) {
+    const active = await this.prisma.laporan.findMany({
+      where: { towerId, status: 'berlangsung' },
+      select: { levelRisiko: true, jenisGangguan: true },
+    })
+
+    if (active.length === 0) {
+      await this.prisma.tower.update({
+        where: { id: towerId },
+        data: { statusKerawanan: 'aman', jenisKerawanan: null },
+      })
+      return
+    }
+
+    // Worst level wins
+    let worstLevel = 'aman'
+    let worstPriority = 0
+    let worstJenis: string | null = null
+
+    for (const l of active) {
+      const p = LEVEL_PRIORITY[l.levelRisiko] ?? 1
+      if (p > worstPriority) {
+        worstPriority = p
+        worstLevel = l.levelRisiko
+        worstJenis = KERAWANAN_TYPES.has(l.jenisGangguan) ? l.jenisGangguan : worstJenis
+      }
+    }
+
+    await this.prisma.tower.update({
+      where: { id: towerId },
+      data: { statusKerawanan: worstLevel, jenisKerawanan: worstJenis },
+    })
+  }
+
   async create(dto: CreateLaporanDto, pelaporId: string) {
     const { towerId, tanggal, foto = [], ...rest } = dto
 
@@ -108,11 +151,13 @@ export class LaporanService {
       },
       include: INCLUDE_FULL,
     })
+
+    await this.syncTowerStatus(towerId)
     return mapLaporan(result)
   }
 
   async update(id: string, dto: UpdateLaporanDto) {
-    await this.findOne(id)
+    const existing = await this.findOne(id)
     const { towerId, tanggal, pelaporId: _, ...rest } = dto as any
     const result = await this.prisma.laporan.update({
       where: { id },
@@ -123,12 +168,19 @@ export class LaporanService {
       },
       include: INCLUDE_FULL,
     })
+
+    // Sync both old and new tower if towerId changed
+    await this.syncTowerStatus(towerId ?? (existing as any).towerId)
+    if (towerId && towerId !== (existing as any).towerId) {
+      await this.syncTowerStatus((existing as any).towerId)
+    }
     return mapLaporan(result)
   }
 
   async remove(id: string) {
-    await this.findOne(id)
-    return this.prisma.laporan.delete({ where: { id } })
+    const existing = await this.findOne(id)
+    await this.prisma.laporan.delete({ where: { id } })
+    await this.syncTowerStatus((existing as any).towerId)
   }
 
   async updateFotoUrls(id: string, urls: string[]) {
