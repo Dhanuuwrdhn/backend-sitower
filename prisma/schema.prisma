@@ -7,19 +7,18 @@ datasource db {
 }
 
 model Pegawai {
-  id        String    @id @default(cuid())
-  nik       String    @unique
-  nama      String
-  jabatan   String
-  unit      String
-  role      String    @default("teknisi")
-  password  String
-  aktif     Boolean   @default(true)
-  expiredAt DateTime?
-  foto      String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-
+  id                     String                  @id @default(cuid())
+  nik                    String                  @unique
+  nama                   String
+  jabatan                String
+  unit                   String
+  role                   String                  @default("teknisi")
+  password               String
+  aktif                  Boolean                 @default(true)
+  foto                   String?
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  expiredAt              DateTime?
   laporan                Laporan[]
   passwordChangeRequests PasswordChangeRequest[] @relation("RequesterRequests")
   reviewedRequests       PasswordChangeRequest[] @relation("ReviewerRequests")
@@ -28,37 +27,35 @@ model Pegawai {
 model PasswordChangeRequest {
   id              String    @id @default(cuid())
   pegawaiId       String
-  pegawai         Pegawai   @relation("RequesterRequests", fields: [pegawaiId], references: [id])
   newPasswordHash String
-  status          String    @default("pending") // pending, approved, rejected
+  status          String    @default("pending")
   requestedAt     DateTime  @default(now())
   expiredAt       DateTime
   reviewedAt      DateTime?
   reviewedById    String?
+  pegawai         Pegawai   @relation("RequesterRequests", fields: [pegawaiId], references: [id])
   reviewedBy      Pegawai?  @relation("ReviewerRequests", fields: [reviewedById], references: [id])
 }
 
 model TransmissionLineType {
-  id        Int      @id @default(autoincrement())
-  kode      String   @unique
+  id        Int                 @id @default(autoincrement())
+  kode      String              @unique
   tegangan  String
   warna     String
-  lineStyle String   @default("solid")
-  createdAt DateTime @default(now())
-
-  routes TransmissionRoute[]
+  lineStyle String              @default("solid")
+  createdAt DateTime            @default(now())
+  routes    TransmissionRoute[]
 }
 
 model GarduInduk {
-  id        Int      @id @default(autoincrement())
-  kode      String   @unique
-  nama      String
-  lat       Float
-  lng       Float
-  tegangan  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  id         Int                 @id @default(autoincrement())
+  kode       String              @unique
+  nama       String
+  lat        Float
+  lng        Float
+  tegangan   String
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @default(now()) @updatedAt
   routesDari TransmissionRoute[] @relation("RouteDari")
   routesKe   TransmissionRoute[] @relation("RouteKe")
 }
@@ -67,123 +64,117 @@ model TransmissionRoute {
   id          Int                  @id @default(autoincrement())
   nama        String
   lineTypeId  Int
-  lineType    TransmissionLineType @relation(fields: [lineTypeId], references: [id])
   garduDariId Int
-  garduDari   GarduInduk           @relation("RouteDari", fields: [garduDariId], references: [id])
   garduKeId   Int
-  garduKe     GarduInduk           @relation("RouteKe", fields: [garduKeId], references: [id])
   createdAt   DateTime             @default(now())
-  updatedAt   DateTime             @updatedAt
-
-  towers Tower[]
+  updatedAt   DateTime             @default(now()) @updatedAt
+  towers      Tower[]
+  garduDari   GarduInduk           @relation("RouteDari", fields: [garduDariId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  garduKe     GarduInduk           @relation("RouteKe", fields: [garduKeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  lineType    TransmissionLineType @relation(fields: [lineTypeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model Tower {
-  id        String   @id
-  nama      String
-  lat       Float
-  lng       Float
-  tegangan  String
-  tipe      String
-  kondisi   String   @default("normal")
-  lokasi    String?
-  radius    Float    @default(100)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  jalur     String?
-  nomorUrut Int?
-
+  id              String             @id @default(cuid())
+  nama            String
+  lat             Float
+  lng             Float
+  tegangan        String
+  tipe            String
+  kondisi         String             @default("normal")
+  lokasi          String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  radius          Float              @default(100)
+  jalur           String?
+  nomorUrut       Int?
   routeId         Int?
-  route           TransmissionRoute? @relation(fields: [routeId], references: [id])
   statusKerawanan String             @default("aman")
   jenisKerawanan  String?
   pplNotes        String?
   penanggungJawab String?
   telepon         String?
   sertifikatLink  String?
-
-  laporan        Laporan[]
-  sertifikat     Sertifikat[]
-  asBuilt        AsBuiltDrawing[]
-  asBuiltFolders AsBuiltFolder[]
+  hasCertificate  Boolean            @default(false)
+  asBuilt         AsBuiltDrawing[]
+  asBuiltFolders  AsBuiltFolder[]
+  laporan         Laporan[]
+  route           TransmissionRoute? @relation(fields: [routeId], references: [id], onUpdate: NoAction)
+  sertifikat      Sertifikat[]
 }
 
 model Laporan {
-  id        String  @id @default(cuid())
-  towerId   String
-  tower     Tower   @relation(fields: [towerId], references: [id])
-  pelaporId String
-  pelapor   Pegawai @relation(fields: [pelaporId], references: [id])
-
-  jenisGangguan String
-  deskripsi     String
-  levelRisiko   String
-  status        String   @default("berlangsung")
-  tanggal       DateTime
-  lokasiDetail  String?
-  keterangan String?
-  foto      String[]
-
-  noSpk    String?
-  teknisi  String?
-  temuan   String?
-  hasil    String?
-  penyebab String?
-  durasi   String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  progress    ProgressLaporan[]
-  fotoHistory FotoHistory[]
+  id             String            @id @default(cuid())
+  towerId        String
+  pelaporId      String
+  deskripsi      String
+  status         String            @default("berlangsung")
+  tanggal        DateTime
+  keterangan     String?
+  foto           String[]
+  noSpk          String?
+  teknisi        String?
+  temuan         String?
+  hasil          String?
+  penyebab       String?
+  durasi         String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  jenisGangguan  String
+  levelRisiko    String
+  lokasiDetail   String?
+  contactPerson  String?
+  progresLaporan String?           @default("sedang_berlangsung")
+  fotoHistory    FotoHistory[]
+  pelapor        Pegawai           @relation(fields: [pelaporId], references: [id])
+  tower          Tower             @relation(fields: [towerId], references: [id])
+  progress       ProgressLaporan[]
 }
 
 model ProgressLaporan {
   id        String   @id @default(cuid())
   laporanId String
-  laporan   Laporan  @relation(fields: [laporanId], references: [id], onDelete: Cascade)
-  tipe      String   // spanduk | brosur | laporan_baru | berita_acara
+  tipe      String
   fileUrl   String
   namaFile  String
   createdAt DateTime @default(now())
+  laporan   Laporan  @relation(fields: [laporanId], references: [id], onDelete: Cascade)
 }
 
 model FotoHistory {
   id        String   @id @default(cuid())
   laporanId String
-  laporan   Laporan  @relation(fields: [laporanId], references: [id], onDelete: Cascade)
-  urls      String[]
+  urls      String[] @default([])
   createdAt DateTime @default(now())
+  laporan   Laporan  @relation(fields: [laporanId], references: [id], onDelete: Cascade)
 }
 
 model Sertifikat {
   id            String              @id @default(cuid())
-  nama          String
-  kategori      String
-  status        String              @default("berlaku")
   towerId       String?
   tower         Tower?              @relation(fields: [towerId], references: [id])
+  nama          String
   berlakuHingga DateTime?
-  dokumen       SertifikatDokumen[]
+  status        String              @default("berlaku")
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
+  kategori      String
+  dokumen       SertifikatDokumen[]
 }
 
 model SertifikatDokumen {
   id        String     @id @default(cuid())
   folderId  String
-  folder    Sertifikat @relation(fields: [folderId], references: [id], onDelete: Cascade)
   namaFile  String
   fileUrl   String
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
+  folder    Sertifikat @relation(fields: [folderId], references: [id], onDelete: Cascade)
 }
 
 model AsBuiltDrawing {
   id         String   @id @default(cuid())
   towerId    String
-  tower      Tower    @relation(fields: [towerId], references: [id])
   namaFile   String
   tipe       String
   tahun      Int
@@ -192,29 +183,30 @@ model AsBuiltDrawing {
   keterangan String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  tower      Tower    @relation(fields: [towerId], references: [id])
 }
 
 model AsBuiltFolder {
-  id         String          @id @default(cuid())
+  id         String           @id @default(cuid())
   nama       String
   tipe       String
   tahun      Int
   towerId    String?
-  tower      Tower?          @relation(fields: [towerId], references: [id])
   keterangan String?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
   dokumen    AsBuiltDokumen[]
-  createdAt  DateTime        @default(now())
-  updatedAt  DateTime        @updatedAt
+  tower      Tower?           @relation(fields: [towerId], references: [id])
 }
 
 model AsBuiltDokumen {
   id        String        @id @default(cuid())
   folderId  String
-  folder    AsBuiltFolder @relation(fields: [folderId], references: [id], onDelete: Cascade)
   namaFile  String
   fileUrl   String
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
+  folder    AsBuiltFolder @relation(fields: [folderId], references: [id], onDelete: Cascade)
 }
 
 model JalurKML {

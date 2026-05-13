@@ -28,25 +28,25 @@ export declare class LaporanController {
         id: string;
         tipe: string;
         createdAt: Date;
-        namaFile: string;
-        fileUrl: string;
         laporanId: string;
+        fileUrl: string;
+        namaFile: string;
     }[]>>;
     uploadProgress(id: string, file: Express.Multer.File, tipe: string, req: any): Promise<{
         id: string;
         tipe: string;
         createdAt: Date;
-        namaFile: string;
-        fileUrl: string;
         laporanId: string;
+        fileUrl: string;
+        namaFile: string;
     }>;
     deleteProgress(id: string, progressId: string): Promise<{
         id: string;
         tipe: string;
         createdAt: Date;
-        namaFile: string;
-        fileUrl: string;
         laporanId: string;
+        fileUrl: string;
+        namaFile: string;
     }>;
     getFotoHistory(id: string): Promise<{
         id: string;

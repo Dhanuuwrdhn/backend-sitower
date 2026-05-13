@@ -21,6 +21,7 @@ class CreatePegawaiDto {
     password;
     aktif;
     foto;
+    expiredAt;
 }
 exports.CreatePegawaiDto = CreatePegawaiDto;
 __decorate([
@@ -67,4 +68,10 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreatePegawaiDto.prototype, "foto", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: '2026-12-31T23:59:59.000Z', description: 'Tanggal akun kedaluwarsa (superadmin only)' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsDateString)(),
+    __metadata("design:type", String)
+], CreatePegawaiDto.prototype, "expiredAt", void 0);
 //# sourceMappingURL=create-pegawai.dto.js.map

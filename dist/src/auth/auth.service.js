@@ -59,6 +59,8 @@ let AuthService = class AuthService {
         const pegawai = await this.prisma.pegawai.findUnique({ where: { nik } });
         if (!pegawai || !pegawai.aktif)
             throw new common_1.UnauthorizedException('NIK tidak ditemukan atau akun nonaktif');
+        if (pegawai.expiredAt && pegawai.expiredAt < new Date())
+            throw new common_1.ForbiddenException('Anda tidak bisa login');
         const valid = await bcrypt.compare(password, pegawai.password);
         if (!valid)
             throw new common_1.UnauthorizedException('Password salah');

@@ -159,22 +159,35 @@ export class AsetService {
 
     const where: any = {}
     if (query.route_id)      where.routeId         = Number(query.route_id)
-    if (query.status)        where.statusKerawanan  = query.status
-    if (query.kerawanan_type) where.jenisKerawanan  = query.kerawanan_type
+    
+    // Status Kerawanan (Support multi-select)
+    if (query.status) {
+      const statuses = query.status.split(',')
+      where.statusKerawanan = statuses.length > 1 ? { in: statuses } : statuses[0]
+    }
+    
+    // Jenis Kerawanan (Support multi-select)
+    if (query.kerawanan_type) {
+      const types = query.kerawanan_type.split(',')
+      where.jenisKerawanan = types.length > 1 ? { in: types } : types[0]
+    }
 
-    if (query.bbox) {
-      // bbox=minLat,minLng,maxLat,maxLng
-      const [minLat, minLng, maxLat, maxLng] = query.bbox.split(',').map(Number)
-      if ([minLat, minLng, maxLat, maxLng].some(isNaN)) throw new BadRequestException('bbox tidak valid')
-      where.lat = { gte: minLat, lte: maxLat }
-      where.lng = { gte: minLng, lte: maxLng }
+    // Tipe (Support multi-select)
+    if (query['tipe']) {
+      const types = query['tipe'].split(',')
+      where.tipe = types.length > 1 ? { in: types } : types[0]
+    }
+
+    // Certificate Status
+    if (query['hasCertificate'] !== undefined) {
+      where.hasCertificate = query['hasCertificate'] === 'true'
     }
 
     const [data, total] = await Promise.all([
       this.prisma.tower.findMany({
         where,
         include: { route: { include: { lineType: true } } },
-        orderBy: [{ jalur: 'asc' }, { nomorUrut: 'asc' }],
+        orderBy: [{ jalur: 'asc' }, { nomorUrut: 'asc' }, { id: 'asc' }],
         skip,
         take: limit,
       }),
@@ -190,27 +203,108 @@ export class AsetService {
       include: {
         route:   { include: { lineType: true, garduDari: true, garduKe: true } },
         laporan: { orderBy: { tanggal: 'desc' }, take: 10 },
+        sertifikat: {
+          include: { _count: { select: { dokumen: true } }, dokumen: { orderBy: { createdAt: 'desc' } } },
+          orderBy: { createdAt: 'desc' },
+        },
       },
     })
     if (!rec) throw new NotFoundException(`Tower ${id} tidak ditemukan`)
     return rec
   }
 
-  async createTower(dto: CreateTowerAsetDto) {
-    return this.prisma.tower.create({
-      data: {
-        ...dto,
-        tegangan: '150kV',
-        tipe:     'SUTT',
-        kondisi:  'normal',
-        statusKerawanan: dto.statusKerawanan ?? 'aman',
+  async createTower(dto: CreateTowerAsetDto, files?: Express.Multer.File[]) {
+    const crypto = require('crypto')
+    // Explicitly handle fields that come as strings from multipart/form-data
+    const data: any = {
+      id: crypto.randomUUID(), // Manual ID generation workaround
+      ...dto,
+      lat: dto.lat ? Number(dto.lat) : 0,
+      lng: dto.lng ? Number(dto.lng) : 0,
+      radius: dto.radius ? Number(dto.radius) : 100,
+      nomorUrut: dto.nomorUrut ? Number(dto.nomorUrut) : null,
+      routeId: dto.routeId ? Number(dto.routeId) : null,
+      hasCertificate: String(dto.hasCertificate) === 'true',
+      statusKerawanan: dto.statusKerawanan ?? 'aman',
+    }
+
+    const tower = await this.prisma.tower.create({
+      data,
+      include: {
+        sertifikat: { include: { dokumen: true } },
+        route: true,
       },
     })
+
+    if (files && files.length > 0) {
+      const cert = await this.prisma.sertifikat.create({
+        data: {
+          towerId: tower.id,
+          nama: `Sertifikat Aset ${tower.nama}`,
+          kategori: 'Aset',
+          status: 'berlaku',
+        },
+      })
+      const docs = files.map((f) => ({
+        folderId: cert.id,
+        namaFile: f.originalname,
+        fileUrl: `/uploads/sertifikat/${f.filename}`,
+      }))
+      await this.prisma.sertifikatDokumen.createMany({ data: docs })
+      
+      // Refresh to include new docs
+      return this.findOneTower(tower.id)
+    }
+    return tower
   }
 
-  async updateTower(id: string, dto: UpdateTowerAsetDto) {
+  async updateTower(id: string, dto: UpdateTowerAsetDto, files?: Express.Multer.File[]) {
     await this.findOneTower(id)
-    return this.prisma.tower.update({ where: { id }, data: dto })
+    
+    // Explicitly handle fields that come as strings from multipart/form-data
+    const data: any = { ...dto }
+    if (dto.lat !== undefined) data.lat = Number(dto.lat)
+    if (dto.lng !== undefined) data.lng = Number(dto.lng)
+    if (dto.radius !== undefined) data.radius = Number(dto.radius)
+    if (dto.nomorUrut !== undefined) data.nomorUrut = dto.nomorUrut ? Number(dto.nomorUrut) : null
+    if (dto.routeId !== undefined) data.routeId = dto.routeId ? Number(dto.routeId) : null
+    if (dto.hasCertificate !== undefined) {
+      data.hasCertificate = String(dto.hasCertificate) === 'true'
+    }
+
+    const tower = await this.prisma.tower.update({
+      where: { id },
+      data,
+      include: {
+        sertifikat: { include: { dokumen: true } },
+        route: true,
+      },
+    })
+
+    if (files && files.length > 0) {
+      // Find or create a default certificate folder
+      let cert = await this.prisma.sertifikat.findFirst({
+        where: { towerId: id, kategori: 'Aset' },
+      })
+      if (!cert) {
+        cert = await this.prisma.sertifikat.create({
+          data: {
+            towerId: id,
+            nama: `Sertifikat Aset ${tower.nama}`,
+            kategori: 'Aset',
+            status: 'berlaku',
+          },
+        })
+      }
+      const docs = files.map((f) => ({
+        folderId: cert.id,
+        namaFile: f.originalname,
+        fileUrl: `/uploads/sertifikat/${f.filename}`,
+      }))
+      await this.prisma.sertifikatDokumen.createMany({ data: docs })
+      return this.findOneTower(id)
+    }
+    return tower
   }
 
   async removeTower(id: string) {
@@ -438,5 +532,96 @@ export class AsetService {
     }
 
     return { message: `Import selesai: ${created} dibuat, ${updated} diperbarui` }
+  }
+
+  // ── Certificates ───────────────────────────────────────────────────────────
+  async findCertificatesByTower(towerId: string) {
+    return this.prisma.sertifikat.findMany({
+      where: { towerId },
+      include: {
+        _count: { select: { dokumen: true } },
+        dokumen: { orderBy: { createdAt: 'desc' } },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+  }
+
+  async findCertificate(id: string) {
+    const cert = await this.prisma.sertifikat.findUnique({
+      where: { id },
+      include: {
+        tower: { select: { id: true, nama: true } },
+        dokumen: { orderBy: { createdAt: 'desc' } },
+      },
+    })
+    if (!cert) throw new NotFoundException(`Sertifikat ${id} tidak ditemukan`)
+    return cert
+  }
+
+  async createCertificate(towerId: string, data: any, files?: Express.Multer.File[]) {
+    const cert = await this.prisma.sertifikat.create({
+      data: {
+        towerId,
+        nama: data.nama,
+        kategori: data.kategori,
+        status: data.status || 'berlaku',
+        berlakuHingga: data.berlakuHingga ? new Date(data.berlakuHingga) : null,
+      },
+    })
+
+    if (files && files.length > 0) {
+      const docs = files.map((f) => ({
+        folderId: cert.id,
+        namaFile: f.originalname,
+        fileUrl: `/uploads/sertifikat/${f.filename}`,
+      }))
+      await this.prisma.sertifikatDokumen.createMany({ data: docs })
+    }
+
+    return this.findCertificate(cert.id)
+  }
+
+  async updateCertificate(id: string, data: any, files?: Express.Multer.File[]) {
+    await this.findCertificate(id)
+    const cert = await this.prisma.sertifikat.update({
+      where: { id },
+      data: {
+        ...(data.nama && { nama: data.nama }),
+        ...(data.kategori && { kategori: data.kategori }),
+        ...(data.status && { status: data.status }),
+        ...(data.berlakuHingga && { berlakuHingga: new Date(data.berlakuHingga) }),
+      },
+    })
+
+    if (files && files.length > 0) {
+      const docs = files.map((f) => ({
+        folderId: cert.id,
+        namaFile: f.originalname,
+        fileUrl: `/uploads/sertifikat/${f.filename}`,
+      }))
+      await this.prisma.sertifikatDokumen.createMany({ data: docs })
+    }
+
+    return this.findCertificate(id)
+  }
+
+  async removeCertificate(id: string) {
+    await this.findCertificate(id)
+    return this.prisma.sertifikat.delete({ where: { id } })
+  }
+
+  // ── Documents ──────────────────────────────────────────────────────────────
+  async findDocument(id: string) {
+    const doc = await this.prisma.sertifikatDokumen.findUnique({
+      where: { id },
+      include: { folder: { select: { id: true, nama: true } } },
+    })
+    if (!doc) throw new NotFoundException(`Dokumen ${id} tidak ditemukan`)
+    return doc
+  }
+
+  async removeDocument(id: string) {
+    await this.findDocument(id)
+    return this.prisma.sertifikatDokumen.delete({ where: { id } })
   }
 }

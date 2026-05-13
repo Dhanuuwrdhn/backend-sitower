@@ -231,16 +231,49 @@ let ImportService = class ImportService {
             return 'pemanfaatan_lahan';
         return 'pekerjaan_pihak_lain';
     }
+    LEVEL_PRIORITY = {
+        kritis_tidak_terpenuhi: 4, kritis_terpenuhi: 3, kritis: 3, sedang: 2, aman: 1,
+    };
+    KERAWANAN_TYPES = new Set([
+        'pekerjaan_pihak_lain', 'kebakaran', 'layangan', 'pencurian', 'pemanfaatan_lahan',
+    ]);
+    async syncTowerStatus(towerId) {
+        const active = await this.prisma.laporan.findMany({
+            where: { towerId, status: 'berlangsung' },
+            select: { levelRisiko: true, jenisGangguan: true },
+        });
+        if (active.length === 0) {
+            await this.prisma.tower.update({ where: { id: towerId }, data: { statusKerawanan: 'aman', jenisKerawanan: null } });
+            return;
+        }
+        let worstLevel = 'aman', worstPriority = 0, worstJenis = null;
+        for (const l of active) {
+            const p = this.LEVEL_PRIORITY[l.levelRisiko] ?? 1;
+            if (p > worstPriority) {
+                worstPriority = p;
+                worstLevel = l.levelRisiko;
+                worstJenis = this.KERAWANAN_TYPES.has(l.jenisGangguan) ? l.jenisGangguan : worstJenis;
+            }
+        }
+        await this.prisma.tower.update({ where: { id: towerId }, data: { statusKerawanan: worstLevel, jenisKerawanan: worstJenis } });
+    }
     async importLaporan(rows) {
         let createdCount = 0;
+        const affectedTowerIds = new Set();
         const validRows = rows.filter(r => {
-            const isInstruction = r['RUAS'] === 'Otomatis by foto lokasi' ||
-                r['URAIAN PEKERJAAN'] === 'Input manual' ||
-                String(r['NO']).toLowerCase() === 'no';
-            const hasContent = r['SPAN'] || r['NO. TOWER'] || r['RUAS'] ||
-                r['KLASIFIKASI '] || r['KLASIFIKASI'] ||
-                r['URAIAN PEKERJAAN'];
-            return !isInstruction && !!hasContent;
+            const ruas = String(r['RUAS'] || '').trim();
+            const uraian = String(r['URAIAN PEKERJAAN'] || '').trim();
+            const klas = String(r['KLASIFIKASI '] || r['KLASIFIKASI'] || '').trim();
+            const no = String(r['NO'] || '').trim().toLowerCase();
+            if (ruas === 'Otomatis by foto lokasi')
+                return false;
+            if (uraian === 'Input manual')
+                return false;
+            if (no === 'no')
+                return false;
+            if (klas.includes('\n') || klas.includes('\r'))
+                return false;
+            return !!(ruas || r['SPAN'] || r['NO. TOWER'] || uraian);
         });
         console.log(`[Import] Total rows: ${rows.length}, Valid rows: ${validRows.length}`);
         for (const r of validRows) {
@@ -310,14 +343,16 @@ let ImportService = class ImportService {
                         levelRisiko: levelRisiko,
                         status: statusStr,
                         tanggal: tanggal,
-                        lokasiDetail: r.lokasiDetail || r.lokasi || r['RUAS'] || null,
+                        lokasiDetail: r.lokasiDetail || r.lokasi || (rawSpan ? `Span ${rawSpan}` : null) || rawRuas || null,
                         keterangan: keterangan,
                         foto: r.foto ? String(r.foto).split(',').map((s) => s.trim()) : [],
                     }
                 });
                 createdCount++;
             }
+            affectedTowerIds.add(tower.id);
         }
+        await Promise.all([...affectedTowerIds].map(id => this.syncTowerStatus(id)));
         return { message: 'Import laporan selesai', total: createdCount };
     }
 };

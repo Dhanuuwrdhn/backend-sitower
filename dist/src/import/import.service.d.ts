@@ -11,5 +11,8 @@ export declare class ImportService {
     private importSertifikat;
     private normalizeStatus;
     private normalizeJenis;
+    private readonly LEVEL_PRIORITY;
+    private readonly KERAWANAN_TYPES;
+    private syncTowerStatus;
     private importLaporan;
 }

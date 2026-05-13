@@ -6,7 +6,6 @@ import { PrismaModule } from './prisma/prisma.module'
 import { AuthModule } from './auth/auth.module'
 import { TowersModule } from './towers/towers.module'
 import { LaporanModule } from './laporan/laporan.module'
-import { SertifikatModule } from './sertifikat/sertifikat.module'
 import { AsBuiltDrawingModule } from './as-built-drawing/as-built-drawing.module'
 import { PegawaiModule } from './pegawai/pegawai.module'
 import { ImportModule } from './import/import.module'
@@ -20,7 +19,6 @@ import { AsetModule } from './aset/aset.module'
     AuthModule,
     TowersModule,
     LaporanModule,
-    SertifikatModule,
     AsBuiltDrawingModule,
     PegawaiModule,
     ImportModule,
