@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsBoolean, MinLength } from 'class-validator'
+import { IsString, IsOptional, IsBoolean, IsDateString, MinLength } from 'class-validator'
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
 
 export class CreatePegawaiDto {
@@ -37,4 +37,9 @@ export class CreatePegawaiDto {
   @IsOptional()
   @IsString()
   foto?: string
+
+  @ApiPropertyOptional({ example: '2026-12-31T23:59:59.000Z', description: 'Tanggal akun kedaluwarsa (superadmin only)' })
+  @IsOptional()
+  @IsDateString()
+  expiredAt?: string
 }

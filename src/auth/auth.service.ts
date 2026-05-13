@@ -17,6 +17,9 @@ export class AuthService {
     if (!pegawai || !pegawai.aktif)
       throw new UnauthorizedException('NIK tidak ditemukan atau akun nonaktif')
 
+    if (pegawai.expiredAt && pegawai.expiredAt < new Date())
+      throw new ForbiddenException('Anda tidak bisa login')
+
     const valid = await bcrypt.compare(password, pegawai.password)
     if (!valid) throw new UnauthorizedException('Password salah')
 
