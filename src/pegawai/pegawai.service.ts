@@ -10,7 +10,8 @@ export class PegawaiService {
 
   findAll() {
     return this.prisma.pegawai.findMany({
-      select: { id: true, nik: true, nama: true, jabatan: true, unit: true, role: true, aktif: true, foto: true, createdAt: true },
+      where: { role: { not: 'superadmin' } },
+      select: { id: true, nik: true, nama: true, jabatan: true, unit: true, role: true, aktif: true, expiredAt: true, foto: true, createdAt: true },
       orderBy: { nama: 'asc' },
     })
   }
@@ -18,7 +19,7 @@ export class PegawaiService {
   async findOne(id: string) {
     const data = await this.prisma.pegawai.findUnique({
       where: { id },
-      select: { id: true, nik: true, nama: true, jabatan: true, unit: true, role: true, aktif: true, foto: true, createdAt: true, updatedAt: true },
+      select: { id: true, nik: true, nama: true, jabatan: true, unit: true, role: true, aktif: true, expiredAt: true, foto: true, createdAt: true, updatedAt: true },
     })
     if (!data) throw new NotFoundException(`Pegawai ${id} tidak ditemukan`)
     return data
@@ -31,7 +32,7 @@ export class PegawaiService {
     const password = await bcrypt.hash(dto.password, 10)
     return this.prisma.pegawai.create({
       data: { ...dto, password },
-      select: { id: true, nik: true, nama: true, jabatan: true, unit: true, role: true, aktif: true },
+      select: { id: true, nik: true, nama: true, jabatan: true, unit: true, role: true, aktif: true, expiredAt: true },
     })
   }
 
@@ -43,7 +44,7 @@ export class PegawaiService {
     return this.prisma.pegawai.update({
       where: { id },
       data,
-      select: { id: true, nik: true, nama: true, jabatan: true, unit: true, role: true, aktif: true },
+      select: { id: true, nik: true, nama: true, jabatan: true, unit: true, role: true, aktif: true, expiredAt: true },
     })
   }
 
