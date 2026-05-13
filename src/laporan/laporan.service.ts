@@ -48,9 +48,22 @@ export class LaporanService {
 
     const where: any = {}
 
-    if (query.jenisGangguan) where.jenisGangguan = query.jenisGangguan
-    if (query.status)        where.status        = query.status
-    if (query.levelRisiko)   where.levelRisiko   = query.levelRisiko
+    if (query.jenisGangguan) {
+      const vals = query.jenisGangguan.split(',').filter(Boolean)
+      if (vals.length > 0) where.jenisGangguan = { in: vals }
+    }
+    if (query.status) {
+      const vals = query.status.split(',').filter(Boolean)
+      if (vals.length > 0) where.status = { in: vals }
+    }
+    if (query.levelRisiko) {
+      const vals = query.levelRisiko.split(',').filter(Boolean)
+      if (vals.length > 0) {
+        // Expand 'kritis' to both kritis types if needed, or just use values
+        const expanded = vals.flatMap(v => v === 'kritis' ? ['kritis_terpenuhi', 'kritis_tidak_terpenuhi'] : [v])
+        where.levelRisiko = { in: expanded }
+      }
+    }
     if (query.towerId)       where.towerId       = query.towerId
 
     if (query.tglMulai || query.tglAkhir) {
