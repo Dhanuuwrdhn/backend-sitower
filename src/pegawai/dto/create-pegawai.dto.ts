@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsBoolean, IsDateString, MinLength } from 'class-validator'
+import { IsString, IsOptional, IsBoolean, IsDateString, MinLength, Matches } from 'class-validator'
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
 
 export class CreatePegawaiDto {
@@ -23,9 +23,15 @@ export class CreatePegawaiDto {
   @IsString()
   role?: string
 
-  @ApiProperty({ example: 'password123', minLength: 6 })
+  @ApiProperty({
+    example: 'Spektra!1',
+    minLength: 8,
+    description: 'Min. 8 karakter, harus mengandung 1 huruf kapital dan 1 karakter spesial.',
+  })
   @IsString()
-  @MinLength(6)
+  @MinLength(8, { message: 'Password minimal 8 karakter' })
+  @Matches(/[A-Z]/, { message: 'Password harus mengandung 1 huruf kapital' })
+  @Matches(/[^A-Za-z0-9]/, { message: 'Password harus mengandung 1 karakter spesial' })
   password!: string
 
   @ApiPropertyOptional({ example: true })
