@@ -334,11 +334,13 @@ export class AsetService {
         orderBy: [{ jalur: 'asc' }, { nomorUrut: 'asc' }],
         select:  {
           id: true, nama: true, lat: true, lng: true, updatedAt: true,
+          tipe: true,
           statusKerawanan: true, jenisKerawanan: true, routeId: true,
           laporan: {
             where:  { status: 'berlangsung' },
             select: { jenisGangguan: true, levelRisiko: true, updatedAt: true },
           },
+          sertifikat: { select: { id: true }, take: 1 },
         },
       }),
     ])
@@ -373,6 +375,8 @@ export class AsetService {
         name:           t.nama,
         lat:            t.lat,
         lng:            t.lng,
+        tipe:           t.tipe,
+        bersertifikat:  (t.sertifikat?.length ?? 0) > 0,
         status:         t.statusKerawanan,
         kerawanan_type: t.jenisKerawanan,
         kerawanan_types: [...new Set(
