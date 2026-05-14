@@ -18,12 +18,15 @@ class LoginDto {
 }
 exports.LoginDto = LoginDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: '199001010001' }),
+    (0, swagger_1.ApiProperty)({
+        example: '1234567890123456',
+        description: 'NIK (16-digit) atau username. Sistem akan cocokkan ke salah satu.',
+    }),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], LoginDto.prototype, "nik", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'password123', minLength: 6 }),
+    (0, swagger_1.ApiProperty)({ example: 'Aa1!aaaa', minLength: 6 }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.MinLength)(6),
     __metadata("design:type", String)

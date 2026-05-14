@@ -51,9 +51,15 @@ __decorate([
     __metadata("design:type", String)
 ], CreatePegawaiDto.prototype, "role", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'password123', minLength: 6 }),
+    (0, swagger_1.ApiProperty)({
+        example: 'Spektra!1',
+        minLength: 8,
+        description: 'Min. 8 karakter, harus mengandung 1 huruf kapital dan 1 karakter spesial.',
+    }),
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.MinLength)(6),
+    (0, class_validator_1.MinLength)(8, { message: 'Password minimal 8 karakter' }),
+    (0, class_validator_1.Matches)(/[A-Z]/, { message: 'Password harus mengandung 1 huruf kapital' }),
+    (0, class_validator_1.Matches)(/[^A-Za-z0-9]/, { message: 'Password harus mengandung 1 karakter spesial' }),
     __metadata("design:type", String)
 ], CreatePegawaiDto.prototype, "password", void 0);
 __decorate([
