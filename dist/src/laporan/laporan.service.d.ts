@@ -22,8 +22,6 @@ export declare class LaporanService {
     remove(id: string): Promise<void>;
     updateFotoUrls(id: string, urls: string[]): Promise<{
         id: string;
-        createdAt: Date;
-        updatedAt: Date;
         towerId: string;
         pelaporId: string;
         deskripsi: string;
@@ -37,6 +35,8 @@ export declare class LaporanService {
         hasil: string | null;
         penyebab: string | null;
         durasi: string | null;
+        createdAt: Date;
+        updatedAt: Date;
         jenisGangguan: string;
         levelRisiko: string;
         lokasiDetail: string | null;

@@ -128,8 +128,12 @@ export class LaporanService {
       pemanfaatan: 0, gangguan: 0, cui: 0, cleanup: 0,
     }
 
+    const KEY_ALIAS: Record<string, string> = {
+      pekerjaan_pihak_lain: 'ppl',
+      pemanfaatan_lahan: 'pemanfaatan',
+    }
     for (const c of counts) {
-      const key = c.jenisGangguan === 'pekerjaan_pihak_lain' ? 'ppl' : c.jenisGangguan
+      const key = KEY_ALIAS[c.jenisGangguan] ?? c.jenisGangguan
       result[key] = c._count.id
     }
 

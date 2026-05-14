@@ -126,8 +126,12 @@ let LaporanService = class LaporanService {
             ppl: 0, kebakaran: 0, layangan: 0, pencurian: 0,
             pemanfaatan: 0, gangguan: 0, cui: 0, cleanup: 0,
         };
+        const KEY_ALIAS = {
+            pekerjaan_pihak_lain: 'ppl',
+            pemanfaatan_lahan: 'pemanfaatan',
+        };
         for (const c of counts) {
-            const key = c.jenisGangguan === 'pekerjaan_pihak_lain' ? 'ppl' : c.jenisGangguan;
+            const key = KEY_ALIAS[c.jenisGangguan] ?? c.jenisGangguan;
             result[key] = c._count.id;
         }
         const [total, berlangsung] = await Promise.all([
