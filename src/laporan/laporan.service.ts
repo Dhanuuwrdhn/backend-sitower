@@ -64,7 +64,20 @@ export class LaporanService {
         where.levelRisiko = { in: expanded }
       }
     }
-    if (query.towerId)       where.towerId       = query.towerId
+    if (query.towerId) {
+      const vals = query.towerId.split(',').filter(Boolean)
+      if (vals.length > 0) where.towerId = { in: vals }
+    }
+    if (query.teknisi) {
+      const vals = query.teknisi.split(',').filter(Boolean)
+      if (vals.length > 0) {
+        where.OR = [
+          ...(where.OR || []),
+          { teknisi: { in: vals } },
+          { pelapor: { nama: { in: vals } } }
+        ]
+      }
+    }
 
     if (query.tglMulai || query.tglAkhir) {
       where.tanggal = {}
