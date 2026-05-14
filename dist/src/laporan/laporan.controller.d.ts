@@ -26,27 +26,27 @@ export declare class LaporanController {
     remove(id: string): Promise<void>;
     getProgress(id: string): Promise<Record<string, {
         id: string;
-        createdAt: Date;
         tipe: string;
-        laporanId: string;
-        fileUrl: string;
+        createdAt: Date;
         namaFile: string;
+        fileUrl: string;
+        laporanId: string;
     }[]>>;
     uploadProgress(id: string, file: Express.Multer.File, tipe: string, req: any): Promise<{
         id: string;
-        createdAt: Date;
         tipe: string;
-        laporanId: string;
-        fileUrl: string;
+        createdAt: Date;
         namaFile: string;
+        fileUrl: string;
+        laporanId: string;
     }>;
     deleteProgress(id: string, progressId: string): Promise<{
         id: string;
-        createdAt: Date;
         tipe: string;
-        laporanId: string;
-        fileUrl: string;
+        createdAt: Date;
         namaFile: string;
+        fileUrl: string;
+        laporanId: string;
     }>;
     getFotoHistory(id: string): Promise<{
         id: string;
@@ -56,12 +56,12 @@ export declare class LaporanController {
     }[]>;
     getRiwayat(id: string): Promise<{
         id: string;
+        createdAt: Date;
+        statusKerawanan: string;
         tanggal: Date;
         foto: string[];
-        createdAt: Date;
         contactPerson: string | null;
         progresLaporan: string;
-        statusKerawanan: string;
         laporanId: string;
         spanduk: string[];
         oleh: string;
@@ -78,12 +78,12 @@ export declare class LaporanController {
         surat?: Express.Multer.File[];
     }, body: any, req: any): Promise<{
         id: string;
+        createdAt: Date;
+        statusKerawanan: string;
         tanggal: Date;
         foto: string[];
-        createdAt: Date;
         contactPerson: string | null;
         progresLaporan: string;
-        statusKerawanan: string;
         laporanId: string;
         spanduk: string[];
         oleh: string;
@@ -95,12 +95,12 @@ export declare class LaporanController {
     }>;
     deleteRiwayat(id: string, riwayatId: string): Promise<{
         id: string;
+        createdAt: Date;
+        statusKerawanan: string;
         tanggal: Date;
         foto: string[];
-        createdAt: Date;
         contactPerson: string | null;
         progresLaporan: string;
-        statusKerawanan: string;
         laporanId: string;
         spanduk: string[];
         oleh: string;

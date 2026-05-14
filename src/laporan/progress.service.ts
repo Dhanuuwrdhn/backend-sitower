@@ -85,39 +85,86 @@ export class ProgressService {
       surat?: string[]
     },
   ) {
-    const laporan = await this.prisma.laporan.findUnique({ where: { id: laporanId } })
+    const [laporan, progressRows] = await Promise.all([
+      this.prisma.laporan.findUnique({ where: { id: laporanId } }),
+      this.prisma.progressLaporan.findMany({
+        where:   { laporanId },
+        orderBy: { createdAt: 'desc' },
+      }),
+    ])
     if (!laporan) throw new NotFoundException(`Laporan ${laporanId} tidak ditemukan`)
 
-    const riwayat = await this.prisma.riwayatLaporan.create({
-      data: {
-        laporanId,
-        oleh,
-        statusKerawanan: payload.statusKerawanan,
-        progresLaporan:  payload.progresLaporan,
-        uraianPekerjaan: payload.uraianPekerjaan ?? null,
-        upayaPengendalian: payload.upayaPengendalian ?? null,
-        pihakLain:       payload.pihakLain ?? null,
-        contactPerson:   payload.contactPerson ?? null,
-        foto:            payload.foto ?? [],
-        beritaAcara:     payload.beritaAcara ?? [],
-        spanduk:         payload.spanduk ?? [],
-        surat:           payload.surat ?? [],
-      },
-    })
+    const currentProgress = progressRows.reduce<Record<string, string[]>>((acc, row) => {
+      acc[row.tipe] = [...(acc[row.tipe] ?? []), row.fileUrl]
+      return acc
+    }, {})
 
-    // Sync laporan parent: status, progres, levelRisiko reflect latest update
     const status =
       payload.progresLaporan === 'selesai' ? 'selesai' :
       payload.progresLaporan === 'tidak_ada_aktifitas' ? 'tidak_ada_aktifitas' :
       'berlangsung'
-    await this.prisma.laporan.update({
-      where: { id: laporanId },
-      data: {
-        status,
-        progresLaporan: payload.progresLaporan,
-        levelRisiko:    payload.statusKerawanan,
-      },
-    })
+
+    const nextFoto = payload.foto && payload.foto.length > 0 ? payload.foto : laporan.foto
+    const nextDeskripsi = payload.uraianPekerjaan?.trim() ? payload.uraianPekerjaan.trim() : laporan.deskripsi
+    const nextKeterangan = payload.upayaPengendalian?.trim() ? payload.upayaPengendalian.trim() : laporan.keterangan
+    const nextTeknisi = payload.pihakLain?.trim() ? payload.pihakLain.trim() : laporan.teknisi
+    const nextContactPerson = payload.contactPerson?.trim() ? payload.contactPerson.trim() : laporan.contactPerson
+
+    const progressCreates = [
+      ...(payload.beritaAcara ?? []).map((fileUrl) => ({
+        laporanId,
+        tipe: 'berita_acara',
+        fileUrl,
+        namaFile: fileUrl.split('/').pop() ?? 'berita-acara',
+      })),
+      ...(payload.spanduk ?? []).map((fileUrl) => ({
+        laporanId,
+        tipe: 'spanduk',
+        fileUrl,
+        namaFile: fileUrl.split('/').pop() ?? 'spanduk',
+      })),
+      ...(payload.surat ?? []).map((fileUrl) => ({
+        laporanId,
+        tipe: 'surat',
+        fileUrl,
+        namaFile: fileUrl.split('/').pop() ?? 'surat',
+      })),
+    ]
+
+    const [, riwayat] = await this.prisma.$transaction([
+      this.prisma.laporan.update({
+        where: { id: laporanId },
+        data: {
+          status,
+          progresLaporan: payload.progresLaporan,
+          levelRisiko: payload.statusKerawanan,
+          deskripsi: nextDeskripsi,
+          keterangan: nextKeterangan,
+          teknisi: nextTeknisi,
+          contactPerson: nextContactPerson,
+          foto: nextFoto,
+        },
+      }),
+      this.prisma.riwayatLaporan.create({
+        data: {
+          laporanId,
+          oleh,
+          statusKerawanan: laporan.levelRisiko,
+          progresLaporan: laporan.progresLaporan ?? 'sedang_berlangsung',
+          uraianPekerjaan: laporan.deskripsi ?? null,
+          upayaPengendalian: laporan.keterangan ?? null,
+          pihakLain: laporan.teknisi ?? null,
+          contactPerson: laporan.contactPerson ?? null,
+          foto: laporan.foto ?? [],
+          beritaAcara: currentProgress.berita_acara ?? [],
+          spanduk: currentProgress.spanduk ?? [],
+          surat: currentProgress.surat ?? [],
+        },
+      }),
+      ...(progressCreates.length > 0
+        ? [this.prisma.progressLaporan.createMany({ data: progressCreates })]
+        : []),
+    ])
 
     return riwayat
   }

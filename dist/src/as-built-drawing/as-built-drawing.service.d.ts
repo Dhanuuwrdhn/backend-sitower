@@ -39,8 +39,8 @@ export declare class AsBuiltDrawingService {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            fileUrl: string;
             namaFile: string;
+            fileUrl: string;
             folderId: string;
         }[];
     } & {
@@ -103,32 +103,32 @@ export declare class AsBuiltDrawingService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        fileUrl: string;
         namaFile: string;
+        fileUrl: string;
         folderId: string;
     }[]>;
     findDokumen(id: string): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        fileUrl: string;
         namaFile: string;
+        fileUrl: string;
         folderId: string;
     }>;
     addDokumen(folderId: string, namaFile: string, fileUrl: string): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        fileUrl: string;
         namaFile: string;
+        fileUrl: string;
         folderId: string;
     }>;
     deleteDokumen(id: string): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        fileUrl: string;
         namaFile: string;
+        fileUrl: string;
         folderId: string;
     }>;
 }
