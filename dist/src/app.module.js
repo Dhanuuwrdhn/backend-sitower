@@ -15,7 +15,6 @@ const prisma_module_1 = require("./prisma/prisma.module");
 const auth_module_1 = require("./auth/auth.module");
 const towers_module_1 = require("./towers/towers.module");
 const laporan_module_1 = require("./laporan/laporan.module");
-const sertifikat_module_1 = require("./sertifikat/sertifikat.module");
 const as_built_drawing_module_1 = require("./as-built-drawing/as-built-drawing.module");
 const pegawai_module_1 = require("./pegawai/pegawai.module");
 const import_module_1 = require("./import/import.module");
@@ -32,7 +31,6 @@ exports.AppModule = AppModule = __decorate([
             auth_module_1.AuthModule,
             towers_module_1.TowersModule,
             laporan_module_1.LaporanModule,
-            sertifikat_module_1.SertifikatModule,
             as_built_drawing_module_1.AsBuiltDrawingModule,
             pegawai_module_1.PegawaiModule,
             import_module_1.ImportModule,

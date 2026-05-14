@@ -7,4 +7,5 @@ export declare class CreatePegawaiDto {
     password: string;
     aktif?: boolean;
     foto?: string;
+    expiredAt?: string;
 }

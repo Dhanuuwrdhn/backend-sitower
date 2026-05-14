@@ -24,21 +24,23 @@ export declare class LaporanService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        foto: string[];
-        teknisi: string | null;
         towerId: string;
         pelaporId: string;
-        jenisGangguan: string;
         deskripsi: string;
-        levelRisiko: string;
         status: string;
         tanggal: Date;
-        lokasiDetail: string | null;
         keterangan: string | null;
+        foto: string[];
         noSpk: string | null;
+        teknisi: string | null;
         temuan: string | null;
         hasil: string | null;
         penyebab: string | null;
         durasi: string | null;
+        jenisGangguan: string;
+        levelRisiko: string;
+        lokasiDetail: string | null;
+        contactPerson: string | null;
+        progresLaporan: string | null;
     }>;
 }

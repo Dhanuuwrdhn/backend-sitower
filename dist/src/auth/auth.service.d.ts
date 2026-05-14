@@ -37,9 +37,9 @@ export declare class AuthService {
             nama: string;
         } | null;
         id: string;
+        expiredAt: Date;
         pegawaiId: string;
         requestedAt: Date;
-        expiredAt: Date;
         reviewedAt: Date | null;
         reviewedById: string | null;
     }[]>;

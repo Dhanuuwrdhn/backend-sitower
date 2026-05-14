@@ -248,14 +248,22 @@ export class ImportService {
       const rawJenis = String(r.jenisGangguan || r.kategori || r['KLASIFIKASI '] || r['KLASIFIKASI'] || '')
       const jenisGangguan = this.normalizeJenis(rawJenis)
 
+      // Normalisasi progres
+      const rawProgres = String(r.progresLaporan || r['PROGRES'] || '')
+      let progresLaporan = 'sedang_berlangsung'
+      if (rawProgres.toLowerCase().includes('tidak ada')) progresLaporan = 'tidak_ada_aktivitas'
+      else if (rawProgres.toLowerCase().includes('selesai')) progresLaporan = 'selesai'
+
       const deskripsi  = String(r.deskripsi || r['URAIAN PEKERJAAN'] || jenisGangguan)
       const keterangan = [
         r['PENGENDALIAN'] || r.keterangan || '',
-        r['PIHAK LAIN'] ? `Pihak Lain: ${r['PIHAK LAIN']}` : '',
       ].filter(Boolean).join('\n')
 
       const rawStatus = String(r.status || r['STATUS'] || '')
       const statusStr = this.normalizeStatus(rawStatus)
+
+      const rawPihakLain = String(r['PIHAK LAIN'] || '').trim()
+      const rawContactPerson = String(r['CONTACT PERSON'] || '').trim()
 
       const levelRisiko = String(r.levelRisiko || r.level || 'aman')
       const tanggal = r.tanggal ? new Date(r.tanggal) : new Date()
@@ -318,10 +326,13 @@ export class ImportService {
             deskripsi: deskripsi,
             levelRisiko: levelRisiko,
             status: statusStr,
+            progresLaporan: progresLaporan,
             tanggal: tanggal,
             lokasiDetail: r.lokasiDetail || r.lokasi || (rawSpan ? `Span ${rawSpan}` : null) || rawRuas || null,
             keterangan: keterangan,
             foto: r.foto ? String(r.foto).split(',').map((s: string) => s.trim()) : [],
+            teknisi: rawPihakLain || null,
+            contactPerson: rawContactPerson || null,
           }
         })
         createdCount++

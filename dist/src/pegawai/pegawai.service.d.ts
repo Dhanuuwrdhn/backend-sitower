@@ -8,24 +8,26 @@ export declare class PegawaiService {
         id: string;
         nama: string;
         createdAt: Date;
+        foto: string | null;
         nik: string;
         jabatan: string;
         unit: string;
         role: string;
         aktif: boolean;
-        foto: string | null;
+        expiredAt: Date | null;
     }[]>;
     findOne(id: string): Promise<{
         id: string;
         nama: string;
         createdAt: Date;
         updatedAt: Date;
+        foto: string | null;
         nik: string;
         jabatan: string;
         unit: string;
         role: string;
         aktif: boolean;
-        foto: string | null;
+        expiredAt: Date | null;
     }>;
     create(dto: CreatePegawaiDto): Promise<{
         id: string;
@@ -35,6 +37,7 @@ export declare class PegawaiService {
         unit: string;
         role: string;
         aktif: boolean;
+        expiredAt: Date | null;
     }>;
     update(id: string, dto: UpdatePegawaiDto): Promise<{
         id: string;
@@ -44,19 +47,21 @@ export declare class PegawaiService {
         unit: string;
         role: string;
         aktif: boolean;
+        expiredAt: Date | null;
     }>;
     remove(id: string): Promise<{
         id: string;
         nama: string;
         createdAt: Date;
         updatedAt: Date;
+        foto: string | null;
         nik: string;
         jabatan: string;
         unit: string;
         role: string;
         password: string;
         aktif: boolean;
-        foto: string | null;
+        expiredAt: Date | null;
     }>;
     toggleAktif(id: string): Promise<{
         id: string;

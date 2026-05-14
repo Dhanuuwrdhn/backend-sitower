@@ -21,9 +21,9 @@ export declare class TowersService {
             tipe: string;
             kondisi: string;
             lokasi: string | null;
-            radius: number;
             createdAt: Date;
             updatedAt: Date;
+            radius: number;
             jalur: string | null;
             nomorUrut: number | null;
             routeId: number | null;
@@ -33,6 +33,7 @@ export declare class TowersService {
             penanggungJawab: string | null;
             telepon: string | null;
             sertifikatLink: string | null;
+            hasCertificate: boolean;
         }[];
         total: number;
         page: number;
@@ -76,22 +77,24 @@ export declare class TowersService {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            foto: string[];
-            teknisi: string | null;
             towerId: string;
             pelaporId: string;
-            jenisGangguan: string;
             deskripsi: string;
-            levelRisiko: string;
             status: string;
             tanggal: Date;
-            lokasiDetail: string | null;
             keterangan: string | null;
+            foto: string[];
             noSpk: string | null;
+            teknisi: string | null;
             temuan: string | null;
             hasil: string | null;
             penyebab: string | null;
             durasi: string | null;
+            jenisGangguan: string;
+            levelRisiko: string;
+            lokasiDetail: string | null;
+            contactPerson: string | null;
+            progresLaporan: string | null;
         })[];
         sertifikat: {
             id: string;
@@ -111,9 +114,9 @@ export declare class TowersService {
             towerId: string;
             keterangan: string | null;
             tahun: number;
+            fileUrl: string | null;
             namaFile: string;
             versi: string | null;
-            fileUrl: string | null;
         }[];
     } & {
         id: string;
@@ -124,9 +127,9 @@ export declare class TowersService {
         tipe: string;
         kondisi: string;
         lokasi: string | null;
-        radius: number;
         createdAt: Date;
         updatedAt: Date;
+        radius: number;
         jalur: string | null;
         nomorUrut: number | null;
         routeId: number | null;
@@ -136,6 +139,7 @@ export declare class TowersService {
         penanggungJawab: string | null;
         telepon: string | null;
         sertifikatLink: string | null;
+        hasCertificate: boolean;
     }>;
     create(dto: CreateTowerDto): import("@prisma/client").Prisma.Prisma__TowerClient<{
         id: string;
@@ -146,9 +150,9 @@ export declare class TowersService {
         tipe: string;
         kondisi: string;
         lokasi: string | null;
-        radius: number;
         createdAt: Date;
         updatedAt: Date;
+        radius: number;
         jalur: string | null;
         nomorUrut: number | null;
         routeId: number | null;
@@ -158,6 +162,7 @@ export declare class TowersService {
         penanggungJawab: string | null;
         telepon: string | null;
         sertifikatLink: string | null;
+        hasCertificate: boolean;
     }, never, import("@prisma/client/runtime/client").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
     update(id: string, dto: UpdateTowerDto): Promise<{
         id: string;
@@ -168,9 +173,9 @@ export declare class TowersService {
         tipe: string;
         kondisi: string;
         lokasi: string | null;
-        radius: number;
         createdAt: Date;
         updatedAt: Date;
+        radius: number;
         jalur: string | null;
         nomorUrut: number | null;
         routeId: number | null;
@@ -180,6 +185,7 @@ export declare class TowersService {
         penanggungJawab: string | null;
         telepon: string | null;
         sertifikatLink: string | null;
+        hasCertificate: boolean;
     }>;
     remove(id: string): Promise<{
         id: string;
@@ -190,9 +196,9 @@ export declare class TowersService {
         tipe: string;
         kondisi: string;
         lokasi: string | null;
-        radius: number;
         createdAt: Date;
         updatedAt: Date;
+        radius: number;
         jalur: string | null;
         nomorUrut: number | null;
         routeId: number | null;
@@ -202,6 +208,7 @@ export declare class TowersService {
         penanggungJawab: string | null;
         telepon: string | null;
         sertifikatLink: string | null;
+        hasCertificate: boolean;
     }>;
 }
 export {};
