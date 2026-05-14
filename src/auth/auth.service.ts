@@ -12,10 +12,13 @@ export class AuthService {
     private jwt: JwtService,
   ) {}
 
-  async login(nik: string, password: string) {
-    const pegawai = await this.prisma.pegawai.findUnique({ where: { nik } })
+  async login(identifier: string, password: string) {
+    // Accept either NIK or username
+    const pegawai = await this.prisma.pegawai.findFirst({
+      where: { OR: [{ nik: identifier }, { username: identifier }] },
+    })
     if (!pegawai || !pegawai.aktif)
-      throw new UnauthorizedException('NIK tidak ditemukan atau akun nonaktif')
+      throw new UnauthorizedException('NIK / username tidak ditemukan atau akun nonaktif')
 
     if (pegawai.expiredAt && pegawai.expiredAt < new Date())
       throw new ForbiddenException('Anda tidak bisa login')
