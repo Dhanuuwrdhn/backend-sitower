@@ -337,7 +337,6 @@ export class AsetService {
           tipe: true,
           statusKerawanan: true, jenisKerawanan: true, routeId: true,
           laporan: {
-            where:  { status: 'berlangsung' },
             select: { jenisGangguan: true, levelRisiko: true, updatedAt: true },
           },
           sertifikat: { select: { id: true }, take: 1 },
