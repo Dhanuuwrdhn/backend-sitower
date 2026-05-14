@@ -9,6 +9,7 @@ datasource db {
 model Pegawai {
   id                     String                  @id @default(cuid())
   nik                    String                  @unique
+  username               String?                 @unique
   nama                   String
   jabatan                String
   unit                   String
