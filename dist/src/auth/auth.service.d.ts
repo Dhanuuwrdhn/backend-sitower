@@ -27,8 +27,8 @@ export declare class AuthService {
         status: string;
         pegawai: {
             id: string;
-            nik: string;
             nama: string;
+            nik: string;
             jabatan: string;
             unit: string;
         };

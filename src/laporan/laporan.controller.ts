@@ -4,7 +4,7 @@ import {
   UseInterceptors, UploadedFiles, UploadedFile,
   BadRequestException,
 } from '@nestjs/common'
-import { FilesInterceptor, FileInterceptor } from '@nestjs/platform-express'
+import { FilesInterceptor, FileInterceptor, FileFieldsInterceptor } from '@nestjs/platform-express'
 import { diskStorage, memoryStorage } from 'multer'
 import { extname, join } from 'path'
 import * as fs from 'fs'
@@ -168,6 +168,67 @@ export class LaporanController {
   @ApiOperation({ summary: 'List foto history per laporan (by date)' })
   getFotoHistory(@Param('id') id: string) {
     return this.progressService.getFotoHistory(id)
+  }
+
+  // ── Riwayat Pembaruan Laporan ─────────────────────────────────────────────
+
+  @Get(':id/riwayat')
+  @ApiOperation({ summary: 'List riwayat pembaruan laporan (terbaru di atas)' })
+  getRiwayat(@Param('id') id: string) {
+    return this.progressService.getRiwayat(id)
+  }
+
+  @Post(':id/riwayat')
+  @ApiOperation({ summary: 'Tambah riwayat pembaruan laporan + sync status laporan' })
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileFieldsInterceptor(
+    [
+      { name: 'foto',        maxCount: 10 },
+      { name: 'beritaAcara', maxCount: 10 },
+      { name: 'spanduk',     maxCount: 10 },
+      { name: 'surat',       maxCount: 10 },
+    ],
+    {
+      storage: progressStorage,
+      limits: { fileSize: MAX_FILE_BYTES },
+      fileFilter: (_req, file, cb) => {
+        if (!/\.(jpg|jpeg|png|webp|pdf|doc|docx)$/i.test(file.originalname)) {
+          return cb(new BadRequestException('Format file tidak didukung'), false)
+        }
+        cb(null, true)
+      },
+    },
+  ))
+  async addRiwayat(
+    @Param('id') id: string,
+    @UploadedFiles() files: { foto?: Express.Multer.File[]; beritaAcara?: Express.Multer.File[]; spanduk?: Express.Multer.File[]; surat?: Express.Multer.File[] },
+    @Body() body: any,
+    @Request() req: any,
+  ) {
+    if (!body.statusKerawanan || !body.progresLaporan) {
+      throw new BadRequestException('statusKerawanan dan progresLaporan wajib diisi')
+    }
+    const baseUrl = process.env.BACKEND_URL ?? `http://localhost:${process.env.PORT ?? 3001}`
+    const toUrls = (arr?: Express.Multer.File[]) => (arr ?? []).map((f) => `${baseUrl}/uploads/progress/${f.filename}`)
+
+    return this.progressService.addRiwayat(id, req.user?.nama ?? 'Sistem', {
+      statusKerawanan:   body.statusKerawanan,
+      progresLaporan:    body.progresLaporan,
+      uraianPekerjaan:   body.uraianPekerjaan,
+      upayaPengendalian: body.upayaPengendalian,
+      pihakLain:         body.pihakLain,
+      contactPerson:     body.contactPerson,
+      foto:        toUrls(files.foto),
+      beritaAcara: toUrls(files.beritaAcara),
+      spanduk:     toUrls(files.spanduk),
+      surat:       toUrls(files.surat),
+    })
+  }
+
+  @Delete(':id/riwayat/:riwayatId')
+  @ApiOperation({ summary: 'Hapus satu entri riwayat pembaruan' })
+  deleteRiwayat(@Param('id') id: string, @Param('riwayatId') riwayatId: string) {
+    return this.progressService.deleteRiwayat(id, riwayatId)
   }
 
   @Post(':id/foto-update')
