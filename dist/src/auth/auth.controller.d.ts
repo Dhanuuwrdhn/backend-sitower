@@ -29,8 +29,8 @@ export declare class AuthController {
         status: string;
         pegawai: {
             id: string;
-            nama: string;
             nik: string;
+            nama: string;
             jabatan: string;
             unit: string;
         };

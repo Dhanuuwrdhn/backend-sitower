@@ -309,7 +309,15 @@ export class AsetService {
 
   async removeTower(id: string) {
     await this.findOneTower(id)
-    return this.prisma.tower.delete({ where: { id } })
+    return this.prisma.$transaction(async (tx) => {
+      // Delete related records that don't have cascade in schema
+      await tx.laporan.deleteMany({ where: { towerId: id } })
+      await tx.sertifikat.deleteMany({ where: { towerId: id } })
+      await tx.asBuiltDrawing.deleteMany({ where: { towerId: id } })
+      await tx.asBuiltFolder.deleteMany({ where: { towerId: id } })
+      
+      return tx.tower.delete({ where: { id } })
+    })
   }
 
   // ── Map Overview ───────────────────────────────────────────────────────────

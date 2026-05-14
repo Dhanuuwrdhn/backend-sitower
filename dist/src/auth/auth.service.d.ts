@@ -4,7 +4,7 @@ export declare class AuthService {
     private prisma;
     private jwt;
     constructor(prisma: PrismaService, jwt: JwtService);
-    login(nik: string, password: string): Promise<{
+    login(identifier: string, password: string): Promise<{
         access_token: string;
         pegawai: {
             id: string;
@@ -27,8 +27,8 @@ export declare class AuthService {
         status: string;
         pegawai: {
             id: string;
-            nama: string;
             nik: string;
+            nama: string;
             jabatan: string;
             unit: string;
         };
