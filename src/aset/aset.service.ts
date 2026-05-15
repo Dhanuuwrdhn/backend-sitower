@@ -152,6 +152,7 @@ export class AsetService {
     bbox?: string
     page?: string
     limit?: string
+    search?: string
   }) {
     const page  = Math.max(1, Number(query.page  ?? 1))
     const limit = Math.min(500, Math.max(1, Number(query.limit ?? 100)))
@@ -159,6 +160,17 @@ export class AsetService {
 
     const where: any = {}
     if (query.route_id)      where.routeId         = Number(query.route_id)
+
+    // Free-text search across id / nama / jalur / lokasi (case-insensitive).
+    if (query.search && query.search.trim()) {
+      const term = query.search.trim()
+      where.OR = [
+        { id:     { contains: term, mode: 'insensitive' } },
+        { nama:   { contains: term, mode: 'insensitive' } },
+        { jalur:  { contains: term, mode: 'insensitive' } },
+        { lokasi: { contains: term, mode: 'insensitive' } },
+      ]
+    }
     
     // Status Kerawanan (Support multi-select)
     if (query.status) {
