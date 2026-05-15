@@ -210,6 +210,11 @@ export class ProgressService {
         : []),
     ])
 
+    // The tower's overall statusKerawanan is derived from the worst levelRisiko
+    // among its active laporan. A progress update may have changed levelRisiko,
+    // so the tower badge / map marker color must be recomputed here.
+    await this.laporanService.syncTowerStatus(updatedLaporan.tower.id)
+
     return { riwayat, laporan: updatedLaporan }
   }
 

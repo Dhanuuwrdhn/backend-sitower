@@ -198,8 +198,9 @@ export class LaporanService {
     return { ...result, total, berlangsung }
   }
 
-  // Recalculate tower statusKerawanan from its active laporan
-  private async syncTowerStatus(towerId: string) {
+  // Recalculate tower statusKerawanan from its active laporan.
+  // Public so ProgressService can re-sync after a status update on a laporan.
+  async syncTowerStatus(towerId: string) {
     const active = await this.prisma.laporan.findMany({
       where: { towerId, status: 'berlangsung' },
       select: { levelRisiko: true, jenisGangguan: true },
