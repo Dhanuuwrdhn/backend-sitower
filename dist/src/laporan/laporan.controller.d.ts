@@ -26,27 +26,27 @@ export declare class LaporanController {
     remove(id: string): Promise<void>;
     getProgress(id: string): Promise<Record<string, {
         id: string;
-        tipe: string;
         createdAt: Date;
-        namaFile: string;
-        fileUrl: string;
+        tipe: string;
         laporanId: string;
+        fileUrl: string;
+        namaFile: string;
     }[]>>;
     uploadProgress(id: string, file: Express.Multer.File, tipe: string, req: any): Promise<{
         id: string;
-        tipe: string;
         createdAt: Date;
-        namaFile: string;
-        fileUrl: string;
+        tipe: string;
         laporanId: string;
+        fileUrl: string;
+        namaFile: string;
     }>;
     deleteProgress(id: string, progressId: string): Promise<{
         id: string;
-        tipe: string;
         createdAt: Date;
-        namaFile: string;
-        fileUrl: string;
+        tipe: string;
         laporanId: string;
+        fileUrl: string;
+        namaFile: string;
     }>;
     getFotoHistory(id: string): Promise<{
         id: string;
@@ -54,62 +54,17 @@ export declare class LaporanController {
         laporanId: string;
         urls: string[];
     }[]>;
-    getRiwayat(id: string): Promise<{
-        id: string;
-        createdAt: Date;
-        statusKerawanan: string;
-        tanggal: Date;
-        foto: string[];
-        contactPerson: string | null;
-        progresLaporan: string;
-        laporanId: string;
-        spanduk: string[];
-        oleh: string;
-        uraianPekerjaan: string | null;
-        upayaPengendalian: string | null;
-        pihakLain: string | null;
-        beritaAcara: string[];
-        surat: string[];
-    }[]>;
+    getRiwayat(id: string): Promise<any>;
     addRiwayat(id: string, files: {
         foto?: Express.Multer.File[];
         beritaAcara?: Express.Multer.File[];
         spanduk?: Express.Multer.File[];
         surat?: Express.Multer.File[];
     }, body: any, req: any): Promise<{
-        id: string;
-        createdAt: Date;
-        statusKerawanan: string;
-        tanggal: Date;
-        foto: string[];
-        contactPerson: string | null;
-        progresLaporan: string;
-        laporanId: string;
-        spanduk: string[];
-        oleh: string;
-        uraianPekerjaan: string | null;
-        upayaPengendalian: string | null;
-        pihakLain: string | null;
-        beritaAcara: string[];
-        surat: string[];
+        riwayat: any;
+        laporan: any;
     }>;
-    deleteRiwayat(id: string, riwayatId: string): Promise<{
-        id: string;
-        createdAt: Date;
-        statusKerawanan: string;
-        tanggal: Date;
-        foto: string[];
-        contactPerson: string | null;
-        progresLaporan: string;
-        laporanId: string;
-        spanduk: string[];
-        oleh: string;
-        uraianPekerjaan: string | null;
-        upayaPengendalian: string | null;
-        pihakLain: string | null;
-        beritaAcara: string[];
-        surat: string[];
-    }>;
+    deleteRiwayat(id: string, riwayatId: string): Promise<any>;
     uploadFotoUpdate(id: string, files: Express.Multer.File[], req: any): Promise<{
         id: string;
         createdAt: Date;

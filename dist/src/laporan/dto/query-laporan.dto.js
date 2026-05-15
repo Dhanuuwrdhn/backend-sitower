@@ -17,6 +17,7 @@ class QueryLaporanDto {
     status;
     levelRisiko;
     towerId;
+    jalur;
     teknisi;
     tglMulai;
     tglAkhir;
@@ -49,6 +50,11 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], QueryLaporanDto.prototype, "towerId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], QueryLaporanDto.prototype, "jalur", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
