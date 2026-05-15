@@ -14,7 +14,7 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('login')
-  @ApiOperation({ summary: 'Login dengan NIK dan password' })
+  @ApiOperation({ summary: 'Login dengan NIP dan password' })
   @ApiBody({ type: LoginDto })
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto.nik, dto.password)

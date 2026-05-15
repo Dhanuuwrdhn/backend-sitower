@@ -52,7 +52,7 @@ let AuthController = class AuthController {
 exports.AuthController = AuthController;
 __decorate([
     (0, common_1.Post)('login'),
-    (0, swagger_1.ApiOperation)({ summary: 'Login dengan NIK dan password' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Login dengan NIP dan password' }),
     (0, swagger_1.ApiBody)({ type: login_dto_1.LoginDto }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),

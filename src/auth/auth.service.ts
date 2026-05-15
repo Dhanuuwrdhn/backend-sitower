@@ -13,12 +13,14 @@ export class AuthService {
   ) {}
 
   async login(identifier: string, password: string) {
-    // Accept either NIK or username
+    // NIP is the canonical login identifier. Born2Works superadmin is preserved as a
+    // special case: its `nik` column stores the literal string "Born2Works", so the same
+    // lookup matches both regular PLN users (numeric NIP) and the superadmin.
     const pegawai = await this.prisma.pegawai.findFirst({
-      where: { OR: [{ nik: identifier }, { username: identifier }] },
+      where: { nik: identifier },
     })
     if (!pegawai || !pegawai.aktif)
-      throw new UnauthorizedException('NIK / username tidak ditemukan atau akun nonaktif')
+      throw new UnauthorizedException('NIP tidak ditemukan atau akun nonaktif')
 
     if (pegawai.expiredAt && pegawai.expiredAt < new Date())
       throw new ForbiddenException('Anda tidak bisa login')

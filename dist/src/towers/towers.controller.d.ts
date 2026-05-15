@@ -113,9 +113,9 @@ export declare class TowersController {
             towerId: string;
             keterangan: string | null;
             tahun: number;
+            fileUrl: string | null;
             namaFile: string;
             versi: string | null;
-            fileUrl: string | null;
         }[];
     } & {
         id: string;

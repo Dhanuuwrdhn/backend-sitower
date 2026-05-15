@@ -71,9 +71,21 @@ function mapExcelStatus(excelStatus: string, color: string) {
   return { statusKerawanan: 'aman', jenisKerawanan: null as string | null }
 }
 
+interface CurrentUser {
+  id: string
+  role: string
+}
+
 @Injectable()
 export class AsetService {
   constructor(private prisma: PrismaService) {}
+
+  private buildTowerAccessWhere(currentUser?: CurrentUser) {
+    if (currentUser?.role === 'teknisi') {
+      return { laporan: { some: { pelaporId: currentUser.id } } }
+    }
+    return {}
+  }
 
   // ── Line Types ─────────────────────────────────────────────────────────────
   findAllLineTypes() {
@@ -209,12 +221,16 @@ export class AsetService {
     return { data, total, page, limit }
   }
 
-  async findOneTower(id: string) {
+  async findOneTower(id: string, currentUser?: CurrentUser) {
     const rec = await this.prisma.tower.findUnique({
       where: { id },
       include: {
         route:   { include: { lineType: true, garduDari: true, garduKe: true } },
-        laporan: { orderBy: { tanggal: 'desc' }, take: 10 },
+        laporan: {
+          where: currentUser?.role === 'teknisi' ? { pelaporId: currentUser.id } : undefined,
+          orderBy: { tanggal: 'desc' },
+          take: 10,
+        },
         sertifikat: {
           include: { _count: { select: { dokumen: true } }, dokumen: { orderBy: { createdAt: 'desc' } } },
           orderBy: { createdAt: 'desc' },
@@ -333,7 +349,13 @@ export class AsetService {
   }
 
   // ── Map Overview ───────────────────────────────────────────────────────────
-  async getMapOverview() {
+  async getMapOverview(currentUser?: CurrentUser) {
+    const towerWhere: any = {
+      lat: { not: 0 },
+      lng: { not: 0 },
+      ...this.buildTowerAccessWhere(currentUser),
+    }
+
     const [routeRecords, garduRecords, towerRecords] = await Promise.all([
       this.prisma.transmissionRoute.findMany({
         include: {
@@ -350,13 +372,19 @@ export class AsetService {
       }),
       this.prisma.garduInduk.findMany({ orderBy: { nama: 'asc' } }),
       this.prisma.tower.findMany({
-        where:   { lat: { not: 0 }, lng: { not: 0 } },
+        where:   towerWhere,
         orderBy: [{ jalur: 'asc' }, { nomorUrut: 'asc' }],
         select:  {
           id: true, nama: true, lat: true, lng: true, updatedAt: true,
           tipe: true,
           statusKerawanan: true, jenisKerawanan: true, routeId: true,
           laporan: {
+            // Show every laporan on the map (including 'selesai' /
+            // 'tidak_ada_aktifitas'), so each marker reflects the full report
+            // history of the tower. The per-jenis badge in the popup carries
+            // the laporan's own levelRisiko, and the overall marker color is
+            // the most-critical level among them.
+            where: currentUser?.role === 'teknisi' ? { pelaporId: currentUser.id } : undefined,
             select: { jenisGangguan: true, levelRisiko: true, updatedAt: true },
           },
           sertifikat: { select: { id: true }, take: 1 },
@@ -367,6 +395,18 @@ export class AsetService {
     const KERAWANAN_JENIS = new Set([
       'pekerjaan_pihak_lain', 'kebakaran', 'layangan', 'pencurian', 'pemanfaatan_lahan',
     ])
+
+    // Priority used to pick the "most critical" status across multiple laporan.
+    // Same ranking used by LaporanService.syncTowerStatus.
+    const LEVEL_PRIORITY: Record<string, number> = {
+      kritis_tidak_terpenuhi: 4,
+      kritis_terpenuhi:       3,
+      kritis:                 3,
+      sedang:                 2,
+      aman:                   1,
+    }
+    const worseLevel = (a: string, b: string) =>
+      (LEVEL_PRIORITY[b] ?? 0) > (LEVEL_PRIORITY[a] ?? 0) ? b : a
 
     return {
       routes: routeRecords.map((r) => ({
@@ -388,27 +428,44 @@ export class AsetService {
         lng:  g.lng,
         icon: 'gardu',
       })),
-      towers: towerRecords.map((t) => ({
-        id:             t.id,
-        tower_code:     t.id,
-        name:           t.nama,
-        lat:            t.lat,
-        lng:            t.lng,
-        tipe:           t.tipe,
-        bersertifikat:  (t.sertifikat?.length ?? 0) > 0,
-        status:         t.statusKerawanan,
-        kerawanan_type: t.jenisKerawanan,
-        kerawanan_types: [...new Set(
-          t.laporan
-            .filter((l) => KERAWANAN_JENIS.has(l.jenisGangguan))
-            .map((l) => l.jenisGangguan)
-        )],
-        icon_color:     ICON_COLOR[t.statusKerawanan] ?? '#00CC00',
-        route_id:       t.routeId,
-        updated_at:     t.laporan.length > 0
-          ? t.laporan.reduce((latest, l) => l.updatedAt > latest ? l.updatedAt : latest, t.laporan[0].updatedAt)
-          : t.updatedAt,
-      })),
+      towers: towerRecords.map((t) => {
+        // Collapse active laporan into one entry per jenisGangguan, keeping the
+        // worst (latest-priority) levelRisiko among the laporan of that jenis.
+        // levelRisiko on Laporan already reflects the latest status because
+        // ProgressService writes the new status back to it on every update.
+        const byJenis = new Map<string, string>()
+        for (const l of t.laporan) {
+          if (!KERAWANAN_JENIS.has(l.jenisGangguan)) continue
+          const prev = byJenis.get(l.jenisGangguan)
+          byJenis.set(l.jenisGangguan, prev ? worseLevel(prev, l.levelRisiko) : l.levelRisiko)
+        }
+        const kerawanan = [...byJenis.entries()].map(([jenis, level]) => ({ jenis, level }))
+        // Overall tower status = worst level across all per-jenis entries.
+        // Falls back to the stored statusKerawanan if the tower has no active
+        // laporan (e.g. seeded data without reports).
+        const overallStatus = kerawanan.length
+          ? kerawanan.reduce((acc, k) => worseLevel(acc, k.level), 'aman')
+          : t.statusKerawanan
+
+        return {
+          id:             t.id,
+          tower_code:     t.id,
+          name:           t.nama,
+          lat:            t.lat,
+          lng:            t.lng,
+          tipe:           t.tipe,
+          bersertifikat:  (t.sertifikat?.length ?? 0) > 0,
+          status:         overallStatus,
+          kerawanan_type: t.jenisKerawanan,
+          kerawanan_types: kerawanan.map((k) => k.jenis),
+          kerawanan,
+          icon_color:     ICON_COLOR[overallStatus] ?? '#00CC00',
+          route_id:       t.routeId,
+          updated_at:     t.laporan.length > 0
+            ? t.laporan.reduce((latest, l) => l.updatedAt > latest ? l.updatedAt : latest, t.laporan[0].updatedAt)
+            : t.updatedAt,
+        }
+      }),
     }
   }
 
@@ -435,11 +492,12 @@ export class AsetService {
     }))
   }
 
-  async getMapFilter(type: string) {
+  async getMapFilter(type: string, currentUser?: CurrentUser) {
     const towers = await this.prisma.tower.findMany({
       where: {
         lat: { not: 0 },
         lng: { not: 0 },
+        ...this.buildTowerAccessWhere(currentUser),
         ...(type === 'semua' ? {} : type === 'kritis' || type === 'sedang' || type === 'aman'
           ? { statusKerawanan: type }
           : { jenisKerawanan: type }),
@@ -462,11 +520,12 @@ export class AsetService {
   }
 
   // ── Stats ──────────────────────────────────────────────────────────────────
-  async getStats() {
+  async getStats(currentUser?: CurrentUser) {
+    const where = this.buildTowerAccessWhere(currentUser)
     const [total, byStatus, byJenis] = await Promise.all([
-      this.prisma.tower.count(),
-      this.prisma.tower.groupBy({ by: ['statusKerawanan'], _count: true }),
-      this.prisma.tower.groupBy({ by: ['jenisKerawanan'],  _count: true }),
+      this.prisma.tower.count({ where }),
+      this.prisma.tower.groupBy({ where, by: ['statusKerawanan'], _count: true }),
+      this.prisma.tower.groupBy({ where, by: ['jenisKerawanan'],  _count: true }),
     ])
 
     const statusMap = Object.fromEntries(byStatus.map((r) => [r.statusKerawanan, r._count]))

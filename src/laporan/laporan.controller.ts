@@ -64,21 +64,21 @@ export class LaporanController {
   @ApiQuery({ name: 'tglAkhir',      required: false, description: 'YYYY-MM-DD' })
   @ApiQuery({ name: 'page',          required: false })
   @ApiQuery({ name: 'limit',         required: false })
-  findAll(@Query() query: QueryLaporanDto) {
-    return this.laporanService.findAll(query)
+  findAll(@Query() query: QueryLaporanDto, @Request() req: any) {
+    return this.laporanService.findAll(query, req.user)
   }
 
   @Get('stats')
   @ApiOperation({ summary: 'Statistik laporan per jenis + total + berlangsung' })
-  getStats() {
-    return this.laporanService.getStats()
+  getStats(@Request() req: any) {
+    return this.laporanService.getStats(req.user)
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Detail satu laporan' })
   @ApiParam({ name: 'id', description: 'Laporan ID' })
-  findOne(@Param('id') id: string) {
-    return this.laporanService.findOne(id)
+  findOne(@Param('id') id: string, @Request() req: any) {
+    return this.laporanService.findOne(id, req.user)
   }
 
   @Post()
@@ -103,24 +103,24 @@ export class LaporanController {
   @ApiOperation({ summary: 'Update laporan' })
   @ApiParam({ name: 'id', description: 'Laporan ID' })
   @ApiBody({ type: UpdateLaporanDto })
-  update(@Param('id') id: string, @Body() dto: UpdateLaporanDto) {
-    return this.laporanService.update(id, dto)
+  update(@Param('id') id: string, @Body() dto: UpdateLaporanDto, @Request() req: any) {
+    return this.laporanService.update(id, dto, req.user)
   }
 
   @Delete(':id')
   @Roles('admin')
   @ApiOperation({ summary: 'Hapus laporan (admin)' })
   @ApiParam({ name: 'id', description: 'Laporan ID' })
-  remove(@Param('id') id: string) {
-    return this.laporanService.remove(id)
+  remove(@Param('id') id: string, @Request() req: any) {
+    return this.laporanService.remove(id, req.user)
   }
 
   // ── Progress Laporan ──────────────────────────────────────────────────────
 
   @Get(':id/progress')
   @ApiOperation({ summary: 'List progress dokumen per laporan (grouped by tipe)' })
-  getProgress(@Param('id') id: string) {
-    return this.progressService.getProgress(id)
+  getProgress(@Param('id') id: string, @Request() req: any) {
+    return this.progressService.getProgress(id, req.user)
   }
 
   @Post(':id/progress')
@@ -152,30 +152,30 @@ export class LaporanController {
     if (!VALID_TIPE.includes(tipe)) throw new BadRequestException('Tipe progress tidak valid')
     const baseUrl = process.env.BACKEND_URL ?? `http://localhost:${process.env.PORT ?? 3001}`
     const fileUrl = `${baseUrl}/uploads/progress/${file.filename}`
-    return this.progressService.addProgress(id, tipe, fileUrl, file.originalname)
+    return this.progressService.addProgress(id, tipe, fileUrl, file.originalname, req.user)
   }
 
   @Delete(':id/progress/:progressId')
   @Roles('admin')
   @ApiOperation({ summary: 'Hapus satu dokumen progress' })
-  deleteProgress(@Param('id') id: string, @Param('progressId') progressId: string) {
-    return this.progressService.deleteProgress(id, progressId)
+  deleteProgress(@Param('id') id: string, @Param('progressId') progressId: string, @Request() req: any) {
+    return this.progressService.deleteProgress(id, progressId, req.user)
   }
 
   // ── Foto History ──────────────────────────────────────────────────────────
 
   @Get(':id/foto-history')
   @ApiOperation({ summary: 'List foto history per laporan (by date)' })
-  getFotoHistory(@Param('id') id: string) {
-    return this.progressService.getFotoHistory(id)
+  getFotoHistory(@Param('id') id: string, @Request() req: any) {
+    return this.progressService.getFotoHistory(id, req.user)
   }
 
   // ── Riwayat Pembaruan Laporan ─────────────────────────────────────────────
 
   @Get(':id/riwayat')
   @ApiOperation({ summary: 'List riwayat pembaruan laporan (terbaru di atas)' })
-  getRiwayat(@Param('id') id: string) {
-    return this.progressService.getRiwayat(id)
+  getRiwayat(@Param('id') id: string, @Request() req: any) {
+    return this.progressService.getRiwayat(id, req.user)
   }
 
   @Post(':id/riwayat')
@@ -222,13 +222,13 @@ export class LaporanController {
       beritaAcara: toUrls(files.beritaAcara),
       spanduk:     toUrls(files.spanduk),
       surat:       toUrls(files.surat),
-    })
+    }, req.user)
   }
 
   @Delete(':id/riwayat/:riwayatId')
   @ApiOperation({ summary: 'Hapus satu entri riwayat pembaruan' })
-  deleteRiwayat(@Param('id') id: string, @Param('riwayatId') riwayatId: string) {
-    return this.progressService.deleteRiwayat(id, riwayatId)
+  deleteRiwayat(@Param('id') id: string, @Param('riwayatId') riwayatId: string, @Request() req: any) {
+    return this.progressService.deleteRiwayat(id, riwayatId, req.user)
   }
 
   @Post(':id/foto-update')
@@ -253,7 +253,7 @@ export class LaporanController {
     if (!files?.length) throw new BadRequestException('Minimal 1 foto')
     const baseUrl = process.env.BACKEND_URL ?? `http://localhost:${process.env.PORT ?? 3001}`
     const urls = files.map((f) => `${baseUrl}/uploads/laporan/${f.filename}`)
-    await this.laporanService.updateFotoUrls(id, urls)
-    return this.progressService.addFotoHistory(id, urls)
+    await this.laporanService.updateFotoUrls(id, urls, req.user)
+    return this.progressService.addFotoHistory(id, urls, req.user)
   }
 }
