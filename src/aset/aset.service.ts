@@ -379,10 +379,12 @@ export class AsetService {
           tipe: true,
           statusKerawanan: true, jenisKerawanan: true, routeId: true,
           laporan: {
-            where: {
-              status: 'berlangsung',
-              ...(currentUser?.role === 'teknisi' ? { pelaporId: currentUser.id } : {}),
-            },
+            // Show every laporan on the map (including 'selesai' /
+            // 'tidak_ada_aktifitas'), so each marker reflects the full report
+            // history of the tower. The per-jenis badge in the popup carries
+            // the laporan's own levelRisiko, and the overall marker color is
+            // the most-critical level among them.
+            where: currentUser?.role === 'teknisi' ? { pelaporId: currentUser.id } : undefined,
             select: { jenisGangguan: true, levelRisiko: true, updatedAt: true },
           },
           sertifikat: { select: { id: true }, take: 1 },
