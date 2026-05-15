@@ -128,6 +128,31 @@ let LaporanController = class LaporanController {
     getFotoHistory(id) {
         return this.progressService.getFotoHistory(id);
     }
+    getRiwayat(id) {
+        return this.progressService.getRiwayat(id);
+    }
+    async addRiwayat(id, files, body, req) {
+        if (!body.statusKerawanan || !body.progresLaporan) {
+            throw new common_1.BadRequestException('statusKerawanan dan progresLaporan wajib diisi');
+        }
+        const baseUrl = process.env.BACKEND_URL ?? `http://localhost:${process.env.PORT ?? 3001}`;
+        const toUrls = (arr) => (arr ?? []).map((f) => `${baseUrl}/uploads/progress/${f.filename}`);
+        return this.progressService.addRiwayat(id, req.user?.nama ?? 'Sistem', {
+            statusKerawanan: body.statusKerawanan,
+            progresLaporan: body.progresLaporan,
+            uraianPekerjaan: body.uraianPekerjaan,
+            upayaPengendalian: body.upayaPengendalian,
+            pihakLain: body.pihakLain,
+            contactPerson: body.contactPerson,
+            foto: toUrls(files.foto),
+            beritaAcara: toUrls(files.beritaAcara),
+            spanduk: toUrls(files.spanduk),
+            surat: toUrls(files.surat),
+        });
+    }
+    deleteRiwayat(id, riwayatId) {
+        return this.progressService.deleteRiwayat(id, riwayatId);
+    }
     async uploadFotoUpdate(id, files, req) {
         if (!files?.length)
             throw new common_1.BadRequestException('Minimal 1 foto');
@@ -267,6 +292,50 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], LaporanController.prototype, "getFotoHistory", null);
+__decorate([
+    (0, common_1.Get)(':id/riwayat'),
+    (0, swagger_1.ApiOperation)({ summary: 'List riwayat pembaruan laporan (terbaru di atas)' }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], LaporanController.prototype, "getRiwayat", null);
+__decorate([
+    (0, common_1.Post)(':id/riwayat'),
+    (0, swagger_1.ApiOperation)({ summary: 'Tambah riwayat pembaruan laporan + sync status laporan' }),
+    (0, swagger_1.ApiConsumes)('multipart/form-data'),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileFieldsInterceptor)([
+        { name: 'foto', maxCount: 10 },
+        { name: 'beritaAcara', maxCount: 10 },
+        { name: 'spanduk', maxCount: 10 },
+        { name: 'surat', maxCount: 10 },
+    ], {
+        storage: progressStorage,
+        limits: { fileSize: MAX_FILE_BYTES },
+        fileFilter: (_req, file, cb) => {
+            if (!/\.(jpg|jpeg|png|webp|pdf|doc|docx)$/i.test(file.originalname)) {
+                return cb(new common_1.BadRequestException('Format file tidak didukung'), false);
+            }
+            cb(null, true);
+        },
+    })),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.UploadedFiles)()),
+    __param(2, (0, common_1.Body)()),
+    __param(3, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object, Object]),
+    __metadata("design:returntype", Promise)
+], LaporanController.prototype, "addRiwayat", null);
+__decorate([
+    (0, common_1.Delete)(':id/riwayat/:riwayatId'),
+    (0, swagger_1.ApiOperation)({ summary: 'Hapus satu entri riwayat pembaruan' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Param)('riwayatId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", void 0)
+], LaporanController.prototype, "deleteRiwayat", null);
 __decorate([
     (0, common_1.Post)(':id/foto-update'),
     (0, swagger_1.ApiOperation)({ summary: 'Upload foto update (disimpan dengan timestamp)' }),

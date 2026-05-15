@@ -23,6 +23,10 @@ export class QueryLaporanDto {
 
   @IsOptional()
   @IsString()
+  jalur?: string
+
+  @IsOptional()
+  @IsString()
   teknisi?: string
 
   @IsOptional()

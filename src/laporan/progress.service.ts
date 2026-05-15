@@ -60,4 +60,133 @@ export class ProgressService {
       orderBy: { createdAt: 'desc' },
     })
   }
+
+  // ── Riwayat Pembaruan Laporan ──────────────────────────────────────────
+  async getRiwayat(laporanId: string) {
+    return this.prisma.riwayatLaporan.findMany({
+      where:   { laporanId },
+      orderBy: { tanggal: 'desc' },
+    })
+  }
+
+  async addRiwayat(
+    laporanId: string,
+    oleh: string,
+    payload: {
+      statusKerawanan: string
+      progresLaporan: string
+      uraianPekerjaan?: string
+      upayaPengendalian?: string
+      pihakLain?: string
+      contactPerson?: string
+      foto?: string[]
+      beritaAcara?: string[]
+      spanduk?: string[]
+      surat?: string[]
+    },
+  ) {
+    const laporan = await this.prisma.laporan.findUnique({ where: { id: laporanId } })
+    if (!laporan) throw new NotFoundException(`Laporan ${laporanId} tidak ditemukan`)
+
+    const status =
+      payload.progresLaporan === 'selesai' ? 'selesai' :
+      payload.progresLaporan === 'tidak_ada_aktifitas' ? 'tidak_ada_aktifitas' :
+      'berlangsung'
+
+    // ── Diff payload vs current laporan to compute changed fields ────────
+    const changedFields: string[] = []
+
+    const trimOrEmpty = (s?: string | null) => (s ?? '').trim()
+    const textChanged = (next?: string, prev?: string | null) =>
+      trimOrEmpty(next).length > 0 && trimOrEmpty(next) !== trimOrEmpty(prev)
+
+    if (payload.statusKerawanan && payload.statusKerawanan !== laporan.levelRisiko) {
+      changedFields.push('statusKerawanan')
+    }
+    if (payload.progresLaporan && payload.progresLaporan !== (laporan.progresLaporan ?? 'sedang_berlangsung')) {
+      changedFields.push('progresLaporan')
+    }
+    if (textChanged(payload.uraianPekerjaan, laporan.deskripsi))   changedFields.push('uraianPekerjaan')
+    if (textChanged(payload.upayaPengendalian, laporan.keterangan)) changedFields.push('upayaPengendalian')
+    if (textChanged(payload.pihakLain, laporan.teknisi))            changedFields.push('pihakLain')
+    if (textChanged(payload.contactPerson, laporan.contactPerson))  changedFields.push('contactPerson')
+
+    if ((payload.foto ?? []).length > 0)        changedFields.push('foto')
+    if ((payload.beritaAcara ?? []).length > 0) changedFields.push('beritaAcara')
+    if ((payload.spanduk ?? []).length > 0)     changedFields.push('spanduk')
+    if ((payload.surat ?? []).length > 0)       changedFields.push('surat')
+
+    // ── Next laporan values: payload wins when provided, else keep current ──
+    const nextFoto = (payload.foto ?? []).length > 0 ? payload.foto! : laporan.foto
+    const nextDeskripsi   = trimOrEmpty(payload.uraianPekerjaan)   ? payload.uraianPekerjaan!.trim()   : laporan.deskripsi
+    const nextKeterangan  = trimOrEmpty(payload.upayaPengendalian) ? payload.upayaPengendalian!.trim() : laporan.keterangan
+    const nextTeknisi     = trimOrEmpty(payload.pihakLain)         ? payload.pihakLain!.trim()         : laporan.teknisi
+    const nextContactPerson = trimOrEmpty(payload.contactPerson)   ? payload.contactPerson!.trim()     : laporan.contactPerson
+
+    const progressCreates = [
+      ...(payload.beritaAcara ?? []).map((fileUrl) => ({
+        laporanId, tipe: 'berita_acara', fileUrl,
+        namaFile: fileUrl.split('/').pop() ?? 'berita-acara',
+      })),
+      ...(payload.spanduk ?? []).map((fileUrl) => ({
+        laporanId, tipe: 'spanduk', fileUrl,
+        namaFile: fileUrl.split('/').pop() ?? 'spanduk',
+      })),
+      ...(payload.surat ?? []).map((fileUrl) => ({
+        laporanId, tipe: 'surat', fileUrl,
+        namaFile: fileUrl.split('/').pop() ?? 'surat',
+      })),
+    ]
+
+    const [updatedLaporan, riwayat] = await this.prisma.$transaction([
+      this.prisma.laporan.update({
+        where: { id: laporanId },
+        data: {
+          status,
+          progresLaporan: payload.progresLaporan,
+          levelRisiko: payload.statusKerawanan,
+          deskripsi: nextDeskripsi,
+          keterangan: nextKeterangan,
+          teknisi: nextTeknisi,
+          contactPerson: nextContactPerson,
+          foto: nextFoto,
+        },
+        include: {
+          tower:   { select: { id: true, nama: true, tipe: true, tegangan: true, lokasi: true } },
+          pelapor: { select: { id: true, nama: true, jabatan: true, unit: true } },
+        },
+      }),
+      this.prisma.riwayatLaporan.create({
+        data: {
+          laporanId,
+          oleh,
+          // Store the NEW values (post-update). Riwayat = "what it became".
+          statusKerawanan: payload.statusKerawanan,
+          progresLaporan:  payload.progresLaporan,
+          uraianPekerjaan:   trimOrEmpty(payload.uraianPekerjaan)   ? payload.uraianPekerjaan!.trim()   : null,
+          upayaPengendalian: trimOrEmpty(payload.upayaPengendalian) ? payload.upayaPengendalian!.trim() : null,
+          pihakLain:         trimOrEmpty(payload.pihakLain)         ? payload.pihakLain!.trim()         : null,
+          contactPerson:     trimOrEmpty(payload.contactPerson)     ? payload.contactPerson!.trim()     : null,
+          foto:        payload.foto ?? [],
+          beritaAcara: payload.beritaAcara ?? [],
+          spanduk:     payload.spanduk ?? [],
+          surat:       payload.surat ?? [],
+          changedFields,
+        },
+      }),
+      ...(progressCreates.length > 0
+        ? [this.prisma.progressLaporan.createMany({ data: progressCreates })]
+        : []),
+    ])
+
+    return { riwayat, laporan: updatedLaporan }
+  }
+
+  async deleteRiwayat(laporanId: string, riwayatId: string) {
+    const rec = await this.prisma.riwayatLaporan.findFirst({
+      where: { id: riwayatId, laporanId },
+    })
+    if (!rec) throw new NotFoundException('Riwayat tidak ditemukan')
+    return this.prisma.riwayatLaporan.delete({ where: { id: riwayatId } })
+  }
 }

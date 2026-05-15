@@ -6,33 +6,33 @@ export declare class PegawaiController {
     constructor(pegawaiService: PegawaiService);
     findAll(): import("@prisma/client").Prisma.PrismaPromise<{
         id: string;
-        nik: string;
         nama: string;
+        createdAt: Date;
+        foto: string | null;
+        nik: string;
         jabatan: string;
         unit: string;
         role: string;
         aktif: boolean;
-        foto: string | null;
-        createdAt: Date;
         expiredAt: Date | null;
     }[]>;
     findOne(id: string): Promise<{
         id: string;
-        nik: string;
         nama: string;
+        createdAt: Date;
+        updatedAt: Date;
+        foto: string | null;
+        nik: string;
         jabatan: string;
         unit: string;
         role: string;
         aktif: boolean;
-        foto: string | null;
-        createdAt: Date;
-        updatedAt: Date;
         expiredAt: Date | null;
     }>;
     create(dto: CreatePegawaiDto): Promise<{
         id: string;
-        nik: string;
         nama: string;
+        nik: string;
         jabatan: string;
         unit: string;
         role: string;
@@ -41,8 +41,8 @@ export declare class PegawaiController {
     }>;
     update(id: string, dto: UpdatePegawaiDto): Promise<{
         id: string;
-        nik: string;
         nama: string;
+        nik: string;
         jabatan: string;
         unit: string;
         role: string;
@@ -51,22 +51,23 @@ export declare class PegawaiController {
     }>;
     remove(id: string): Promise<{
         id: string;
-        nik: string;
         nama: string;
+        createdAt: Date;
+        updatedAt: Date;
+        foto: string | null;
+        nik: string;
+        username: string | null;
         jabatan: string;
         unit: string;
         role: string;
         password: string;
         aktif: boolean;
-        foto: string | null;
-        createdAt: Date;
-        updatedAt: Date;
         expiredAt: Date | null;
     }>;
     toggleAktif(id: string): Promise<{
         id: string;
-        nik: string;
         nama: string;
+        nik: string;
         aktif: boolean;
     }>;
 }

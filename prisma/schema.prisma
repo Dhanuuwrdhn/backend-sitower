@@ -130,6 +130,7 @@ model Laporan {
   pelapor        Pegawai           @relation(fields: [pelaporId], references: [id])
   tower          Tower             @relation(fields: [towerId], references: [id])
   progress       ProgressLaporan[]
+  riwayat        RiwayatLaporan[]
 }
 
 model ProgressLaporan {
@@ -148,6 +149,26 @@ model FotoHistory {
   urls      String[] @default([])
   createdAt DateTime @default(now())
   laporan   Laporan  @relation(fields: [laporanId], references: [id], onDelete: Cascade)
+}
+
+model RiwayatLaporan {
+  id                String   @id @default(cuid())
+  laporanId         String
+  oleh              String
+  tanggal           DateTime @default(now())
+  statusKerawanan   String
+  progresLaporan    String
+  uraianPekerjaan   String?
+  upayaPengendalian String?
+  pihakLain         String?
+  contactPerson     String?
+  foto              String[] @default([])
+  beritaAcara       String[] @default([])
+  spanduk           String[] @default([])
+  surat             String[] @default([])
+  changedFields     String[] @default([])
+  createdAt         DateTime @default(now())
+  laporan           Laporan  @relation(fields: [laporanId], references: [id], onDelete: Cascade)
 }
 
 model Sertifikat {

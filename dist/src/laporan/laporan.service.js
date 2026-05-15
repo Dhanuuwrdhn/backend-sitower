@@ -62,7 +62,7 @@ let LaporanService = class LaporanService {
         if (query.levelRisiko) {
             const vals = query.levelRisiko.split(',').filter(Boolean);
             if (vals.length > 0) {
-                const expanded = vals.flatMap(v => v === 'kritis' ? ['kritis_terpenuhi', 'kritis_tidak_terpenuhi'] : [v]);
+                const expanded = vals.flatMap(v => v === 'kritis' ? ['kritis', 'kritis_terpenuhi', 'kritis_tidak_terpenuhi'] : [v]);
                 where.levelRisiko = { in: expanded };
             }
         }
@@ -70,6 +70,12 @@ let LaporanService = class LaporanService {
             const vals = query.towerId.split(',').filter(Boolean);
             if (vals.length > 0)
                 where.towerId = { in: vals };
+        }
+        if (query.jalur) {
+            const vals = query.jalur.split(',').map(s => s.trim()).filter(Boolean);
+            if (vals.length > 0) {
+                where.tower = { ...(where.tower ?? {}), jalur: { in: vals } };
+            }
         }
         if (query.teknisi) {
             const vals = query.teknisi.split(',').filter(Boolean);
@@ -84,9 +90,9 @@ let LaporanService = class LaporanService {
         if (query.tglMulai || query.tglAkhir) {
             where.tanggal = {};
             if (query.tglMulai)
-                where.tanggal.gte = new Date(query.tglMulai);
+                where.tanggal.gte = new Date(`${query.tglMulai}T00:00:00+07:00`);
             if (query.tglAkhir)
-                where.tanggal.lte = new Date(query.tglAkhir + 'T23:59:59');
+                where.tanggal.lte = new Date(`${query.tglAkhir}T23:59:59.999+07:00`);
         }
         if (query.search) {
             where.OR = [
@@ -126,8 +132,12 @@ let LaporanService = class LaporanService {
             ppl: 0, kebakaran: 0, layangan: 0, pencurian: 0,
             pemanfaatan: 0, gangguan: 0, cui: 0, cleanup: 0,
         };
+        const KEY_ALIAS = {
+            pekerjaan_pihak_lain: 'ppl',
+            pemanfaatan_lahan: 'pemanfaatan',
+        };
         for (const c of counts) {
-            const key = c.jenisGangguan === 'pekerjaan_pihak_lain' ? 'ppl' : c.jenisGangguan;
+            const key = KEY_ALIAS[c.jenisGangguan] ?? c.jenisGangguan;
             result[key] = c._count.id;
         }
         const [total, berlangsung] = await Promise.all([

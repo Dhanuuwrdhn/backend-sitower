@@ -59,14 +59,23 @@ export class LaporanService {
     if (query.levelRisiko) {
       const vals = query.levelRisiko.split(',').filter(Boolean)
       if (vals.length > 0) {
-        // Expand 'kritis' to both kritis types if needed, or just use values
-        const expanded = vals.flatMap(v => v === 'kritis' ? ['kritis_terpenuhi', 'kritis_tidak_terpenuhi'] : [v])
+        // 'kritis' from the filter can match any of the historical/current
+        // variants: 'kritis', 'kritis_terpenuhi', 'kritis_tidak_terpenuhi'.
+        const expanded = vals.flatMap(v =>
+          v === 'kritis' ? ['kritis', 'kritis_terpenuhi', 'kritis_tidak_terpenuhi'] : [v],
+        )
         where.levelRisiko = { in: expanded }
       }
     }
     if (query.towerId) {
       const vals = query.towerId.split(',').filter(Boolean)
       if (vals.length > 0) where.towerId = { in: vals }
+    }
+    if (query.jalur) {
+      const vals = query.jalur.split(',').map(s => s.trim()).filter(Boolean)
+      if (vals.length > 0) {
+        where.tower = { ...(where.tower ?? {}), jalur: { in: vals } }
+      }
     }
     if (query.teknisi) {
       const vals = query.teknisi.split(',').filter(Boolean)
@@ -80,9 +89,11 @@ export class LaporanService {
     }
 
     if (query.tglMulai || query.tglAkhir) {
+      // Interpret the date strings as Asia/Jakarta (WIB, UTC+7) day boundaries
+      // so that "same start and end date" includes the entire WIB day.
       where.tanggal = {}
-      if (query.tglMulai) where.tanggal.gte = new Date(query.tglMulai)
-      if (query.tglAkhir) where.tanggal.lte = new Date(query.tglAkhir + 'T23:59:59')
+      if (query.tglMulai) where.tanggal.gte = new Date(`${query.tglMulai}T00:00:00+07:00`)
+      if (query.tglAkhir) where.tanggal.lte = new Date(`${query.tglAkhir}T23:59:59.999+07:00`)
     }
 
     if (query.search) {
@@ -128,8 +139,12 @@ export class LaporanService {
       pemanfaatan: 0, gangguan: 0, cui: 0, cleanup: 0,
     }
 
+    const KEY_ALIAS: Record<string, string> = {
+      pekerjaan_pihak_lain: 'ppl',
+      pemanfaatan_lahan: 'pemanfaatan',
+    }
     for (const c of counts) {
-      const key = c.jenisGangguan === 'pekerjaan_pihak_lain' ? 'ppl' : c.jenisGangguan
+      const key = KEY_ALIAS[c.jenisGangguan] ?? c.jenisGangguan
       result[key] = c._count.id
     }
 

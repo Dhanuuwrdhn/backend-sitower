@@ -4,6 +4,7 @@ export declare class QueryLaporanDto {
     status?: string;
     levelRisiko?: string;
     towerId?: string;
+    jalur?: string;
     teknisi?: string;
     tglMulai?: string;
     tglAkhir?: string;
