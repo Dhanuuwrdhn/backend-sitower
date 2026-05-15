@@ -28,6 +28,18 @@ const KERAWANAN_TYPES = new Set([
   'pekerjaan_pihak_lain', 'kebakaran', 'layangan', 'pencurian', 'pemanfaatan_lahan',
 ])
 
+const INITIAL_RIWAYAT_MARKER = '__initial__'
+const INITIAL_RIWAYAT_FIELDS = [
+  'statusKerawanan',
+  'progresLaporan',
+  'uraianPekerjaan',
+  'upayaPengendalian',
+  'pihakLain',
+  'contactPerson',
+  'foto',
+  INITIAL_RIWAYAT_MARKER,
+]
+
 function mapLaporan(l: any) {
   if (!l) return l
   return {
@@ -227,15 +239,38 @@ export class LaporanService {
     const tower = await this.prisma.tower.findUnique({ where: { id: towerId } })
     if (!tower) throw new NotFoundException(`Tower dengan id "${towerId}" tidak ditemukan`)
 
-    const result = await this.prisma.laporan.create({
-      data: {
-        ...rest,
-        tanggal: new Date(tanggal),
-        foto,
-        tower:   { connect: { id: towerId } },
-        pelapor: { connect: { id: pelaporId } },
-      },
-      include: INCLUDE_FULL,
+    const result = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.laporan.create({
+        data: {
+          ...rest,
+          tanggal: new Date(tanggal),
+          foto,
+          tower:   { connect: { id: towerId } },
+          pelapor: { connect: { id: pelaporId } },
+        },
+        include: INCLUDE_FULL,
+      })
+
+      await tx.riwayatLaporan.create({
+        data: {
+          laporanId: created.id,
+          oleh: created.pelapor?.nama ?? 'Sistem',
+          tanggal: created.createdAt,
+          statusKerawanan: created.levelRisiko,
+          progresLaporan: created.progresLaporan ?? 'sedang_berlangsung',
+          uraianPekerjaan: created.deskripsi ?? null,
+          upayaPengendalian: created.keterangan ?? null,
+          pihakLain: created.teknisi ?? null,
+          contactPerson: created.contactPerson ?? null,
+          foto: created.foto ?? [],
+          beritaAcara: [],
+          spanduk: [],
+          surat: [],
+          changedFields: INITIAL_RIWAYAT_FIELDS,
+        },
+      })
+
+      return created
     })
 
     await this.syncTowerStatus(towerId)
