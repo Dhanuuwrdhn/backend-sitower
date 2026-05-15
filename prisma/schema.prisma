@@ -166,6 +166,7 @@ model RiwayatLaporan {
   beritaAcara       String[] @default([])
   spanduk           String[] @default([])
   surat             String[] @default([])
+  changedFields     String[] @default([])
   createdAt         DateTime @default(now())
   laporan           Laporan  @relation(fields: [laporanId], references: [id], onDelete: Cascade)
 }
