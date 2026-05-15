@@ -85,8 +85,24 @@ export class ProgressService {
       surat?: string[]
     },
   ) {
-    const laporan = await this.prisma.laporan.findUnique({ where: { id: laporanId } })
+    const [laporan, currentProgress] = await Promise.all([
+      this.prisma.laporan.findUnique({ where: { id: laporanId } }),
+      this.prisma.progressLaporan.findMany({
+        where: { laporanId },
+        orderBy: { createdAt: 'asc' },
+      }),
+    ])
     if (!laporan) throw new NotFoundException(`Laporan ${laporanId} tidak ditemukan`)
+
+    // Group existing progress files by tipe — these are the "old" file lists
+    // that will be snapshotted into the new riwayat row.
+    const oldFilesByTipe: Record<string, string[]> = {
+      berita_acara: [], spanduk: [], surat: [],
+    }
+    for (const p of currentProgress) {
+      if (!oldFilesByTipe[p.tipe]) oldFilesByTipe[p.tipe] = []
+      oldFilesByTipe[p.tipe].push(p.fileUrl)
+    }
 
     const status =
       payload.progresLaporan === 'selesai' ? 'selesai' :
@@ -160,17 +176,19 @@ export class ProgressService {
         data: {
           laporanId,
           oleh,
-          // Store the NEW values (post-update). Riwayat = "what it became".
-          statusKerawanan: payload.statusKerawanan,
-          progresLaporan:  payload.progresLaporan,
-          uraianPekerjaan:   trimOrEmpty(payload.uraianPekerjaan)   ? payload.uraianPekerjaan!.trim()   : null,
-          upayaPengendalian: trimOrEmpty(payload.upayaPengendalian) ? payload.upayaPengendalian!.trim() : null,
-          pihakLain:         trimOrEmpty(payload.pihakLain)         ? payload.pihakLain!.trim()         : null,
-          contactPerson:     trimOrEmpty(payload.contactPerson)     ? payload.contactPerson!.trim()     : null,
-          foto:        payload.foto ?? [],
-          beritaAcara: payload.beritaAcara ?? [],
-          spanduk:     payload.spanduk ?? [],
-          surat:       payload.surat ?? [],
+          // Snapshot the OLD (pre-update) values of the laporan. The riwayat
+          // row represents "what the report looked like BEFORE this update".
+          // changedFields lists which of those fields were actually altered.
+          statusKerawanan: laporan.levelRisiko,
+          progresLaporan:  laporan.progresLaporan ?? 'sedang_berlangsung',
+          uraianPekerjaan:   laporan.deskripsi    ?? null,
+          upayaPengendalian: laporan.keterangan   ?? null,
+          pihakLain:         laporan.teknisi      ?? null,
+          contactPerson:     laporan.contactPerson ?? null,
+          foto:        laporan.foto ?? [],
+          beritaAcara: oldFilesByTipe.berita_acara ?? [],
+          spanduk:     oldFilesByTipe.spanduk     ?? [],
+          surat:       oldFilesByTipe.surat       ?? [],
           changedFields,
         },
       }),
