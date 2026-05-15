@@ -86,14 +86,14 @@ let LaporanController = class LaporanController {
         this.laporanService = laporanService;
         this.progressService = progressService;
     }
-    findAll(query) {
-        return this.laporanService.findAll(query);
+    findAll(query, req) {
+        return this.laporanService.findAll(query, req.user);
     }
-    getStats() {
-        return this.laporanService.getStats();
+    getStats(req) {
+        return this.laporanService.getStats(req.user);
     }
-    findOne(id) {
-        return this.laporanService.findOne(id);
+    findOne(id, req) {
+        return this.laporanService.findOne(id, req.user);
     }
     create(dto, req) {
         return this.laporanService.create(dto, req.user.id);
@@ -103,14 +103,14 @@ let LaporanController = class LaporanController {
         const urls = files.map((f) => `${baseUrl}/uploads/laporan/${f.filename}`);
         return { urls };
     }
-    update(id, dto) {
-        return this.laporanService.update(id, dto);
+    update(id, dto, req) {
+        return this.laporanService.update(id, dto, req.user);
     }
-    remove(id) {
-        return this.laporanService.remove(id);
+    remove(id, req) {
+        return this.laporanService.remove(id, req.user);
     }
-    getProgress(id) {
-        return this.progressService.getProgress(id);
+    getProgress(id, req) {
+        return this.progressService.getProgress(id, req.user);
     }
     async uploadProgress(id, file, tipe, req) {
         if (!file)
@@ -120,16 +120,16 @@ let LaporanController = class LaporanController {
             throw new common_1.BadRequestException('Tipe progress tidak valid');
         const baseUrl = process.env.BACKEND_URL ?? `http://localhost:${process.env.PORT ?? 3001}`;
         const fileUrl = `${baseUrl}/uploads/progress/${file.filename}`;
-        return this.progressService.addProgress(id, tipe, fileUrl, file.originalname);
+        return this.progressService.addProgress(id, tipe, fileUrl, file.originalname, req.user);
     }
-    deleteProgress(id, progressId) {
-        return this.progressService.deleteProgress(id, progressId);
+    deleteProgress(id, progressId, req) {
+        return this.progressService.deleteProgress(id, progressId, req.user);
     }
-    getFotoHistory(id) {
-        return this.progressService.getFotoHistory(id);
+    getFotoHistory(id, req) {
+        return this.progressService.getFotoHistory(id, req.user);
     }
-    getRiwayat(id) {
-        return this.progressService.getRiwayat(id);
+    getRiwayat(id, req) {
+        return this.progressService.getRiwayat(id, req.user);
     }
     async addRiwayat(id, files, body, req) {
         if (!body.statusKerawanan || !body.progresLaporan) {
@@ -148,18 +148,18 @@ let LaporanController = class LaporanController {
             beritaAcara: toUrls(files.beritaAcara),
             spanduk: toUrls(files.spanduk),
             surat: toUrls(files.surat),
-        });
+        }, req.user);
     }
-    deleteRiwayat(id, riwayatId) {
-        return this.progressService.deleteRiwayat(id, riwayatId);
+    deleteRiwayat(id, riwayatId, req) {
+        return this.progressService.deleteRiwayat(id, riwayatId, req.user);
     }
     async uploadFotoUpdate(id, files, req) {
         if (!files?.length)
             throw new common_1.BadRequestException('Minimal 1 foto');
         const baseUrl = process.env.BACKEND_URL ?? `http://localhost:${process.env.PORT ?? 3001}`;
         const urls = files.map((f) => `${baseUrl}/uploads/laporan/${f.filename}`);
-        await this.laporanService.updateFotoUrls(id, urls);
-        return this.progressService.addFotoHistory(id, urls);
+        await this.laporanService.updateFotoUrls(id, urls, req.user);
+        return this.progressService.addFotoHistory(id, urls, req.user);
     }
 };
 exports.LaporanController = LaporanController;
@@ -176,15 +176,17 @@ __decorate([
     (0, swagger_1.ApiQuery)({ name: 'page', required: false }),
     (0, swagger_1.ApiQuery)({ name: 'limit', required: false }),
     __param(0, (0, common_1.Query)()),
+    __param(1, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [query_laporan_dto_1.QueryLaporanDto]),
+    __metadata("design:paramtypes", [query_laporan_dto_1.QueryLaporanDto, Object]),
     __metadata("design:returntype", void 0)
 ], LaporanController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Get)('stats'),
     (0, swagger_1.ApiOperation)({ summary: 'Statistik laporan per jenis + total + berlangsung' }),
+    __param(0, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], LaporanController.prototype, "getStats", null);
 __decorate([
@@ -192,8 +194,9 @@ __decorate([
     (0, swagger_1.ApiOperation)({ summary: 'Detail satu laporan' }),
     (0, swagger_1.ApiParam)({ name: 'id', description: 'Laporan ID' }),
     __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], LaporanController.prototype, "findOne", null);
 __decorate([
@@ -225,8 +228,9 @@ __decorate([
     (0, swagger_1.ApiBody)({ type: update_laporan_dto_1.UpdateLaporanDto }),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, update_laporan_dto_1.UpdateLaporanDto]),
+    __metadata("design:paramtypes", [String, update_laporan_dto_1.UpdateLaporanDto, Object]),
     __metadata("design:returntype", void 0)
 ], LaporanController.prototype, "update", null);
 __decorate([
@@ -235,16 +239,18 @@ __decorate([
     (0, swagger_1.ApiOperation)({ summary: 'Hapus laporan (admin)' }),
     (0, swagger_1.ApiParam)({ name: 'id', description: 'Laporan ID' }),
     __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], LaporanController.prototype, "remove", null);
 __decorate([
     (0, common_1.Get)(':id/progress'),
     (0, swagger_1.ApiOperation)({ summary: 'List progress dokumen per laporan (grouped by tipe)' }),
     __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], LaporanController.prototype, "getProgress", null);
 __decorate([
@@ -280,24 +286,27 @@ __decorate([
     (0, swagger_1.ApiOperation)({ summary: 'Hapus satu dokumen progress' }),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Param)('progressId')),
+    __param(2, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [String, String, Object]),
     __metadata("design:returntype", void 0)
 ], LaporanController.prototype, "deleteProgress", null);
 __decorate([
     (0, common_1.Get)(':id/foto-history'),
     (0, swagger_1.ApiOperation)({ summary: 'List foto history per laporan (by date)' }),
     __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], LaporanController.prototype, "getFotoHistory", null);
 __decorate([
     (0, common_1.Get)(':id/riwayat'),
     (0, swagger_1.ApiOperation)({ summary: 'List riwayat pembaruan laporan (terbaru di atas)' }),
     __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], LaporanController.prototype, "getRiwayat", null);
 __decorate([
@@ -332,8 +341,9 @@ __decorate([
     (0, swagger_1.ApiOperation)({ summary: 'Hapus satu entri riwayat pembaruan' }),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Param)('riwayatId')),
+    __param(2, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [String, String, Object]),
     __metadata("design:returntype", void 0)
 ], LaporanController.prototype, "deleteRiwayat", null);
 __decorate([
