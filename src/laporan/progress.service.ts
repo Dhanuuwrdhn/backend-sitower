@@ -1,20 +1,29 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
+import { LaporanService } from './laporan.service'
+
+interface CurrentUser {
+  id: string
+  role: string
+}
 
 @Injectable()
 export class ProgressService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private laporanService: LaporanService,
+  ) {}
 
-  async addProgress(laporanId: string, tipe: string, fileUrl: string, namaFile: string) {
-    const laporan = await this.prisma.laporan.findUnique({ where: { id: laporanId } })
-    if (!laporan) throw new NotFoundException(`Laporan ${laporanId} tidak ditemukan`)
+  async addProgress(laporanId: string, tipe: string, fileUrl: string, namaFile: string, currentUser?: CurrentUser) {
+    await this.laporanService.assertAccessible(laporanId, currentUser)
 
     return this.prisma.progressLaporan.create({
       data: { laporanId, tipe, fileUrl, namaFile },
     })
   }
 
-  async getProgress(laporanId: string) {
+  async getProgress(laporanId: string, currentUser?: CurrentUser) {
+    await this.laporanService.assertAccessible(laporanId, currentUser)
     const rows = await this.prisma.progressLaporan.findMany({
       where:   { laporanId },
       orderBy: { createdAt: 'desc' },
@@ -31,7 +40,8 @@ export class ProgressService {
     return grouped
   }
 
-  async deleteProgress(laporanId: string, progressId: string) {
+  async deleteProgress(laporanId: string, progressId: string, currentUser?: CurrentUser) {
+    await this.laporanService.assertAccessible(laporanId, currentUser)
     const rec = await this.prisma.progressLaporan.findFirst({
       where: { id: progressId, laporanId },
     })
@@ -48,13 +58,13 @@ export class ProgressService {
   }
 
   // Foto history
-  async addFotoHistory(laporanId: string, urls: string[]) {
-    const laporan = await this.prisma.laporan.findUnique({ where: { id: laporanId } })
-    if (!laporan) throw new NotFoundException(`Laporan ${laporanId} tidak ditemukan`)
+  async addFotoHistory(laporanId: string, urls: string[], currentUser?: CurrentUser) {
+    await this.laporanService.assertAccessible(laporanId, currentUser)
     return this.prisma.fotoHistory.create({ data: { laporanId, urls } })
   }
 
-  async getFotoHistory(laporanId: string) {
+  async getFotoHistory(laporanId: string, currentUser?: CurrentUser) {
+    await this.laporanService.assertAccessible(laporanId, currentUser)
     return this.prisma.fotoHistory.findMany({
       where:   { laporanId },
       orderBy: { createdAt: 'desc' },
@@ -62,7 +72,8 @@ export class ProgressService {
   }
 
   // ── Riwayat Pembaruan Laporan ──────────────────────────────────────────
-  async getRiwayat(laporanId: string) {
+  async getRiwayat(laporanId: string, currentUser?: CurrentUser) {
+    await this.laporanService.assertAccessible(laporanId, currentUser)
     return this.prisma.riwayatLaporan.findMany({
       where:   { laporanId },
       orderBy: { tanggal: 'desc' },
@@ -84,7 +95,9 @@ export class ProgressService {
       spanduk?: string[]
       surat?: string[]
     },
+    currentUser?: CurrentUser,
   ) {
+    await this.laporanService.assertAccessible(laporanId, currentUser)
     const [laporan, currentProgress] = await Promise.all([
       this.prisma.laporan.findUnique({ where: { id: laporanId } }),
       this.prisma.progressLaporan.findMany({
@@ -200,7 +213,8 @@ export class ProgressService {
     return { riwayat, laporan: updatedLaporan }
   }
 
-  async deleteRiwayat(laporanId: string, riwayatId: string) {
+  async deleteRiwayat(laporanId: string, riwayatId: string, currentUser?: CurrentUser) {
+    await this.laporanService.assertAccessible(laporanId, currentUser)
     const rec = await this.prisma.riwayatLaporan.findFirst({
       where: { id: riwayatId, laporanId },
     })

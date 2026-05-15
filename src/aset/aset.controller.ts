@@ -1,6 +1,6 @@
 import {
   Controller, Get, Post, Put, Delete,
-  Body, Param, Query, UseGuards, ParseIntPipe,
+  Body, Param, Query, UseGuards, ParseIntPipe, Request,
   UploadedFile, UploadedFiles, UseInterceptors, Res,
 } from '@nestjs/common'
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express'
@@ -88,7 +88,7 @@ export class AsetController {
 
   @Get('towers/:id')
   @ApiOperation({ summary: 'Detail tower beserta history laporan' })
-  findOneTower(@Param('id') id: string) { return this.asetService.findOneTower(id) }
+  findOneTower(@Param('id') id: string, @Request() req: any) { return this.asetService.findOneTower(id, req.user) }
 
   @Post('towers')
   @Roles('admin')
@@ -133,7 +133,7 @@ export class AsetController {
   // ── Map ─────────────────────────────────────────────────────────────────────
   @Get('map/overview')
   @ApiOperation({ summary: 'Data lengkap peta: routes polyline + gardu + towers' })
-  getMapOverview() { return this.asetService.getMapOverview() }
+  getMapOverview(@Request() req: any) { return this.asetService.getMapOverview(req.user) }
 
   @Get('map/routes')
   @ApiOperation({ summary: 'Polyline per jalur transmisi' })
@@ -142,12 +142,12 @@ export class AsetController {
   @Get('map/filter')
   @ApiOperation({ summary: 'Filter marker peta berdasarkan jenis kerawanan' })
   @ApiQuery({ name: 'type', required: false, enum: ['semua', 'ppl', 'layangan', 'kebakaran', 'pencurian', 'pemanfaatan_lahan', 'kritis', 'sedang', 'aman'] })
-  getMapFilter(@Query('type') type: string = 'semua') { return this.asetService.getMapFilter(type) }
+  getMapFilter(@Query('type') type: string = 'semua', @Request() req: any) { return this.asetService.getMapFilter(type, req.user) }
 
   // ── Stats ───────────────────────────────────────────────────────────────────
   @Get('stats')
   @ApiOperation({ summary: 'Statistik aset: total, aman/sedang/kritis, per jenis kerawanan' })
-  getStats() { return this.asetService.getStats() }
+  getStats(@Request() req: any) { return this.asetService.getStats(req.user) }
 
   // ── Import ──────────────────────────────────────────────────────────────────
   @Post('import')

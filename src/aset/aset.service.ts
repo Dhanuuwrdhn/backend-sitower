@@ -71,9 +71,21 @@ function mapExcelStatus(excelStatus: string, color: string) {
   return { statusKerawanan: 'aman', jenisKerawanan: null as string | null }
 }
 
+interface CurrentUser {
+  id: string
+  role: string
+}
+
 @Injectable()
 export class AsetService {
   constructor(private prisma: PrismaService) {}
+
+  private buildTowerAccessWhere(currentUser?: CurrentUser) {
+    if (currentUser?.role === 'teknisi') {
+      return { laporan: { some: { pelaporId: currentUser.id } } }
+    }
+    return {}
+  }
 
   // ── Line Types ─────────────────────────────────────────────────────────────
   findAllLineTypes() {
@@ -209,12 +221,16 @@ export class AsetService {
     return { data, total, page, limit }
   }
 
-  async findOneTower(id: string) {
+  async findOneTower(id: string, currentUser?: CurrentUser) {
     const rec = await this.prisma.tower.findUnique({
       where: { id },
       include: {
         route:   { include: { lineType: true, garduDari: true, garduKe: true } },
-        laporan: { orderBy: { tanggal: 'desc' }, take: 10 },
+        laporan: {
+          where: currentUser?.role === 'teknisi' ? { pelaporId: currentUser.id } : undefined,
+          orderBy: { tanggal: 'desc' },
+          take: 10,
+        },
         sertifikat: {
           include: { _count: { select: { dokumen: true } }, dokumen: { orderBy: { createdAt: 'desc' } } },
           orderBy: { createdAt: 'desc' },
@@ -333,7 +349,13 @@ export class AsetService {
   }
 
   // ── Map Overview ───────────────────────────────────────────────────────────
-  async getMapOverview() {
+  async getMapOverview(currentUser?: CurrentUser) {
+    const towerWhere: any = {
+      lat: { not: 0 },
+      lng: { not: 0 },
+      ...this.buildTowerAccessWhere(currentUser),
+    }
+
     const [routeRecords, garduRecords, towerRecords] = await Promise.all([
       this.prisma.transmissionRoute.findMany({
         include: {
@@ -350,13 +372,14 @@ export class AsetService {
       }),
       this.prisma.garduInduk.findMany({ orderBy: { nama: 'asc' } }),
       this.prisma.tower.findMany({
-        where:   { lat: { not: 0 }, lng: { not: 0 } },
+        where:   towerWhere,
         orderBy: [{ jalur: 'asc' }, { nomorUrut: 'asc' }],
         select:  {
           id: true, nama: true, lat: true, lng: true, updatedAt: true,
           tipe: true,
           statusKerawanan: true, jenisKerawanan: true, routeId: true,
           laporan: {
+            where: currentUser?.role === 'teknisi' ? { pelaporId: currentUser.id } : undefined,
             select: { jenisGangguan: true, levelRisiko: true, updatedAt: true },
           },
           sertifikat: { select: { id: true }, take: 1 },
@@ -435,11 +458,12 @@ export class AsetService {
     }))
   }
 
-  async getMapFilter(type: string) {
+  async getMapFilter(type: string, currentUser?: CurrentUser) {
     const towers = await this.prisma.tower.findMany({
       where: {
         lat: { not: 0 },
         lng: { not: 0 },
+        ...this.buildTowerAccessWhere(currentUser),
         ...(type === 'semua' ? {} : type === 'kritis' || type === 'sedang' || type === 'aman'
           ? { statusKerawanan: type }
           : { jenisKerawanan: type }),
@@ -462,11 +486,12 @@ export class AsetService {
   }
 
   // ── Stats ──────────────────────────────────────────────────────────────────
-  async getStats() {
+  async getStats(currentUser?: CurrentUser) {
+    const where = this.buildTowerAccessWhere(currentUser)
     const [total, byStatus, byJenis] = await Promise.all([
-      this.prisma.tower.count(),
-      this.prisma.tower.groupBy({ by: ['statusKerawanan'], _count: true }),
-      this.prisma.tower.groupBy({ by: ['jenisKerawanan'],  _count: true }),
+      this.prisma.tower.count({ where }),
+      this.prisma.tower.groupBy({ where, by: ['statusKerawanan'], _count: true }),
+      this.prisma.tower.groupBy({ where, by: ['jenisKerawanan'],  _count: true }),
     ])
 
     const statusMap = Object.fromEntries(byStatus.map((r) => [r.statusKerawanan, r._count]))

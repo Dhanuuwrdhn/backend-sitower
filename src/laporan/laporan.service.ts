@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
 import { CreateLaporanDto } from './dto/create-laporan.dto'
 import { UpdateLaporanDto } from './dto/update-laporan.dto'
@@ -37,16 +37,42 @@ function mapLaporan(l: any) {
   }
 }
 
+interface CurrentUser {
+  id: string
+  role: string
+}
+
 @Injectable()
 export class LaporanService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(query: QueryLaporanDto) {
+  private buildAccessWhere(currentUser?: CurrentUser) {
+    if (currentUser?.role === 'teknisi') {
+      return { pelaporId: currentUser.id }
+    }
+    return {}
+  }
+
+  async assertAccessible(id: string, currentUser?: CurrentUser) {
+    const laporan = await this.prisma.laporan.findUnique({
+      where: { id },
+      select: { id: true, pelaporId: true, towerId: true },
+    })
+
+    if (!laporan) throw new NotFoundException(`Laporan ${id} tidak ditemukan`)
+    if (currentUser?.role === 'teknisi' && laporan.pelaporId !== currentUser.id) {
+      throw new ForbiddenException('Anda tidak memiliki akses ke laporan ini')
+    }
+
+    return laporan
+  }
+
+  async findAll(query: QueryLaporanDto, currentUser?: CurrentUser) {
     const page  = Math.max(1, Number(query.page ?? 1))
     const limit = Math.min(100, Math.max(1, Number(query.limit ?? 10)))
     const skip  = (page - 1) * limit
 
-    const where: any = {}
+    const where: any = this.buildAccessWhere(currentUser)
 
     if (query.jenisGangguan) {
       const vals = query.jenisGangguan.split(',').filter(Boolean)
@@ -119,18 +145,22 @@ export class LaporanService {
     return { data: data.map(mapLaporan), total, page, limit }
   }
 
-  async findOne(id: string) {
-    const laporan = await this.prisma.laporan.findUnique({
-      where: { id },
+  async findOne(id: string, currentUser?: CurrentUser) {
+    await this.assertAccessible(id, currentUser)
+
+    const laporan = await this.prisma.laporan.findFirst({
+      where: { id, ...this.buildAccessWhere(currentUser) },
       include: INCLUDE_FULL,
     })
     if (!laporan) throw new NotFoundException(`Laporan ${id} tidak ditemukan`)
     return mapLaporan(laporan)
   }
 
-  async getStats() {
+  async getStats(currentUser?: CurrentUser) {
+    const where = this.buildAccessWhere(currentUser)
     const counts = await this.prisma.laporan.groupBy({
       by: ['jenisGangguan'],
+      where,
       _count: { id: true },
     })
 
@@ -149,8 +179,8 @@ export class LaporanService {
     }
 
     const [total, berlangsung] = await Promise.all([
-      this.prisma.laporan.count(),
-      this.prisma.laporan.count({ where: { status: 'berlangsung' } }),
+      this.prisma.laporan.count({ where }),
+      this.prisma.laporan.count({ where: { ...where, status: 'berlangsung' } }),
     ])
 
     return { ...result, total, berlangsung }
@@ -212,8 +242,8 @@ export class LaporanService {
     return mapLaporan(result)
   }
 
-  async update(id: string, dto: UpdateLaporanDto) {
-    const existing = await this.findOne(id)
+  async update(id: string, dto: UpdateLaporanDto, currentUser?: CurrentUser) {
+    const existing = await this.assertAccessible(id, currentUser)
     const { towerId, tanggal, pelaporId: _, ...rest } = dto as any
     const result = await this.prisma.laporan.update({
       where: { id },
@@ -233,13 +263,14 @@ export class LaporanService {
     return mapLaporan(result)
   }
 
-  async remove(id: string) {
-    const existing = await this.findOne(id)
+  async remove(id: string, currentUser?: CurrentUser) {
+    const existing = await this.assertAccessible(id, currentUser)
     await this.prisma.laporan.delete({ where: { id } })
-    await this.syncTowerStatus((existing as any).towerId)
+    await this.syncTowerStatus(existing.towerId)
   }
 
-  async updateFotoUrls(id: string, urls: string[]) {
+  async updateFotoUrls(id: string, urls: string[], currentUser?: CurrentUser) {
+    await this.assertAccessible(id, currentUser)
     return this.prisma.laporan.update({
       where: { id },
       data: { foto: { push: urls } },
