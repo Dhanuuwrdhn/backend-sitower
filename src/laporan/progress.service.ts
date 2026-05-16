@@ -98,24 +98,8 @@ export class ProgressService {
     currentUser?: CurrentUser,
   ) {
     await this.laporanService.assertWritable(laporanId, currentUser)
-    const [laporan, currentProgress] = await Promise.all([
-      this.prisma.laporan.findUnique({ where: { id: laporanId } }),
-      this.prisma.progressLaporan.findMany({
-        where: { laporanId },
-        orderBy: { createdAt: 'asc' },
-      }),
-    ])
+    const laporan = await this.prisma.laporan.findUnique({ where: { id: laporanId } })
     if (!laporan) throw new NotFoundException(`Laporan ${laporanId} tidak ditemukan`)
-
-    // Group existing progress files by tipe — these are the "old" file lists
-    // that will be snapshotted into the new riwayat row.
-    const oldFilesByTipe: Record<string, string[]> = {
-      berita_acara: [], spanduk: [], surat: [],
-    }
-    for (const p of currentProgress) {
-      if (!oldFilesByTipe[p.tipe]) oldFilesByTipe[p.tipe] = []
-      oldFilesByTipe[p.tipe].push(p.fileUrl)
-    }
 
     const status =
       payload.progresLaporan === 'selesai' ? 'selesai' :
@@ -189,19 +173,20 @@ export class ProgressService {
         data: {
           laporanId,
           oleh,
-          // Snapshot the OLD (pre-update) values of the laporan. The riwayat
-          // row represents "what the report looked like BEFORE this update".
-          // changedFields lists which of those fields were actually altered.
-          statusKerawanan: laporan.levelRisiko,
-          progresLaporan:  laporan.progresLaporan ?? 'sedang_berlangsung',
-          uraianPekerjaan:   laporan.deskripsi    ?? null,
-          upayaPengendalian: laporan.keterangan   ?? null,
-          pihakLain:         laporan.teknisi      ?? null,
-          contactPerson:     laporan.contactPerson ?? null,
-          foto:        laporan.foto ?? [],
-          beritaAcara: oldFilesByTipe.berita_acara ?? [],
-          spanduk:     oldFilesByTipe.spanduk     ?? [],
-          surat:       oldFilesByTipe.surat       ?? [],
+          // Snapshot the NEW (post-update) values for fields in changedFields,
+          // so each riwayat row displays what was actually changed/added in
+          // this Perbarui Laporan submission. Unchanged fields stay null/[] —
+          // showField() hides them via the changedFields list.
+          statusKerawanan: payload.statusKerawanan,
+          progresLaporan:  payload.progresLaporan,
+          uraianPekerjaan:   changedFields.includes('uraianPekerjaan')   ? (payload.uraianPekerjaan!.trim())   : null,
+          upayaPengendalian: changedFields.includes('upayaPengendalian') ? (payload.upayaPengendalian!.trim()) : null,
+          pihakLain:         changedFields.includes('pihakLain')         ? (payload.pihakLain!.trim())         : null,
+          contactPerson:     changedFields.includes('contactPerson')     ? (payload.contactPerson!.trim())     : null,
+          foto:        payload.foto        ?? [],
+          beritaAcara: payload.beritaAcara ?? [],
+          spanduk:     payload.spanduk     ?? [],
+          surat:       payload.surat       ?? [],
           changedFields,
         },
       }),
