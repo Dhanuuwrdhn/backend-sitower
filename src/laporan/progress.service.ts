@@ -15,15 +15,15 @@ export class ProgressService {
   ) {}
 
   async addProgress(laporanId: string, tipe: string, fileUrl: string, namaFile: string, currentUser?: CurrentUser) {
-    await this.laporanService.assertAccessible(laporanId, currentUser)
+    await this.laporanService.assertWritable(laporanId, currentUser)
 
     return this.prisma.progressLaporan.create({
       data: { laporanId, tipe, fileUrl, namaFile },
     })
   }
 
-  async getProgress(laporanId: string, currentUser?: CurrentUser) {
-    await this.laporanService.assertAccessible(laporanId, currentUser)
+  async getProgress(laporanId: string, _currentUser?: CurrentUser) {
+    await this.laporanService.assertExists(laporanId)
     const rows = await this.prisma.progressLaporan.findMany({
       where:   { laporanId },
       orderBy: { createdAt: 'desc' },
@@ -41,7 +41,7 @@ export class ProgressService {
   }
 
   async deleteProgress(laporanId: string, progressId: string, currentUser?: CurrentUser) {
-    await this.laporanService.assertAccessible(laporanId, currentUser)
+    await this.laporanService.assertWritable(laporanId, currentUser)
     const rec = await this.prisma.progressLaporan.findFirst({
       where: { id: progressId, laporanId },
     })
@@ -59,12 +59,12 @@ export class ProgressService {
 
   // Foto history
   async addFotoHistory(laporanId: string, urls: string[], currentUser?: CurrentUser) {
-    await this.laporanService.assertAccessible(laporanId, currentUser)
+    await this.laporanService.assertWritable(laporanId, currentUser)
     return this.prisma.fotoHistory.create({ data: { laporanId, urls } })
   }
 
-  async getFotoHistory(laporanId: string, currentUser?: CurrentUser) {
-    await this.laporanService.assertAccessible(laporanId, currentUser)
+  async getFotoHistory(laporanId: string, _currentUser?: CurrentUser) {
+    await this.laporanService.assertExists(laporanId)
     return this.prisma.fotoHistory.findMany({
       where:   { laporanId },
       orderBy: { createdAt: 'desc' },
@@ -72,8 +72,8 @@ export class ProgressService {
   }
 
   // ── Riwayat Pembaruan Laporan ──────────────────────────────────────────
-  async getRiwayat(laporanId: string, currentUser?: CurrentUser) {
-    await this.laporanService.assertAccessible(laporanId, currentUser)
+  async getRiwayat(laporanId: string, _currentUser?: CurrentUser) {
+    await this.laporanService.assertExists(laporanId)
     return this.prisma.riwayatLaporan.findMany({
       where:   { laporanId },
       orderBy: { tanggal: 'desc' },
@@ -97,7 +97,7 @@ export class ProgressService {
     },
     currentUser?: CurrentUser,
   ) {
-    await this.laporanService.assertAccessible(laporanId, currentUser)
+    await this.laporanService.assertWritable(laporanId, currentUser)
     const [laporan, currentProgress] = await Promise.all([
       this.prisma.laporan.findUnique({ where: { id: laporanId } }),
       this.prisma.progressLaporan.findMany({
@@ -219,7 +219,7 @@ export class ProgressService {
   }
 
   async deleteRiwayat(laporanId: string, riwayatId: string, currentUser?: CurrentUser) {
-    await this.laporanService.assertAccessible(laporanId, currentUser)
+    await this.laporanService.assertWritable(laporanId, currentUser)
     const rec = await this.prisma.riwayatLaporan.findFirst({
       where: { id: riwayatId, laporanId },
     })

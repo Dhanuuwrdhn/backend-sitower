@@ -65,26 +65,42 @@ export class LaporanService {
     return {}
   }
 
-  async assertAccessible(id: string, currentUser?: CurrentUser) {
+  // Existence-only check used by READ endpoints (detail view, riwayat list,
+  // progress files). Every authenticated user — including teknisi — may read
+  // any laporan's data.
+  async assertExists(id: string) {
     const laporan = await this.prisma.laporan.findUnique({
       where: { id },
       select: { id: true, pelaporId: true, towerId: true },
     })
-
     if (!laporan) throw new NotFoundException(`Laporan ${id} tidak ditemukan`)
-    if (currentUser?.role === 'teknisi' && laporan.pelaporId !== currentUser.id) {
-      throw new ForbiddenException('Anda tidak memiliki akses ke laporan ini')
-    }
-
     return laporan
   }
+
+  // Ownership check used by WRITE endpoints. Teknisi may only mutate their
+  // own laporan; admin/superadmin bypass.
+  async assertWritable(id: string, currentUser?: CurrentUser) {
+    const laporan = await this.assertExists(id)
+    if (currentUser?.role === 'teknisi' && laporan.pelaporId !== currentUser.id) {
+      throw new ForbiddenException('Anda hanya dapat mengubah laporan milik Anda sendiri')
+    }
+    return laporan
+  }
+
 
   async findAll(query: QueryLaporanDto, currentUser?: CurrentUser) {
     const page  = Math.max(1, Number(query.page ?? 1))
     const limit = Math.min(100, Math.max(1, Number(query.limit ?? 10)))
     const skip  = (page - 1) * limit
 
-    const where: any = this.buildAccessWhere(currentUser)
+    // Laporan list is visible to all authenticated users (Riwayat page shows
+    // every report). Per-row "edit own only" enforcement happens in update/
+    // delete handlers, not at the list level. The dashboard "recent" table
+    // opts back into ownership filtering via the `mine=true` query param.
+    const where: any = {}
+    if ((query.mine === 'true' || query.mine === '1') && currentUser?.id) {
+      where.pelaporId = currentUser.id
+    }
 
     if (query.jenisGangguan) {
       const vals = query.jenisGangguan.split(',').filter(Boolean)
@@ -158,10 +174,13 @@ export class LaporanService {
   }
 
   async findOne(id: string, currentUser?: CurrentUser) {
-    await this.assertAccessible(id, currentUser)
+    // Detail view is open to every authenticated user (including teknisi
+    // viewing someone else's report). The Perbarui Laporan action enforces
+    // ownership separately via assertWritable.
+    await this.assertExists(id)
 
-    const laporan = await this.prisma.laporan.findFirst({
-      where: { id, ...this.buildAccessWhere(currentUser) },
+    const laporan = await this.prisma.laporan.findUnique({
+      where: { id },
       include: INCLUDE_FULL,
     })
     if (!laporan) throw new NotFoundException(`Laporan ${id} tidak ditemukan`)
@@ -279,7 +298,7 @@ export class LaporanService {
   }
 
   async update(id: string, dto: UpdateLaporanDto, currentUser?: CurrentUser) {
-    const existing = await this.assertAccessible(id, currentUser)
+    const existing = await this.assertWritable(id, currentUser)
     const { towerId, tanggal, pelaporId: _, ...rest } = dto as any
     const result = await this.prisma.laporan.update({
       where: { id },
@@ -300,13 +319,13 @@ export class LaporanService {
   }
 
   async remove(id: string, currentUser?: CurrentUser) {
-    const existing = await this.assertAccessible(id, currentUser)
+    const existing = await this.assertWritable(id, currentUser)
     await this.prisma.laporan.delete({ where: { id } })
     await this.syncTowerStatus(existing.towerId)
   }
 
   async updateFotoUrls(id: string, urls: string[], currentUser?: CurrentUser) {
-    await this.assertAccessible(id, currentUser)
+    await this.assertWritable(id, currentUser)
     return this.prisma.laporan.update({
       where: { id },
       data: { foto: { push: urls } },

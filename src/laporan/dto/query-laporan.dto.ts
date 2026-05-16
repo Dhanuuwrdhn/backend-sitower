@@ -44,4 +44,11 @@ export class QueryLaporanDto {
   @IsOptional()
   @IsNumberString()
   limit?: string
+
+  // When 'true' (or '1'), restricts the list to the calling user's own
+  // laporan. Used by the dashboard "recent" table for teknisi while the
+  // main Riwayat page leaves it unset to show everyone's reports.
+  @IsOptional()
+  @IsString()
+  mine?: string
 }
