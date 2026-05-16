@@ -187,8 +187,10 @@ export class LaporanService {
     return mapLaporan(laporan)
   }
 
-  async getStats(currentUser?: CurrentUser) {
-    const where = this.buildAccessWhere(currentUser)
+  async getStats(_currentUser?: CurrentUser) {
+    // Dashboard stats are visible to every authenticated user (teknisi too),
+    // mirroring the Riwayat list visibility. Ownership only restricts writes.
+    const where: any = {}
     const counts = await this.prisma.laporan.groupBy({
       by: ['jenisGangguan'],
       where,

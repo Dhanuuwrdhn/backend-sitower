@@ -80,13 +80,6 @@ interface CurrentUser {
 export class AsetService {
   constructor(private prisma: PrismaService) {}
 
-  private buildTowerAccessWhere(currentUser?: CurrentUser) {
-    if (currentUser?.role === 'teknisi') {
-      return { laporan: { some: { pelaporId: currentUser.id } } }
-    }
-    return {}
-  }
-
   // ── Line Types ─────────────────────────────────────────────────────────────
   findAllLineTypes() {
     return this.prisma.transmissionLineType.findMany({ orderBy: { kode: 'asc' } })
@@ -221,13 +214,12 @@ export class AsetService {
     return { data, total, page, limit }
   }
 
-  async findOneTower(id: string, currentUser?: CurrentUser) {
+  async findOneTower(id: string, _currentUser?: CurrentUser) {
     const rec = await this.prisma.tower.findUnique({
       where: { id },
       include: {
         route:   { include: { lineType: true, garduDari: true, garduKe: true } },
         laporan: {
-          where: currentUser?.role === 'teknisi' ? { pelaporId: currentUser.id } : undefined,
           orderBy: { tanggal: 'desc' },
           take: 10,
         },
@@ -349,11 +341,12 @@ export class AsetService {
   }
 
   // ── Map Overview ───────────────────────────────────────────────────────────
-  async getMapOverview(currentUser?: CurrentUser) {
+  async getMapOverview(_currentUser?: CurrentUser) {
+    // Map overview is open to every authenticated user — teknisi sees the
+    // same tower set as admin. Ownership only restricts writes.
     const towerWhere: any = {
       lat: { not: 0 },
       lng: { not: 0 },
-      ...this.buildTowerAccessWhere(currentUser),
     }
 
     const [routeRecords, garduRecords, towerRecords] = await Promise.all([
@@ -384,7 +377,6 @@ export class AsetService {
             // history of the tower. The per-jenis badge in the popup carries
             // the laporan's own levelRisiko, and the overall marker color is
             // the most-critical level among them.
-            where: currentUser?.role === 'teknisi' ? { pelaporId: currentUser.id } : undefined,
             select: { id: true, jenisGangguan: true, levelRisiko: true, updatedAt: true },
           },
           sertifikat: { select: { id: true }, take: 1 },
@@ -502,12 +494,11 @@ export class AsetService {
     }))
   }
 
-  async getMapFilter(type: string, currentUser?: CurrentUser) {
+  async getMapFilter(type: string, _currentUser?: CurrentUser) {
     const towers = await this.prisma.tower.findMany({
       where: {
         lat: { not: 0 },
         lng: { not: 0 },
-        ...this.buildTowerAccessWhere(currentUser),
         ...(type === 'semua' ? {} : type === 'kritis' || type === 'sedang' || type === 'aman'
           ? { statusKerawanan: type }
           : { jenisKerawanan: type }),
@@ -530,8 +521,10 @@ export class AsetService {
   }
 
   // ── Stats ──────────────────────────────────────────────────────────────────
-  async getStats(currentUser?: CurrentUser) {
-    const where = this.buildTowerAccessWhere(currentUser)
+  async getStats(_currentUser?: CurrentUser) {
+    // Tower stats are visible to every authenticated user. Ownership only
+    // restricts write actions, not dashboard visibility.
+    const where: any = {}
     const [total, byStatus, byJenis] = await Promise.all([
       this.prisma.tower.count({ where }),
       this.prisma.tower.groupBy({ where, by: ['statusKerawanan'], _count: true }),
