@@ -385,7 +385,7 @@ export class AsetService {
             // the laporan's own levelRisiko, and the overall marker color is
             // the most-critical level among them.
             where: currentUser?.role === 'teknisi' ? { pelaporId: currentUser.id } : undefined,
-            select: { jenisGangguan: true, levelRisiko: true, updatedAt: true },
+            select: { id: true, jenisGangguan: true, levelRisiko: true, updatedAt: true },
           },
           sertifikat: { select: { id: true }, take: 1 },
         },
@@ -433,13 +433,23 @@ export class AsetService {
         // worst (latest-priority) levelRisiko among the laporan of that jenis.
         // levelRisiko on Laporan already reflects the latest status because
         // ProgressService writes the new status back to it on every update.
-        const byJenis = new Map<string, string>()
+        const byJenis = new Map<string, { level: string; laporanId: string; updatedAt: Date }>()
         for (const l of t.laporan) {
           if (!KERAWANAN_JENIS.has(l.jenisGangguan)) continue
           const prev = byJenis.get(l.jenisGangguan)
-          byJenis.set(l.jenisGangguan, prev ? worseLevel(prev, l.levelRisiko) : l.levelRisiko)
+          if (!prev) {
+            byJenis.set(l.jenisGangguan, { level: l.levelRisiko, laporanId: l.id, updatedAt: l.updatedAt })
+            continue
+          }
+          const worse = worseLevel(prev.level, l.levelRisiko)
+          // Pick the worst level; on tie keep the most recent.
+          if (worse !== prev.level || l.updatedAt > prev.updatedAt) {
+            byJenis.set(l.jenisGangguan, { level: worse, laporanId: l.id, updatedAt: l.updatedAt })
+          }
         }
-        const kerawanan = [...byJenis.entries()].map(([jenis, level]) => ({ jenis, level }))
+        const kerawanan = [...byJenis.entries()].map(([jenis, v]) => ({
+          jenis, level: v.level, laporan_id: v.laporanId,
+        }))
         // Overall tower status = worst level across all per-jenis entries.
         // Falls back to the stored statusKerawanan if the tower has no active
         // laporan (e.g. seeded data without reports).
