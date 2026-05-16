@@ -27,7 +27,7 @@ export class PegawaiService {
 
   async create(dto: CreatePegawaiDto) {
     const exists = await this.prisma.pegawai.findUnique({ where: { nik: dto.nik } })
-    if (exists) throw new ConflictException(`NIK ${dto.nik} sudah terdaftar`)
+    if (exists) throw new ConflictException(`NIP ${dto.nik} sudah terdaftar`)
 
     const password = await bcrypt.hash(dto.password, 10)
     return this.prisma.pegawai.create({
