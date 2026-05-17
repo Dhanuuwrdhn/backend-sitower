@@ -5,18 +5,19 @@ export declare class PegawaiController {
     private pegawaiService;
     constructor(pegawaiService: PegawaiService);
     findAll(): import("@prisma/client").Prisma.PrismaPromise<{
+        unit: string;
         id: string;
         nama: string;
         createdAt: Date;
         foto: string | null;
         nik: string;
         jabatan: string;
-        unit: string;
         role: string;
         aktif: boolean;
         expiredAt: Date | null;
     }[]>;
     findOne(id: string): Promise<{
+        unit: string;
         id: string;
         nama: string;
         createdAt: Date;
@@ -24,32 +25,32 @@ export declare class PegawaiController {
         foto: string | null;
         nik: string;
         jabatan: string;
-        unit: string;
         role: string;
         aktif: boolean;
         expiredAt: Date | null;
     }>;
     create(dto: CreatePegawaiDto): Promise<{
+        unit: string;
         id: string;
         nama: string;
         nik: string;
         jabatan: string;
-        unit: string;
         role: string;
         aktif: boolean;
         expiredAt: Date | null;
     }>;
     update(id: string, dto: UpdatePegawaiDto): Promise<{
+        unit: string;
         id: string;
         nama: string;
         nik: string;
         jabatan: string;
-        unit: string;
         role: string;
         aktif: boolean;
         expiredAt: Date | null;
     }>;
     remove(id: string): Promise<{
+        unit: string;
         id: string;
         nama: string;
         createdAt: Date;
@@ -58,7 +59,6 @@ export declare class PegawaiController {
         nik: string;
         username: string | null;
         jabatan: string;
-        unit: string;
         role: string;
         password: string;
         aktif: boolean;

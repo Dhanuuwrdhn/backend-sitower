@@ -20,6 +20,7 @@ const pegawai_module_1 = require("./pegawai/pegawai.module");
 const import_module_1 = require("./import/import.module");
 const jalur_kml_module_1 = require("./jalur-kml/jalur-kml.module");
 const aset_module_1 = require("./aset/aset.module");
+const units_module_1 = require("./units/units.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -36,6 +37,7 @@ exports.AppModule = AppModule = __decorate([
             import_module_1.ImportModule,
             jalur_kml_module_1.JalurKmlModule,
             aset_module_1.AsetModule,
+            units_module_1.UnitsModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

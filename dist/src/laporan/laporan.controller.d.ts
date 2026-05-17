@@ -105,10 +105,10 @@ export declare class LaporanController {
                 lokasi: string | null;
             };
             pelapor: {
+                unit: string;
                 id: string;
                 nama: string;
                 jabatan: string;
-                unit: string;
             };
         } & {
             id: string;
