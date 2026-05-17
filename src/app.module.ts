@@ -11,6 +11,7 @@ import { PegawaiModule } from './pegawai/pegawai.module'
 import { ImportModule } from './import/import.module'
 import { JalurKmlModule } from './jalur-kml/jalur-kml.module'
 import { AsetModule } from './aset/aset.module'
+import { UnitsModule } from './units/units.module'
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { AsetModule } from './aset/aset.module'
     ImportModule,
     JalurKmlModule,
     AsetModule,
+    UnitsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
