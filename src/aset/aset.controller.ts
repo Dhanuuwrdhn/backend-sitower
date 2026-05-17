@@ -86,6 +86,12 @@ export class AsetController {
   @ApiQuery({ name: 'limit',         required: false })
   findAllTowers(@Query() query: any) { return this.asetService.findAllTowers(query) }
 
+  // Must be declared BEFORE @Get('towers/:id') so NestJS does not treat
+  // "dropdown" as a tower id parameter.
+  @Get('towers/dropdown')
+  @ApiOperation({ summary: 'Dropdown semua tower (tanpa pagination, untuk form Ruas)' })
+  findAllTowersForDropdown() { return this.asetService.findAllTowersForDropdown() }
+
   @Get('towers/:id')
   @ApiOperation({ summary: 'Detail tower beserta history laporan' })
   findOneTower(@Param('id') id: string, @Request() req: any) { return this.asetService.findOneTower(id, req.user) }

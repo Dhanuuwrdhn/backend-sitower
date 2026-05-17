@@ -214,6 +214,32 @@ export class AsetService {
     return { data, total, page, limit }
   }
 
+  // Unpaginated, unfiltered tower list shaped for the Ruas dropdown in the
+  // Buat Laporan form. Must mirror the field shape expected by TowerOption on
+  // the frontend (id, nomorTower, garduInduk, tipe, tegangan, nama, jalur,
+  // lat, lng, radius). Returns ALL towers — newly-added ones included.
+  async findAllTowersForDropdown() {
+    const towers = await this.prisma.tower.findMany({
+      select: {
+        id: true, nama: true, tipe: true, tegangan: true,
+        lat: true, lng: true, radius: true, jalur: true,
+      },
+      orderBy: [{ jalur: 'asc' }, { nomorUrut: 'asc' }, { id: 'asc' }],
+    })
+    return towers.map((t) => ({
+      id: t.id,
+      nomorTower: t.id,
+      garduInduk: '',
+      tipe: t.tipe,
+      tegangan: t.tegangan,
+      nama: t.nama,
+      jalur: t.jalur ?? undefined,
+      lat: t.lat,
+      lng: t.lng,
+      radius: t.radius,
+    }))
+  }
+
   async findOneTower(id: string, _currentUser?: CurrentUser) {
     const rec = await this.prisma.tower.findUnique({
       where: { id },
