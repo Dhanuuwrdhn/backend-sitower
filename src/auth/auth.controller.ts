@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Put, Body, Request, UseGuards, Param } from '@nestjs/common'
+import { Controller, Post, Get, Put, Delete, Body, Request, UseGuards, Param } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiBody, ApiParam } from '@nestjs/swagger'
 import { AuthService } from './auth.service'
 import { JwtAuthGuard } from './jwt-auth.guard'
@@ -82,5 +82,15 @@ export class AuthController {
   @ApiParam({ name: 'id', description: 'Password change request ID' })
   rejectRequest(@Param('id') id: string, @Request() req: any) {
     return this.authService.rejectPasswordChangeRequest(id, req.user.id)
+  }
+
+  @Delete('password-change-requests/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Hapus request ganti password (admin)' })
+  @ApiParam({ name: 'id', description: 'Password change request ID' })
+  deleteRequest(@Param('id') id: string) {
+    return this.authService.deletePasswordChangeRequest(id)
   }
 }

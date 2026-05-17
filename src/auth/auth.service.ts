@@ -168,4 +168,16 @@ export class AuthService {
 
     return { message: 'Permintaan ganti password telah ditolak' }
   }
+
+  // ── Admin: delete request ─────────────────────────────────────────────────────
+
+  async deletePasswordChangeRequest(requestId: string) {
+    const request = await this.prisma.passwordChangeRequest.findUnique({
+      where: { id: requestId },
+    })
+    if (!request) throw new NotFoundException('Request tidak ditemukan')
+
+    await this.prisma.passwordChangeRequest.delete({ where: { id: requestId } })
+    return { message: 'Permintaan ganti password telah dihapus' }
+  }
 }
