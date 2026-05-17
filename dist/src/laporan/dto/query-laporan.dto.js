@@ -23,6 +23,7 @@ class QueryLaporanDto {
     tglAkhir;
     page;
     limit;
+    mine;
 }
 exports.QueryLaporanDto = QueryLaporanDto;
 __decorate([
@@ -80,4 +81,9 @@ __decorate([
     (0, class_validator_1.IsNumberString)(),
     __metadata("design:type", String)
 ], QueryLaporanDto.prototype, "limit", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], QueryLaporanDto.prototype, "mine", void 0);
 //# sourceMappingURL=query-laporan.dto.js.map

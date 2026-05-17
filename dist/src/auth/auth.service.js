@@ -182,6 +182,15 @@ let AuthService = class AuthService {
         });
         return { message: 'Permintaan ganti password telah ditolak' };
     }
+    async deletePasswordChangeRequest(requestId) {
+        const request = await this.prisma.passwordChangeRequest.findUnique({
+            where: { id: requestId },
+        });
+        if (!request)
+            throw new common_1.NotFoundException('Request tidak ditemukan');
+        await this.prisma.passwordChangeRequest.delete({ where: { id: requestId } });
+        return { message: 'Permintaan ganti password telah dihapus' };
+    }
 };
 exports.AuthService = AuthService;
 exports.AuthService = AuthService = __decorate([

@@ -61,6 +61,7 @@ export declare class TowersController {
         tipe: string;
         tegangan: string;
         nama: string;
+        jalur: string | undefined;
         lat: number;
         lng: number;
         radius: number;
@@ -113,9 +114,9 @@ export declare class TowersController {
             towerId: string;
             keterangan: string | null;
             tahun: number;
-            fileUrl: string | null;
             namaFile: string;
             versi: string | null;
+            fileUrl: string | null;
         }[];
     } & {
         id: string;

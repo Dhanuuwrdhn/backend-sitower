@@ -48,6 +48,9 @@ let AuthController = class AuthController {
     rejectRequest(id, req) {
         return this.authService.rejectPasswordChangeRequest(id, req.user.id);
     }
+    deleteRequest(id) {
+        return this.authService.deletePasswordChangeRequest(id);
+    }
 };
 exports.AuthController = AuthController;
 __decorate([
@@ -129,6 +132,18 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], AuthController.prototype, "rejectRequest", null);
+__decorate([
+    (0, common_1.Delete)('password-change-requests/:id'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('admin'),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Hapus request ganti password (admin)' }),
+    (0, swagger_1.ApiParam)({ name: 'id', description: 'Password change request ID' }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], AuthController.prototype, "deleteRequest", null);
 exports.AuthController = AuthController = __decorate([
     (0, swagger_1.ApiTags)('Auth'),
     (0, common_1.Controller)('auth'),

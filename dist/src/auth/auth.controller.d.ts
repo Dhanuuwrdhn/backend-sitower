@@ -51,4 +51,7 @@ export declare class AuthController {
     rejectRequest(id: string, req: any): Promise<{
         message: string;
     }>;
+    deleteRequest(id: string): Promise<{
+        message: string;
+    }>;
 }

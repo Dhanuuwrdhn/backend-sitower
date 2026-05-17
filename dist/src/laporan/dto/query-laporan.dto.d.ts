@@ -10,4 +10,5 @@ export declare class QueryLaporanDto {
     tglAkhir?: string;
     page?: string;
     limit?: string;
+    mine?: string;
 }

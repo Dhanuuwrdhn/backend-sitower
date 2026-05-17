@@ -10,7 +10,12 @@ export declare class LaporanService {
     private prisma;
     constructor(prisma: PrismaService);
     private buildAccessWhere;
-    assertAccessible(id: string, currentUser?: CurrentUser): Promise<{
+    assertExists(id: string): Promise<{
+        id: string;
+        towerId: string;
+        pelaporId: string;
+    }>;
+    assertWritable(id: string, currentUser?: CurrentUser): Promise<{
         id: string;
         towerId: string;
         pelaporId: string;
@@ -22,7 +27,7 @@ export declare class LaporanService {
         limit: number;
     }>;
     findOne(id: string, currentUser?: CurrentUser): Promise<any>;
-    getStats(currentUser?: CurrentUser): Promise<{
+    getStats(_currentUser?: CurrentUser): Promise<{
         total: number;
         berlangsung: number;
     }>;

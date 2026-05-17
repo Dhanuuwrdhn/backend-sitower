@@ -61,15 +61,19 @@ let LaporanService = class LaporanService {
         }
         return {};
     }
-    async assertAccessible(id, currentUser) {
+    async assertExists(id) {
         const laporan = await this.prisma.laporan.findUnique({
             where: { id },
             select: { id: true, pelaporId: true, towerId: true },
         });
         if (!laporan)
             throw new common_1.NotFoundException(`Laporan ${id} tidak ditemukan`);
+        return laporan;
+    }
+    async assertWritable(id, currentUser) {
+        const laporan = await this.assertExists(id);
         if (currentUser?.role === 'teknisi' && laporan.pelaporId !== currentUser.id) {
-            throw new common_1.ForbiddenException('Anda tidak memiliki akses ke laporan ini');
+            throw new common_1.ForbiddenException('Anda hanya dapat mengubah laporan milik Anda sendiri');
         }
         return laporan;
     }
@@ -77,7 +81,10 @@ let LaporanService = class LaporanService {
         const page = Math.max(1, Number(query.page ?? 1));
         const limit = Math.min(100, Math.max(1, Number(query.limit ?? 10)));
         const skip = (page - 1) * limit;
-        const where = this.buildAccessWhere(currentUser);
+        const where = {};
+        if ((query.mine === 'true' || query.mine === '1') && currentUser?.id) {
+            where.pelaporId = currentUser.id;
+        }
         if (query.jenisGangguan) {
             const vals = query.jenisGangguan.split(',').filter(Boolean);
             if (vals.length > 0)
@@ -144,17 +151,17 @@ let LaporanService = class LaporanService {
         return { data: data.map(mapLaporan), total, page, limit };
     }
     async findOne(id, currentUser) {
-        await this.assertAccessible(id, currentUser);
-        const laporan = await this.prisma.laporan.findFirst({
-            where: { id, ...this.buildAccessWhere(currentUser) },
+        await this.assertExists(id);
+        const laporan = await this.prisma.laporan.findUnique({
+            where: { id },
             include: INCLUDE_FULL,
         });
         if (!laporan)
             throw new common_1.NotFoundException(`Laporan ${id} tidak ditemukan`);
         return mapLaporan(laporan);
     }
-    async getStats(currentUser) {
-        const where = this.buildAccessWhere(currentUser);
+    async getStats(_currentUser) {
+        const where = {};
         const counts = await this.prisma.laporan.groupBy({
             by: ['jenisGangguan'],
             where,
@@ -246,7 +253,7 @@ let LaporanService = class LaporanService {
         return mapLaporan(result);
     }
     async update(id, dto, currentUser) {
-        const existing = await this.assertAccessible(id, currentUser);
+        const existing = await this.assertWritable(id, currentUser);
         const { towerId, tanggal, pelaporId: _, ...rest } = dto;
         const result = await this.prisma.laporan.update({
             where: { id },
@@ -264,12 +271,12 @@ let LaporanService = class LaporanService {
         return mapLaporan(result);
     }
     async remove(id, currentUser) {
-        const existing = await this.assertAccessible(id, currentUser);
+        const existing = await this.assertWritable(id, currentUser);
         await this.prisma.laporan.delete({ where: { id } });
         await this.syncTowerStatus(existing.towerId);
     }
     async updateFotoUrls(id, urls, currentUser) {
-        await this.assertAccessible(id, currentUser);
+        await this.assertWritable(id, currentUser);
         return this.prisma.laporan.update({
             where: { id },
             data: { foto: { push: urls } },

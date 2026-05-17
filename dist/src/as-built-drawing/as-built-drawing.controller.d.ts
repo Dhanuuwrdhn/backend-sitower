@@ -40,8 +40,8 @@ export declare class AsBuiltDrawingController {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            fileUrl: string;
             namaFile: string;
+            fileUrl: string;
             folderId: string;
         }[];
     } & {
@@ -104,24 +104,24 @@ export declare class AsBuiltDrawingController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        fileUrl: string;
         namaFile: string;
+        fileUrl: string;
         folderId: string;
     }[]>;
     uploadDokumen(folderId: string, file: Express.Multer.File): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        fileUrl: string;
         namaFile: string;
+        fileUrl: string;
         folderId: string;
     }>;
     findOneDokumen(id: string): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        fileUrl: string;
         namaFile: string;
+        fileUrl: string;
         folderId: string;
     }>;
     previewDokumen(id: string, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
@@ -129,8 +129,8 @@ export declare class AsBuiltDrawingController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        fileUrl: string;
         namaFile: string;
+        fileUrl: string;
         folderId: string;
     }>;
 }

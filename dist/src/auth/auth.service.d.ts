@@ -49,4 +49,7 @@ export declare class AuthService {
     rejectPasswordChangeRequest(requestId: string, adminId: string): Promise<{
         message: string;
     }>;
+    deletePasswordChangeRequest(requestId: string): Promise<{
+        message: string;
+    }>;
 }
