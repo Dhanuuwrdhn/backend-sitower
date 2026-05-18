@@ -200,6 +200,11 @@ export class AsetService {
       where.hasCertificate = query['hasCertificate'] === 'true'
     }
 
+    // CCTV Status
+    if (query['hasCctv'] !== undefined) {
+      where.hasCctv = query['hasCctv'] === 'true'
+    }
+
     const [data, total] = await Promise.all([
       this.prisma.tower.findMany({
         where,
@@ -271,6 +276,7 @@ export class AsetService {
       nomorUrut: dto.nomorUrut ? Number(dto.nomorUrut) : null,
       routeId: dto.routeId ? Number(dto.routeId) : null,
       hasCertificate: String(dto.hasCertificate) === 'true',
+      hasCctv: String(dto.hasCctv) === 'true',
       statusKerawanan: dto.statusKerawanan ?? 'aman',
     }
 
@@ -316,6 +322,9 @@ export class AsetService {
     if (dto.routeId !== undefined) data.routeId = dto.routeId ? Number(dto.routeId) : null
     if (dto.hasCertificate !== undefined) {
       data.hasCertificate = String(dto.hasCertificate) === 'true'
+    }
+    if (dto.hasCctv !== undefined) {
+      data.hasCctv = String(dto.hasCctv) === 'true'
     }
 
     const tower = await this.prisma.tower.update({
@@ -395,7 +404,7 @@ export class AsetService {
         orderBy: [{ jalur: 'asc' }, { nomorUrut: 'asc' }],
         select:  {
           id: true, nama: true, lat: true, lng: true, updatedAt: true,
-          tipe: true,
+          tipe: true, hasCctv: true,
           statusKerawanan: true, jenisKerawanan: true, routeId: true,
           laporan: {
             // Show every laporan on the map (including 'selesai' /
@@ -483,6 +492,7 @@ export class AsetService {
           lng:            t.lng,
           tipe:           t.tipe,
           bersertifikat:  (t.sertifikat?.length ?? 0) > 0,
+          hasCctv:        t.hasCctv ?? false,
           status:         overallStatus,
           kerawanan_type: t.jenisKerawanan,
           kerawanan_types: kerawanan.map((k) => k.jenis),
