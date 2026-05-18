@@ -26,11 +26,11 @@ export declare class AuthService {
         newPasswordHash: undefined;
         status: string;
         pegawai: {
+            unit: string;
             id: string;
             nama: string;
             nik: string;
             jabatan: string;
-            unit: string;
         };
         reviewedBy: {
             id: string;
