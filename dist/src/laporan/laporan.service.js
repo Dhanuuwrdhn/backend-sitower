@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.LaporanService = void 0;
+exports.LaporanService = exports.INITIAL_RIWAYAT_FIELDS = exports.INITIAL_RIWAYAT_MARKER = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
 const INCLUDE_FULL = {
@@ -30,8 +30,8 @@ const LEVEL_PRIORITY = {
 const KERAWANAN_TYPES = new Set([
     'pekerjaan_pihak_lain', 'kebakaran', 'layangan', 'pencurian', 'pemanfaatan_lahan',
 ]);
-const INITIAL_RIWAYAT_MARKER = '__initial__';
-const INITIAL_RIWAYAT_FIELDS = [
+exports.INITIAL_RIWAYAT_MARKER = '__initial__';
+exports.INITIAL_RIWAYAT_FIELDS = [
     'statusKerawanan',
     'progresLaporan',
     'uraianPekerjaan',
@@ -39,7 +39,7 @@ const INITIAL_RIWAYAT_FIELDS = [
     'pihakLain',
     'contactPerson',
     'foto',
-    INITIAL_RIWAYAT_MARKER,
+    exports.INITIAL_RIWAYAT_MARKER,
 ];
 function mapLaporan(l) {
     if (!l)
@@ -244,7 +244,7 @@ let LaporanService = class LaporanService {
                     beritaAcara: [],
                     spanduk: [],
                     surat: [],
-                    changedFields: INITIAL_RIWAYAT_FIELDS,
+                    changedFields: exports.INITIAL_RIWAYAT_FIELDS,
                 },
             });
             return created;

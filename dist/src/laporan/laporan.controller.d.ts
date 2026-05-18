@@ -26,24 +26,24 @@ export declare class LaporanController {
     remove(id: string, req: any): Promise<void>;
     getProgress(id: string, req: any): Promise<Record<string, {
         id: string;
-        tipe: string;
         createdAt: Date;
+        tipe: string;
         laporanId: string;
         fileUrl: string;
         namaFile: string;
     }[]>>;
     uploadProgress(id: string, file: Express.Multer.File, tipe: string, req: any): Promise<{
         id: string;
-        tipe: string;
         createdAt: Date;
+        tipe: string;
         laporanId: string;
         fileUrl: string;
         namaFile: string;
     }>;
     deleteProgress(id: string, progressId: string, req: any): Promise<{
         id: string;
-        tipe: string;
         createdAt: Date;
+        tipe: string;
         laporanId: string;
         fileUrl: string;
         namaFile: string;
@@ -55,16 +55,16 @@ export declare class LaporanController {
         urls: string[];
     }[]>;
     getRiwayat(id: string, req: any): Promise<{
-        id: string;
-        createdAt: Date;
         statusKerawanan: string;
-        tanggal: Date;
-        foto: string[];
-        contactPerson: string | null;
         progresLaporan: string;
         uraianPekerjaan: string | null;
         upayaPengendalian: string | null;
         pihakLain: string | null;
+        contactPerson: string | null;
+        foto: string[];
+        id: string;
+        tanggal: Date;
+        createdAt: Date;
         laporanId: string;
         oleh: string;
         beritaAcara: string[];
@@ -79,16 +79,16 @@ export declare class LaporanController {
         surat?: Express.Multer.File[];
     }, body: any, req: any): Promise<{
         riwayat: {
-            id: string;
-            createdAt: Date;
             statusKerawanan: string;
-            tanggal: Date;
-            foto: string[];
-            contactPerson: string | null;
             progresLaporan: string;
             uraianPekerjaan: string | null;
             upayaPengendalian: string | null;
             pihakLain: string | null;
+            contactPerson: string | null;
+            foto: string[];
+            id: string;
+            tanggal: Date;
+            createdAt: Date;
             laporanId: string;
             oleh: string;
             beritaAcara: string[];
@@ -97,6 +97,12 @@ export declare class LaporanController {
             changedFields: string[];
         };
         laporan: {
+            pelapor: {
+                id: string;
+                nama: string;
+                jabatan: string;
+                unit: string;
+            };
             tower: {
                 id: string;
                 nama: string;
@@ -104,47 +110,41 @@ export declare class LaporanController {
                 tipe: string;
                 lokasi: string | null;
             };
-            pelapor: {
-                unit: string;
-                id: string;
-                nama: string;
-                jabatan: string;
-            };
         } & {
+            progresLaporan: string | null;
+            contactPerson: string | null;
+            foto: string[];
             id: string;
-            createdAt: Date;
-            updatedAt: Date;
             towerId: string;
             pelaporId: string;
             deskripsi: string;
             status: string;
             tanggal: Date;
             keterangan: string | null;
-            foto: string[];
             noSpk: string | null;
             teknisi: string | null;
             temuan: string | null;
             hasil: string | null;
             penyebab: string | null;
             durasi: string | null;
+            createdAt: Date;
+            updatedAt: Date;
             jenisGangguan: string;
             levelRisiko: string;
             lokasiDetail: string | null;
-            contactPerson: string | null;
-            progresLaporan: string | null;
         };
     }>;
     deleteRiwayat(id: string, riwayatId: string, req: any): Promise<{
-        id: string;
-        createdAt: Date;
         statusKerawanan: string;
-        tanggal: Date;
-        foto: string[];
-        contactPerson: string | null;
         progresLaporan: string;
         uraianPekerjaan: string | null;
         upayaPengendalian: string | null;
         pihakLain: string | null;
+        contactPerson: string | null;
+        foto: string[];
+        id: string;
+        tanggal: Date;
+        createdAt: Date;
         laporanId: string;
         oleh: string;
         beritaAcara: string[];

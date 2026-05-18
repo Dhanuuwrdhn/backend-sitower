@@ -45,6 +45,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ImportService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const laporan_service_1 = require("../laporan/laporan.service");
 const XLSX = __importStar(require("xlsx"));
 let ImportService = class ImportService {
     prisma;
@@ -341,7 +342,7 @@ let ImportService = class ImportService {
                 }
             });
             if (!existingLaporan) {
-                await this.prisma.laporan.create({
+                const created = await this.prisma.laporan.create({
                     data: {
                         towerId: tower.id,
                         pelaporId: pegawai.id,
@@ -357,6 +358,24 @@ let ImportService = class ImportService {
                         teknisi: rawPihakLain || null,
                         contactPerson: rawContactPerson || null,
                     }
+                });
+                await this.prisma.riwayatLaporan.create({
+                    data: {
+                        laporanId: created.id,
+                        oleh: pegawai.nama,
+                        tanggal: created.createdAt,
+                        statusKerawanan: created.levelRisiko,
+                        progresLaporan: created.progresLaporan ?? 'sedang_berlangsung',
+                        uraianPekerjaan: created.deskripsi ?? null,
+                        upayaPengendalian: created.keterangan ?? null,
+                        pihakLain: created.teknisi ?? null,
+                        contactPerson: created.contactPerson ?? null,
+                        foto: created.foto ?? [],
+                        beritaAcara: [],
+                        spanduk: [],
+                        surat: [],
+                        changedFields: laporan_service_1.INITIAL_RIWAYAT_FIELDS,
+                    },
                 });
                 createdCount++;
             }
