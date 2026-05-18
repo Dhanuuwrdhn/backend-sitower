@@ -445,7 +445,7 @@ export class AsetService {
         orderBy: [{ jalur: 'asc' }, { nomorUrut: 'asc' }],
         select:  {
           id: true, nama: true, lat: true, lng: true, updatedAt: true,
-          tipe: true, hasCctv: true,
+          tipe: true, hasCctv: true, hasCertificate: true,
           statusKerawanan: true, jenisKerawanan: true, routeId: true,
           laporan: {
             // Show every laporan on the map (including 'selesai' /
@@ -532,7 +532,7 @@ export class AsetService {
           lat:            t.lat,
           lng:            t.lng,
           tipe:           t.tipe,
-          bersertifikat:  (t.sertifikat?.length ?? 0) > 0,
+          bersertifikat:  t.hasCertificate ?? false,
           hasCctv:        t.hasCctv ?? false,
           status:         overallStatus,
           kerawanan_type: t.jenisKerawanan,
