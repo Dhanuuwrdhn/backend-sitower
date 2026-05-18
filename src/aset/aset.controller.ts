@@ -1,5 +1,5 @@
 import {
-  Controller, Get, Post, Put, Delete,
+  Controller, Get, Post, Put, Delete, Header,
   Body, Param, Query, UseGuards, ParseIntPipe, Request,
   UploadedFile, UploadedFiles, UseInterceptors, Res,
 } from '@nestjs/common'
@@ -139,6 +139,7 @@ export class AsetController {
   // ── Map ─────────────────────────────────────────────────────────────────────
   @Get('map/overview')
   @ApiOperation({ summary: 'Data lengkap peta: routes polyline + gardu + towers' })
+  @Header('Cache-Control', 'no-store, no-cache, must-revalidate')
   getMapOverview(@Request() req: any) { return this.asetService.getMapOverview(req.user) }
 
   @Get('map/routes')
