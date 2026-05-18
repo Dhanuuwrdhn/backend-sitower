@@ -89,7 +89,7 @@ export class AsetController {
   // Must be declared BEFORE @Get('towers/:id') so NestJS does not treat
   // "dropdown" as a tower id parameter.
   @Get('towers/dropdown')
-  @ApiOperation({ summary: 'Dropdown semua tower (tanpa pagination, untuk form Ruas)' })
+  @ApiOperation({ summary: 'Dropdown semua tower (tanpa pagination, untuk form Penghantar)' })
   findAllTowersForDropdown() { return this.asetService.findAllTowersForDropdown() }
 
   @Get('towers/:id')
