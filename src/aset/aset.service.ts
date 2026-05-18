@@ -455,7 +455,7 @@ export class AsetService {
             // in sync with the dashboard stats card (which already excludes
             // 'selesai' for the PPL count).
             where: { status: { in: ['berlangsung', 'tidak_ada_aktifitas'] } },
-            select: { id: true, jenisGangguan: true, levelRisiko: true, updatedAt: true },
+            select: { id: true, jenisGangguan: true, levelRisiko: true, progresLaporan: true, status: true, updatedAt: true },
           },
           sertifikat: { select: { id: true }, take: 1 },
         },
@@ -508,6 +508,7 @@ export class AsetService {
           .map((l) => ({
             jenis: l.jenisGangguan,
             level: l.levelRisiko,
+            progres: l.progresLaporan ?? l.status,
             laporan_id: l.id,
             updatedAt: l.updatedAt,
           }))
