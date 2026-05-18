@@ -28,8 +28,8 @@ const KERAWANAN_TYPES = new Set([
   'pekerjaan_pihak_lain', 'kebakaran', 'layangan', 'pencurian', 'pemanfaatan_lahan',
 ])
 
-const INITIAL_RIWAYAT_MARKER = '__initial__'
-const INITIAL_RIWAYAT_FIELDS = [
+export const INITIAL_RIWAYAT_MARKER = '__initial__'
+export const INITIAL_RIWAYAT_FIELDS = [
   'statusKerawanan',
   'progresLaporan',
   'uraianPekerjaan',

@@ -1,5 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
+import { INITIAL_RIWAYAT_FIELDS } from '../laporan/laporan.service'
 import * as XLSX from 'xlsx'
 
 @Injectable()
@@ -318,7 +319,7 @@ export class ImportService {
       })
 
       if (!existingLaporan) {
-        await this.prisma.laporan.create({
+        const created = await this.prisma.laporan.create({
           data: {
             towerId: tower.id,
             pelaporId: pegawai.id,
@@ -334,6 +335,24 @@ export class ImportService {
             teknisi: rawPihakLain || null,
             contactPerson: rawContactPerson || null,
           }
+        })
+        await this.prisma.riwayatLaporan.create({
+          data: {
+            laporanId: created.id,
+            oleh: pegawai.nama,
+            tanggal: created.createdAt,
+            statusKerawanan: created.levelRisiko,
+            progresLaporan: created.progresLaporan ?? 'sedang_berlangsung',
+            uraianPekerjaan: created.deskripsi ?? null,
+            upayaPengendalian: created.keterangan ?? null,
+            pihakLain: created.teknisi ?? null,
+            contactPerson: created.contactPerson ?? null,
+            foto: created.foto ?? [],
+            beritaAcara: [],
+            spanduk: [],
+            surat: [],
+            changedFields: INITIAL_RIWAYAT_FIELDS,
+          },
         })
         createdCount++
       }
