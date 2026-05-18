@@ -190,7 +190,10 @@ export class LaporanService {
   async getStats(_currentUser?: CurrentUser) {
     // Dashboard stats are visible to every authenticated user (teknisi too),
     // mirroring the Riwayat list visibility. Ownership only restricts writes.
-    const where: any = {}
+    // Only count ACTIVE laporan (berlangsung / tidak_ada_aktifitas) so the
+    // jenis cards on Dashboard stay in sync with the map markers, which now
+    // also hide 'selesai' laporan from kerawanan aggregation.
+    const where: any = { status: { in: ['berlangsung', 'tidak_ada_aktifitas'] } }
     const counts = await this.prisma.laporan.groupBy({
       by: ['jenisGangguan'],
       where,
