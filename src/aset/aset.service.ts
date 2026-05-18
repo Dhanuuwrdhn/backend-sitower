@@ -177,10 +177,51 @@ export class AsetService {
       ]
     }
     
-    // Status Kerawanan (Support multi-select)
+    // Status Kerawanan — computed dynamically from laporan (mirrors map overview logic).
+    // A tower's effective status = worst levelRisiko across all its kerawanan laporan.
     if (query.status) {
-      const statuses = query.status.split(',')
-      where.statusKerawanan = statuses.length > 1 ? { in: statuses } : statuses[0]
+      const KRITIS = ['kritis', 'kritis_terpenuhi', 'kritis_tidak_terpenuhi']
+      const KERAWANAN_JENIS = [
+        'pekerjaan_pihak_lain', 'kebakaran', 'layangan', 'pencurian', 'pemanfaatan_lahan',
+      ]
+      const requestedStatuses = query.status.split(',').map((s: string) => s.trim().toLowerCase())
+      const statusConditions: any[] = []
+
+      for (const s of requestedStatuses) {
+        if (s === 'kritis') {
+          // Any kritis-level laporan present
+          statusConditions.push({
+            laporan: { some: { levelRisiko: { in: KRITIS }, jenisGangguan: { in: KERAWANAN_JENIS } } },
+          })
+        } else if (s === 'sedang') {
+          // Has a sedang laporan but no kritis laporan
+          statusConditions.push({
+            AND: [
+              { laporan: { some: { levelRisiko: 'sedang', jenisGangguan: { in: KERAWANAN_JENIS } } } },
+              { laporan: { none: { levelRisiko: { in: KRITIS }, jenisGangguan: { in: KERAWANAN_JENIS } } } },
+            ],
+          })
+        } else if (s === 'aman') {
+          // Has kerawanan laporan but worst level is aman (no sedang or kritis)
+          statusConditions.push({
+            AND: [
+              { laporan: { some: { jenisGangguan: { in: KERAWANAN_JENIS } } } },
+              { laporan: { none: { levelRisiko: { in: ['sedang', ...KRITIS] }, jenisGangguan: { in: KERAWANAN_JENIS } } } },
+            ],
+          })
+        } else if (s === 'tidak ada aktivitas') {
+          // No kerawanan laporan at all
+          statusConditions.push({
+            laporan: { none: { jenisGangguan: { in: KERAWANAN_JENIS } } },
+          })
+        }
+      }
+
+      if (statusConditions.length === 1) {
+        Object.assign(where, statusConditions[0])
+      } else if (statusConditions.length > 1) {
+        where.OR = [...(where.OR ?? []), ...statusConditions]
+      }
     }
     
     // Jenis Kerawanan (Support multi-select)
