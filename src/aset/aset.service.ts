@@ -540,9 +540,13 @@ export class AsetService {
           kerawanan,
           icon_color:     ICON_COLOR[overallStatus] ?? '#00CC00',
           route_id:       t.routeId,
-          updated_at:     t.laporan.length > 0
-            ? t.laporan.reduce((latest, l) => l.updatedAt > latest ? l.updatedAt : latest, t.laporan[0].updatedAt)
-            : t.updatedAt,
+          // Latest of: tower's own updatedAt (sertifikat/CCTV/info edit) +
+          // all laporan updatedAt (new report or progres update). Whichever
+          // is newest wins, so popup "Terakhir update" reflects any change.
+          updated_at:     t.laporan.reduce(
+            (latest, l) => l.updatedAt > latest ? l.updatedAt : latest,
+            t.updatedAt,
+          ),
         }
       }),
     }
