@@ -448,11 +448,13 @@ export class AsetService {
           tipe: true, hasCctv: true, hasCertificate: true,
           statusKerawanan: true, jenisKerawanan: true, routeId: true,
           laporan: {
-            // Show every laporan on the map (including 'selesai' /
-            // 'tidak_ada_aktifitas'), so each marker reflects the full report
-            // history of the tower. The per-jenis badge in the popup carries
-            // the laporan's own levelRisiko, and the overall marker color is
-            // the most-critical level among them.
+            // Only ACTIVE laporan (berlangsung / tidak_ada_aktifitas) drive
+            // the map marker color and popup kerawanan list. When all of a
+            // tower's laporan are 'selesai', kerawanan[] becomes empty and
+            // the marker falls back to the route's normal color. Keeps map
+            // in sync with the dashboard stats card (which already excludes
+            // 'selesai' for the PPL count).
+            where: { status: { in: ['berlangsung', 'tidak_ada_aktifitas'] } },
             select: { id: true, jenisGangguan: true, levelRisiko: true, updatedAt: true },
           },
           sertifikat: { select: { id: true }, take: 1 },
