@@ -33,6 +33,7 @@ export declare class TowersController {
             telepon: string | null;
             sertifikatLink: string | null;
             hasCertificate: boolean;
+            hasCctv: boolean;
         }[];
         total: number;
         page: number;
@@ -114,9 +115,9 @@ export declare class TowersController {
             towerId: string;
             keterangan: string | null;
             tahun: number;
+            fileUrl: string | null;
             namaFile: string;
             versi: string | null;
-            fileUrl: string | null;
         }[];
     } & {
         id: string;
@@ -140,6 +141,7 @@ export declare class TowersController {
         telepon: string | null;
         sertifikatLink: string | null;
         hasCertificate: boolean;
+        hasCctv: boolean;
     }>;
     create(dto: CreateTowerDto): import("@prisma/client").Prisma.Prisma__TowerClient<{
         id: string;
@@ -163,6 +165,7 @@ export declare class TowersController {
         telepon: string | null;
         sertifikatLink: string | null;
         hasCertificate: boolean;
+        hasCctv: boolean;
     }, never, import("@prisma/client/runtime/client").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
     update(id: string, dto: UpdateTowerDto): Promise<{
         id: string;
@@ -186,6 +189,7 @@ export declare class TowersController {
         telepon: string | null;
         sertifikatLink: string | null;
         hasCertificate: boolean;
+        hasCctv: boolean;
     }>;
     remove(id: string): Promise<{
         id: string;
@@ -209,5 +213,6 @@ export declare class TowersController {
         telepon: string | null;
         sertifikatLink: string | null;
         hasCertificate: boolean;
+        hasCctv: boolean;
     }>;
 }

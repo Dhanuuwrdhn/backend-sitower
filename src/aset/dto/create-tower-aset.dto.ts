@@ -96,4 +96,9 @@ export class CreateTowerAsetDto {
   @IsOptional()
   @Transform(({ value }) => value === 'true' || value === true)
   hasCertificate?: boolean
+
+  @ApiPropertyOptional({ example: false })
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  hasCctv?: boolean
 }
