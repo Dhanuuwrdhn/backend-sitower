@@ -1,7 +1,20 @@
+import 'dotenv/config'
 import { PrismaClient } from '@prisma/client'
-import { INITIAL_RIWAYAT_FIELDS } from './src/laporan/laporan.service'
+import { PrismaPg } from '@prisma/adapter-pg'
 
-const prisma = new PrismaClient()
+const INITIAL_RIWAYAT_FIELDS = [
+  'statusKerawanan',
+  'progresLaporan',
+  'uraianPekerjaan',
+  'upayaPengendalian',
+  'pihakLain',
+  'contactPerson',
+  'foto',
+  '__initial__',
+]
+
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })
+const prisma = new PrismaClient({ adapter })
 
 async function run() {
   const laporans = await prisma.laporan.findMany({
