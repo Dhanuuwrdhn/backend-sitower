@@ -1,4 +1,4 @@
-import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common'
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
 import { CreateLaporanDto } from './dto/create-laporan.dto'
 import { UpdateLaporanDto } from './dto/update-laporan.dto'
@@ -188,25 +188,16 @@ export class LaporanService {
   }
 
   async getStats(_currentUser?: CurrentUser) {
-    // Dashboard stats are visible to every authenticated user (teknisi too),
-    // mirroring the Riwayat list visibility. Ownership only restricts writes.
-    // Count DISTINCT towers per jenis among ACTIVE laporan so the jenis
-    // cards equal the number of markers shown on the map (a tower with
-    // multiple active laporan of the same jenis counts once).
+    // Dashboard stats are visible to every authenticated user (teknisi too).
+    // Count ACTIVE laporan (berlangsung / tidak_ada_aktifitas) per jenis.
+    // A tower with multiple active laporan of the same jenis contributes
+    // each one — matching the per-laporan entries shown in the map popup.
     const where: any = { status: { in: ['berlangsung', 'tidak_ada_aktifitas'] } }
-    // groupBy ['jenisGangguan','towerId'] then dedup tower → count per jenis.
-    const grouped = await this.prisma.laporan.groupBy({
-      by: ['jenisGangguan', 'towerId'],
+    const counts = await this.prisma.laporan.groupBy({
+      by: ['jenisGangguan'],
       where,
+      _count: { id: true },
     })
-    const countByJenis = new Map<string, number>()
-    for (const g of grouped) {
-      countByJenis.set(g.jenisGangguan, (countByJenis.get(g.jenisGangguan) ?? 0) + 1)
-    }
-    const counts = [...countByJenis.entries()].map(([jenisGangguan, n]) => ({
-      jenisGangguan,
-      _count: { id: n },
-    }))
 
     const result: Record<string, number> = {
       ppl: 0, kebakaran: 0, layangan: 0, pencurian: 0,
@@ -271,25 +262,6 @@ export class LaporanService {
 
     const tower = await this.prisma.tower.findUnique({ where: { id: towerId } })
     if (!tower) throw new NotFoundException(`Tower dengan id "${towerId}" tidak ditemukan`)
-
-    // Cegah duplikasi kerawanan aktif: blokir bila tower ini sudah punya
-    // laporan dengan jenis yang sama dan progres belum 'selesai'. Jika
-    // laporan sebelumnya sudah selesai, user boleh buat laporan baru.
-    if (rest.jenisGangguan) {
-      const existingActive = await this.prisma.laporan.findFirst({
-        where: {
-          towerId,
-          jenisGangguan: rest.jenisGangguan,
-          status: { in: ['berlangsung', 'tidak_ada_aktifitas'] },
-        },
-        select: { id: true, status: true },
-      })
-      if (existingActive) {
-        throw new ConflictException(
-          `Tower ini sudah memiliki laporan ${rest.jenisGangguan} yang masih aktif. Selesaikan dulu laporan sebelumnya.`,
-        )
-      }
-    }
 
     const result = await this.prisma.$transaction(async (tx) => {
       const created = await tx.laporan.create({

@@ -499,27 +499,25 @@ export class AsetService {
         icon: 'gardu',
       })),
       towers: towerRecords.map((t) => {
-        // Collapse active laporan into one entry per jenisGangguan, keeping the
-        // worst (latest-priority) levelRisiko among the laporan of that jenis.
-        // levelRisiko on Laporan already reflects the latest status because
-        // ProgressService writes the new status back to it on every update.
-        const byJenis = new Map<string, { level: string; laporanId: string; updatedAt: Date }>()
-        for (const l of t.laporan) {
-          if (!KERAWANAN_JENIS.has(l.jenisGangguan)) continue
-          const prev = byJenis.get(l.jenisGangguan)
-          if (!prev) {
-            byJenis.set(l.jenisGangguan, { level: l.levelRisiko, laporanId: l.id, updatedAt: l.updatedAt })
-            continue
-          }
-          const worse = worseLevel(prev.level, l.levelRisiko)
-          // Pick the worst level; on tie keep the most recent.
-          if (worse !== prev.level || l.updatedAt > prev.updatedAt) {
-            byJenis.set(l.jenisGangguan, { level: worse, laporanId: l.id, updatedAt: l.updatedAt })
-          }
-        }
-        const kerawanan = [...byJenis.entries()].map(([jenis, v]) => ({
-          jenis, level: v.level, laporan_id: v.laporanId,
-        }))
+        // Return one entry per ACTIVE laporan (no jenis dedup) so the popup
+        // shows every kerawanan separately — including towers with multiple
+        // active laporan of the same jenis. Ordering: worst-level first,
+        // then most-recently-updated.
+        const kerawanan = t.laporan
+          .filter((l) => KERAWANAN_JENIS.has(l.jenisGangguan))
+          .map((l) => ({
+            jenis: l.jenisGangguan,
+            level: l.levelRisiko,
+            laporan_id: l.id,
+            updatedAt: l.updatedAt,
+          }))
+          .sort((a, b) => {
+            const pa = LEVEL_PRIORITY[a.level] ?? 0
+            const pb = LEVEL_PRIORITY[b.level] ?? 0
+            if (pa !== pb) return pb - pa
+            return b.updatedAt.getTime() - a.updatedAt.getTime()
+          })
+          .map(({ updatedAt: _u, ...rest }) => rest)
         // Overall tower status = worst level across all per-jenis entries.
         // Falls back to the stored statusKerawanan if the tower has no active
         // laporan (e.g. seeded data without reports).
