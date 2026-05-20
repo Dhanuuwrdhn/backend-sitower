@@ -161,7 +161,7 @@ let LaporanService = class LaporanService {
         return mapLaporan(laporan);
     }
     async getStats(_currentUser) {
-        const where = {};
+        const where = { status: { in: ['berlangsung', 'tidak_ada_aktifitas'] } };
         const counts = await this.prisma.laporan.groupBy({
             by: ['jenisGangguan'],
             where,

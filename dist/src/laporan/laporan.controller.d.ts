@@ -27,24 +27,24 @@ export declare class LaporanController {
     getProgress(id: string, req: any): Promise<Record<string, {
         id: string;
         createdAt: Date;
-        tipe: string;
         laporanId: string;
+        tipe: string;
         fileUrl: string;
         namaFile: string;
     }[]>>;
     uploadProgress(id: string, file: Express.Multer.File, tipe: string, req: any): Promise<{
         id: string;
         createdAt: Date;
-        tipe: string;
         laporanId: string;
+        tipe: string;
         fileUrl: string;
         namaFile: string;
     }>;
     deleteProgress(id: string, progressId: string, req: any): Promise<{
         id: string;
         createdAt: Date;
-        tipe: string;
         laporanId: string;
+        tipe: string;
         fileUrl: string;
         namaFile: string;
     }>;
@@ -135,22 +135,7 @@ export declare class LaporanController {
         };
     }>;
     deleteRiwayat(id: string, riwayatId: string, req: any): Promise<{
-        statusKerawanan: string;
-        progresLaporan: string;
-        uraianPekerjaan: string | null;
-        upayaPengendalian: string | null;
-        pihakLain: string | null;
-        contactPerson: string | null;
-        foto: string[];
-        id: string;
-        tanggal: Date;
-        createdAt: Date;
-        laporanId: string;
-        oleh: string;
-        beritaAcara: string[];
-        spanduk: string[];
-        surat: string[];
-        changedFields: string[];
+        success: boolean;
     }>;
     uploadFotoUpdate(id: string, files: Express.Multer.File[], req: any): Promise<{
         id: string;
