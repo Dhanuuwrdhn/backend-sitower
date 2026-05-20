@@ -12,6 +12,7 @@ import { ImportModule } from './import/import.module'
 import { JalurKmlModule } from './jalur-kml/jalur-kml.module'
 import { AsetModule } from './aset/aset.module'
 import { UnitsModule } from './units/units.module'
+import { CuiModule } from './cui/cui.module'
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { UnitsModule } from './units/units.module'
     JalurKmlModule,
     AsetModule,
     UnitsModule,
+    CuiModule,
   ],
   controllers: [AppController],
   providers: [AppService],
