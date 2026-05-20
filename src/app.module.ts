@@ -13,6 +13,7 @@ import { JalurKmlModule } from './jalur-kml/jalur-kml.module'
 import { AsetModule } from './aset/aset.module'
 import { UnitsModule } from './units/units.module'
 import { CuiModule } from './cui/cui.module'
+import { CleanupModule } from './cleanup/cleanup.module'
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { CuiModule } from './cui/cui.module'
     AsetModule,
     UnitsModule,
     CuiModule,
+    CleanupModule,
   ],
   controllers: [AppController],
   providers: [AppService],

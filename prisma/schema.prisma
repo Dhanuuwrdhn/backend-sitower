@@ -22,6 +22,7 @@ model Pegawai {
   expiredAt              DateTime?
   laporan                Laporan[]
   climbUpInspections     ClimbUpInspection[]
+  cleanUpIsolators       CleanUpIsolator[]
   passwordChangeRequests PasswordChangeRequest[] @relation("RequesterRequests")
   reviewedRequests       PasswordChangeRequest[] @relation("ReviewerRequests")
 }
@@ -110,6 +111,7 @@ model Tower {
   asBuiltFolders     AsBuiltFolder[]
   laporan            Laporan[]
   climbUpInspections ClimbUpInspection[]
+  cleanUpIsolators   CleanUpIsolator[]
   route              TransmissionRoute? @relation(fields: [routeId], references: [id], onUpdate: NoAction)
   sertifikat         Sertifikat[]
 }
@@ -207,6 +209,20 @@ model SertifikatDokumen {
 model ClimbUpInspection {
   id          String   @id @default(cuid())
   towerId     String
+  tanggal     DateTime
+  keterangan  String?
+  status      String   @default("sedang_berlangsung")
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  tower       Tower    @relation(fields: [towerId], references: [id])
+  createdBy   Pegawai  @relation(fields: [createdById], references: [id])
+}
+
+model CleanUpIsolator {
+  id          String   @id @default(cuid())
+  towerId     String
+  sirkit      String   @default("sirkit_1")
   tanggal     DateTime
   keterangan  String?
   status      String   @default("sedang_berlangsung")

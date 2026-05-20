@@ -1,0 +1,124 @@
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common'
+import { PrismaService } from '../prisma/prisma.service'
+import { CreateCleanupDto } from './dto/create-cleanup.dto'
+import { UpdateCleanupDto } from './dto/update-cleanup.dto'
+
+type SafeUser = { id: string; role: string }
+
+const INCLUDE_TOWER = {
+  tower: {
+    select: {
+      id: true,
+      nama: true,
+      jalur: true,
+      route: { select: { id: true, nama: true } },
+    },
+  },
+  createdBy: { select: { id: true, nama: true } },
+}
+
+@Injectable()
+export class CleanupService {
+  constructor(private prisma: PrismaService) {}
+
+  async findAll(query: {
+    search?: string
+    status?: string
+    sirkit?: string
+    jalur?: string
+    tglMulai?: string
+    tglAkhir?: string
+    page?: number
+    limit?: number
+  }) {
+    const page = Math.max(1, Number(query.page) || 1)
+    const limit = Math.min(100, Math.max(1, Number(query.limit) || 10))
+    const where: any = {}
+    if (query.status) {
+      const list = query.status.split(',').map((s) => s.trim()).filter(Boolean)
+      if (list.length === 1) where.status = list[0]
+      else if (list.length > 1) where.status = { in: list }
+    }
+    if (query.sirkit) {
+      const list = query.sirkit.split(',').map((s) => s.trim()).filter(Boolean)
+      if (list.length === 1) where.sirkit = list[0]
+      else if (list.length > 1) where.sirkit = { in: list }
+    }
+    if (query.jalur) {
+      const list = query.jalur.split(',').map((s) => s.trim()).filter(Boolean)
+      if (list.length) where.tower = { ...(where.tower ?? {}), jalur: { in: list } }
+    }
+    if (query.tglMulai || query.tglAkhir) {
+      where.tanggal = {
+        ...(query.tglMulai && { gte: new Date(query.tglMulai) }),
+        ...(query.tglAkhir && { lte: new Date(`${query.tglAkhir}T23:59:59.999Z`) }),
+      }
+    }
+    if (query.search) {
+      const s = query.search
+      where.OR = [
+        { keterangan: { contains: s, mode: 'insensitive' } },
+        { tower: { nama: { contains: s, mode: 'insensitive' } } },
+        { tower: { route: { nama: { contains: s, mode: 'insensitive' } } } },
+      ]
+    }
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.cleanUpIsolator.findMany({
+        where,
+        include: INCLUDE_TOWER,
+        orderBy: { tanggal: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.cleanUpIsolator.count({ where }),
+    ])
+    return { data, total, page, limit }
+  }
+
+  async findOne(id: string) {
+    const row = await this.prisma.cleanUpIsolator.findUnique({
+      where: { id },
+      include: INCLUDE_TOWER,
+    })
+    if (!row) throw new NotFoundException('Cleanup tidak ditemukan')
+    return row
+  }
+
+  async create(dto: CreateCleanupDto, user: SafeUser) {
+    return this.prisma.cleanUpIsolator.create({
+      data: {
+        towerId: dto.towerId,
+        sirkit: dto.sirkit,
+        tanggal: new Date(dto.tanggal),
+        keterangan: dto.keterangan,
+        status: dto.status ?? 'sedang_berlangsung',
+        createdById: user.id,
+      },
+      include: INCLUDE_TOWER,
+    })
+  }
+
+  async update(id: string, dto: UpdateCleanupDto) {
+    await this.findOne(id)
+    return this.prisma.cleanUpIsolator.update({
+      where: { id },
+      data: {
+        ...(dto.towerId    !== undefined && { towerId: dto.towerId }),
+        ...(dto.sirkit     !== undefined && { sirkit: dto.sirkit }),
+        ...(dto.tanggal    !== undefined && { tanggal: new Date(dto.tanggal) }),
+        ...(dto.keterangan !== undefined && { keterangan: dto.keterangan }),
+        ...(dto.status     !== undefined && { status: dto.status }),
+      },
+      include: INCLUDE_TOWER,
+    })
+  }
+
+  async remove(id: string, user: SafeUser) {
+    if (user.role !== 'admin' && user.role !== 'superadmin') {
+      throw new ForbiddenException('Hanya admin yang dapat menghapus Cleanup')
+    }
+    await this.findOne(id)
+    await this.prisma.cleanUpIsolator.delete({ where: { id } })
+    return { message: 'Cleanup dihapus' }
+  }
+}
