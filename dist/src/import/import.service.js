@@ -312,7 +312,7 @@ let ImportService = class ImportService {
                     tower = await this.prisma.tower.create({
                         data: {
                             id: placeholderId,
-                            nama: rawRuas || 'Ruas Tidak Dikenal',
+                            nama: rawRuas || 'Penghantar Tidak Dikenal',
                             lat: 0, lng: 0,
                             tegangan: '150 kV',
                             tipe: 'other',

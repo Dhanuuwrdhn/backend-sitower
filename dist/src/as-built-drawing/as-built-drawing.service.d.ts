@@ -19,12 +19,12 @@ export declare class AsBuiltDrawingService {
         };
     } & {
         id: string;
-        nama: string;
-        tipe: string;
-        createdAt: Date;
-        updatedAt: Date;
         towerId: string | null;
         keterangan: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        nama: string;
+        tipe: string;
         tahun: number;
     })[]>;
     findFolder(id: string): Promise<{
@@ -45,12 +45,12 @@ export declare class AsBuiltDrawingService {
         }[];
     } & {
         id: string;
-        nama: string;
-        tipe: string;
-        createdAt: Date;
-        updatedAt: Date;
         towerId: string | null;
         keterangan: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        nama: string;
+        tipe: string;
         tahun: number;
     }>;
     createFolder(dto: CreateFolderDto): import("@prisma/client").Prisma.Prisma__AsBuiltFolderClient<{
@@ -63,12 +63,12 @@ export declare class AsBuiltDrawingService {
         };
     } & {
         id: string;
-        nama: string;
-        tipe: string;
-        createdAt: Date;
-        updatedAt: Date;
         towerId: string | null;
         keterangan: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        nama: string;
+        tipe: string;
         tahun: number;
     }, never, import("@prisma/client/runtime/client").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
     updateFolder(id: string, dto: UpdateAsBuiltDrawingDto): Promise<{
@@ -81,22 +81,22 @@ export declare class AsBuiltDrawingService {
         };
     } & {
         id: string;
-        nama: string;
-        tipe: string;
-        createdAt: Date;
-        updatedAt: Date;
         towerId: string | null;
         keterangan: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        nama: string;
+        tipe: string;
         tahun: number;
     }>;
     deleteFolder(id: string): Promise<{
         id: string;
-        nama: string;
-        tipe: string;
-        createdAt: Date;
-        updatedAt: Date;
         towerId: string | null;
         keterangan: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        nama: string;
+        tipe: string;
         tahun: number;
     }>;
     findDokumenByFolder(folderId: string): import("@prisma/client").Prisma.PrismaPromise<{
