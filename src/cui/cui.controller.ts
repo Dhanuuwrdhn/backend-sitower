@@ -19,13 +19,19 @@ export class CuiController {
   @Get()
   @ApiOperation({ summary: 'List CUI (paginated)' })
   @ApiQuery({ name: 'search', required: false })
-  @ApiQuery({ name: 'status', required: false, enum: ['selesai', 'sedang_berlangsung', 'tidak_ada_aktifitas'] })
+  @ApiQuery({ name: 'status', required: false, description: 'comma-separated: selesai,sedang_berlangsung,tidak_ada_aktifitas' })
+  @ApiQuery({ name: 'jalur', required: false, description: 'comma-separated tower.jalur values' })
+  @ApiQuery({ name: 'tglMulai', required: false })
+  @ApiQuery({ name: 'tglAkhir', required: false })
   @ApiQuery({ name: 'page', required: false })
   @ApiQuery({ name: 'limit', required: false })
-  findAll(@Query() query: { search?: string; status?: string; page?: string; limit?: string }) {
+  findAll(@Query() query: { search?: string; status?: string; jalur?: string; tglMulai?: string; tglAkhir?: string; page?: string; limit?: string }) {
     return this.cuiService.findAll({
       search: query.search,
       status: query.status,
+      jalur: query.jalur,
+      tglMulai: query.tglMulai,
+      tglAkhir: query.tglAkhir,
       page: query.page ? Number(query.page) : undefined,
       limit: query.limit ? Number(query.limit) : undefined,
     })

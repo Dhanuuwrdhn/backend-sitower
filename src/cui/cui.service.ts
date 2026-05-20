@@ -20,11 +20,33 @@ const INCLUDE_TOWER = {
 export class CuiService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(query: { search?: string; status?: string; page?: number; limit?: number }) {
+  async findAll(query: {
+    search?: string
+    status?: string
+    jalur?: string
+    tglMulai?: string
+    tglAkhir?: string
+    page?: number
+    limit?: number
+  }) {
     const page = Math.max(1, Number(query.page) || 1)
     const limit = Math.min(100, Math.max(1, Number(query.limit) || 10))
     const where: any = {}
-    if (query.status) where.status = query.status
+    if (query.status) {
+      const list = query.status.split(',').map((s) => s.trim()).filter(Boolean)
+      if (list.length === 1) where.status = list[0]
+      else if (list.length > 1) where.status = { in: list }
+    }
+    if (query.jalur) {
+      const list = query.jalur.split(',').map((s) => s.trim()).filter(Boolean)
+      if (list.length) where.tower = { ...(where.tower ?? {}), jalur: { in: list } }
+    }
+    if (query.tglMulai || query.tglAkhir) {
+      where.tanggal = {
+        ...(query.tglMulai && { gte: new Date(query.tglMulai) }),
+        ...(query.tglAkhir && { lte: new Date(`${query.tglAkhir}T23:59:59.999Z`) }),
+      }
+    }
     if (query.search) {
       const s = query.search
       where.OR = [
