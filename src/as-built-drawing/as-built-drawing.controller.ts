@@ -1,8 +1,8 @@
 import {
-  Controller, Get, Post, Put, Delete, Body, Param, Query,
-  UseGuards, UseInterceptors, UploadedFile, UploadedFiles, Res,
+  Controller, Get, Post, Put, Delete, Body, Param, Query, Req,
+  UseGuards, UseInterceptors, UploadedFiles, Res,
 } from '@nestjs/common'
-import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express'
+import { FilesInterceptor } from '@nestjs/platform-express'
 import { diskStorage } from 'multer'
 import { extname, join } from 'path'
 import type { Response } from 'express'
@@ -18,6 +18,16 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { RolesGuard } from '../auth/roles.guard'
 import { Roles } from '../auth/roles.decorator'
 
+const DISK_STORAGE = diskStorage({
+  destination: join(process.cwd(), 'uploads', 'asbuilt'),
+  filename: (_req, file, cb) => cb(
+    null,
+    `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${extname(file.originalname)}`,
+  ),
+})
+
+const userId = (req: any): string | undefined => req?.user?.sub ?? req?.user?.id
+
 @ApiTags('As-Built Drawing')
 @ApiBearerAuth()
 @Controller('as-built-drawing')
@@ -28,33 +38,41 @@ export class AsBuiltDrawingController {
   // ── Folders ──────────────────────────────────────────────────────────────────
 
   @Get()
-  @ApiOperation({ summary: 'List semua folder as-built drawing' })
-  @ApiQuery({ name: 'search',  required: false })
-  @ApiQuery({ name: 'tipe',    required: false, enum: ['Electrical','Mechanical','Civil','Grounding','Lainnya'] })
-  @ApiQuery({ name: 'tahun',   required: false })
-  @ApiQuery({ name: 'towerId', required: false })
-  findAll(@Query() query: { search?: string; tipe?: string; tahun?: string; towerId?: string }) {
+  @ApiOperation({ summary: 'List folder + dokumen di level tertentu (root jika parentId kosong)' })
+  @ApiQuery({ name: 'search',   required: false })
+  @ApiQuery({ name: 'tipe',     required: false })
+  @ApiQuery({ name: 'tahun',    required: false })
+  @ApiQuery({ name: 'towerId',  required: false })
+  @ApiQuery({ name: 'parentId', required: false, description: '"root"/null untuk root level' })
+  findAll(@Query() query: { search?: string; tipe?: string; tahun?: string; towerId?: string; parentId?: string }) {
     return this.asBuiltDrawingService.findAllFolders(query)
   }
 
+  @Get('breadcrumb/:id')
+  @ApiOperation({ summary: 'Breadcrumb chain dari root ke folder ini' })
+  @ApiParam({ name: 'id', description: 'Folder ID' })
+  breadcrumb(@Param('id') id: string) {
+    return this.asBuiltDrawingService.breadcrumb(id)
+  }
+
   @Get(':id')
-  @ApiOperation({ summary: 'Detail folder + list dokumen' })
+  @ApiOperation({ summary: 'Detail folder + subfolders + dokumen' })
   @ApiParam({ name: 'id', description: 'Folder ID' })
   findFolder(@Param('id') id: string) {
     return this.asBuiltDrawingService.findFolder(id)
   }
 
   @Post()
-  @Roles('admin')
-  @ApiOperation({ summary: 'Buat folder as-built drawing baru (admin)' })
+  @Roles('admin', 'superadmin')
+  @ApiOperation({ summary: 'Buat folder as-built drawing baru (admin/superadmin)' })
   @ApiBody({ type: CreateFolderDto })
-  createFolder(@Body() dto: CreateFolderDto) {
-    return this.asBuiltDrawingService.createFolder(dto)
+  createFolder(@Body() dto: CreateFolderDto, @Req() req: any) {
+    return this.asBuiltDrawingService.createFolder(dto, userId(req))
   }
 
   @Put(':id')
-  @Roles('admin')
-  @ApiOperation({ summary: 'Update folder (admin)' })
+  @Roles('admin', 'superadmin')
+  @ApiOperation({ summary: 'Update folder (admin/superadmin)' })
   @ApiParam({ name: 'id', description: 'Folder ID' })
   @ApiBody({ type: UpdateAsBuiltDrawingDto })
   updateFolder(@Param('id') id: string, @Body() dto: UpdateAsBuiltDrawingDto) {
@@ -62,8 +80,8 @@ export class AsBuiltDrawingController {
   }
 
   @Delete(':id')
-  @Roles('admin')
-  @ApiOperation({ summary: 'Hapus folder + semua dokumen (admin)' })
+  @Roles('admin', 'superadmin')
+  @ApiOperation({ summary: 'Hapus folder + semua subfolder & dokumen (admin/superadmin)' })
   @ApiParam({ name: 'id', description: 'Folder ID' })
   deleteFolder(@Param('id') id: string) {
     return this.asBuiltDrawingService.deleteFolder(id)
@@ -78,6 +96,26 @@ export class AsBuiltDrawingController {
     return this.asBuiltDrawingService.findDokumenByFolder(folderId)
   }
 
+  /** Upload langsung di root (tanpa folder). */
+  @Post('dokumen')
+  @Roles('admin', 'superadmin', 'teknisi')
+  @ApiOperation({ summary: 'Upload 1+ dokumen langsung di root (admin/superadmin/teknisi)' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: { files: { type: 'array', items: { type: 'string', format: 'binary' } } },
+    },
+  })
+  @UseInterceptors(FilesInterceptor('files', 20, { storage: DISK_STORAGE }))
+  uploadRootDokumen(@UploadedFiles() files: Express.Multer.File[], @Req() req: any) {
+    const docs = (files ?? []).map((f) => ({
+      namaFile: f.originalname,
+      fileUrl: `/uploads/asbuilt/${f.filename}`,
+    }))
+    return this.asBuiltDrawingService.addDokumenMulti(null, docs, userId(req))
+  }
+
   @Post(':folderId/dokumen')
   @Roles('admin', 'superadmin', 'teknisi')
   @ApiOperation({ summary: 'Upload 1+ dokumen ke folder (admin/superadmin/teknisi)' })
@@ -86,28 +124,20 @@ export class AsBuiltDrawingController {
   @ApiBody({
     schema: {
       type: 'object',
-      properties: {
-        files: { type: 'array', items: { type: 'string', format: 'binary' } },
-      },
+      properties: { files: { type: 'array', items: { type: 'string', format: 'binary' } } },
     },
   })
-  @UseInterceptors(
-    FilesInterceptor('files', 20, {
-      storage: diskStorage({
-        destination: join(process.cwd(), 'uploads', 'asbuilt'),
-        filename: (_req, file, cb) => cb(null, `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${extname(file.originalname)}`),
-      }),
-    }),
-  )
+  @UseInterceptors(FilesInterceptor('files', 20, { storage: DISK_STORAGE }))
   uploadDokumen(
     @Param('folderId') folderId: string,
     @UploadedFiles() files: Express.Multer.File[],
+    @Req() req: any,
   ) {
     const docs = (files ?? []).map((f) => ({
       namaFile: f.originalname,
       fileUrl: `/uploads/asbuilt/${f.filename}`,
     }))
-    return this.asBuiltDrawingService.addDokumenMulti(folderId, docs)
+    return this.asBuiltDrawingService.addDokumenMulti(folderId, docs, userId(req))
   }
 
   @Get('dokumen/:id')

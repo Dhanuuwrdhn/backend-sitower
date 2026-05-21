@@ -23,6 +23,11 @@ export class CreateFolderDto {
   @IsString()
   towerId?: string
 
+  @ApiPropertyOptional({ description: 'ID folder induk untuk nested folder (opsional)' })
+  @IsOptional()
+  @IsString()
+  parentId?: string
+
   @ApiPropertyOptional({ example: 'Drawing hasil revisi 2024' })
   @IsOptional()
   @IsString()

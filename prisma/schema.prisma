@@ -23,6 +23,8 @@ model Pegawai {
   laporan                Laporan[]
   climbUpInspections     ClimbUpInspection[]
   cleanUpIsolators       CleanUpIsolator[]
+  asBuiltFolders         AsBuiltFolder[]         @relation("AsBuiltFolderCreator")
+  asBuiltDokumens        AsBuiltDokumen[]        @relation("AsBuiltDokumenCreator")
   passwordChangeRequests PasswordChangeRequest[] @relation("RequesterRequests")
   reviewedRequests       PasswordChangeRequest[] @relation("ReviewerRequests")
 }
@@ -248,26 +250,33 @@ model AsBuiltDrawing {
 }
 
 model AsBuiltFolder {
-  id         String           @id @default(cuid())
-  nama       String
-  tipe       String
-  tahun      Int
-  towerId    String?
-  keterangan String?
-  createdAt  DateTime         @default(now())
-  updatedAt  DateTime         @updatedAt
-  dokumen    AsBuiltDokumen[]
-  tower      Tower?           @relation(fields: [towerId], references: [id])
+  id          String           @id @default(cuid())
+  nama        String
+  tipe        String
+  tahun       Int
+  towerId     String?
+  parentId    String?
+  createdById String?
+  keterangan  String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  dokumen     AsBuiltDokumen[]
+  children    AsBuiltFolder[]  @relation("AsBuiltFolderTree")
+  parent      AsBuiltFolder?   @relation("AsBuiltFolderTree", fields: [parentId], references: [id], onDelete: Cascade)
+  tower       Tower?           @relation(fields: [towerId], references: [id])
+  createdBy   Pegawai?         @relation("AsBuiltFolderCreator", fields: [createdById], references: [id])
 }
 
 model AsBuiltDokumen {
-  id        String        @id @default(cuid())
-  folderId  String
-  namaFile  String
-  fileUrl   String
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-  folder    AsBuiltFolder @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  id          String         @id @default(cuid())
+  folderId    String?
+  createdById String?
+  namaFile    String
+  fileUrl     String
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  folder      AsBuiltFolder? @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  createdBy   Pegawai?       @relation("AsBuiltDokumenCreator", fields: [createdById], references: [id])
 }
 
 model JalurKML {
