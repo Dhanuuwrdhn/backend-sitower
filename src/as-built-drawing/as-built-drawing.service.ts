@@ -33,9 +33,9 @@ export class AsBuiltDrawingService {
   }
 
   createFolder(dto: CreateFolderDto) {
-    const { towerId, ...rest } = dto
+    const { towerId, tipe, ...rest } = dto
     return this.prisma.asBuiltFolder.create({
-      data: { ...rest, ...(towerId && { tower: { connect: { id: towerId } } }) },
+      data: { ...rest, tipe: tipe ?? 'Lainnya', ...(towerId && { tower: { connect: { id: towerId } } }) },
       include: FOLDER_INCLUDE,
     })
   }

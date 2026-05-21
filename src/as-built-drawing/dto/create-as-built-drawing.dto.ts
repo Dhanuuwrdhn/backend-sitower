@@ -7,10 +7,11 @@ export class CreateFolderDto {
   @IsString()
   nama!: string
 
-  @ApiProperty({ enum: ['Electrical', 'Mechanical', 'Civil', 'Grounding', 'Lainnya'], example: 'Electrical' })
+  @ApiPropertyOptional({ enum: ['Electrical', 'Mechanical', 'Civil', 'Grounding', 'Lainnya'], example: 'Lainnya' })
+  @IsOptional()
   @IsString()
   @IsIn(['Electrical', 'Mechanical', 'Civil', 'Grounding', 'Lainnya'])
-  tipe!: string
+  tipe?: string
 
   @ApiProperty({ example: 2024 })
   @IsNumber()
