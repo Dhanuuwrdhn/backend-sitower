@@ -127,9 +127,14 @@ export class AsBuiltDrawingController {
       return res.status(404).json({ message: 'File tidak ditemukan di server' })
     }
     const ext = extname(doc.namaFile).toLowerCase()
+    const IMG: Record<string, string> = {
+      '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+      '.gif': 'image/gif', '.webp': 'image/webp', '.svg': 'image/svg+xml',
+      '.bmp': 'image/bmp',
+    }
     const mime = ext === '.pdf' ? 'application/pdf'
-      : ['.png', '.jpg', '.jpeg'].includes(ext) ? `image/${ext.slice(1)}`
-      : 'application/octet-stream'
+      : IMG[ext]
+      ?? 'application/octet-stream'
     res.setHeader('Content-Type', mime)
     res.setHeader('Content-Disposition', `inline; filename="${doc.namaFile}"`)
     createReadStream(filePath).pipe(res)
