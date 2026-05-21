@@ -108,13 +108,16 @@ export declare class AsBuiltDrawingController {
         namaFile: string;
         folderId: string;
     }[]>;
-    uploadDokumen(folderId: string, file: Express.Multer.File): Promise<{
-        id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        fileUrl: string;
-        namaFile: string;
-        folderId: string;
+    uploadDokumen(folderId: string, files: Express.Multer.File[]): Promise<{
+        count: number;
+        docs: {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            fileUrl: string;
+            namaFile: string;
+            folderId: string;
+        }[];
     }>;
     findOneDokumen(id: string): Promise<{
         id: string;

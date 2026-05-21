@@ -77,6 +77,15 @@ export class AsBuiltDrawingService {
     return this.prisma.asBuiltDokumen.create({ data: { folderId, namaFile, fileUrl } })
   }
 
+  async addDokumenMulti(folderId: string, docs: { namaFile: string; fileUrl: string }[]) {
+    await this.findFolder(folderId)
+    if (!docs.length) return { count: 0, docs: [] }
+    const created = await this.prisma.$transaction(
+      docs.map((d) => this.prisma.asBuiltDokumen.create({ data: { folderId, ...d } })),
+    )
+    return { count: created.length, docs: created }
+  }
+
   async deleteDokumen(id: string) {
     await this.findDokumen(id)
     return this.prisma.asBuiltDokumen.delete({ where: { id } })

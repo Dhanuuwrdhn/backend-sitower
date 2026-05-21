@@ -123,6 +123,20 @@ export declare class AsBuiltDrawingService {
         namaFile: string;
         folderId: string;
     }>;
+    addDokumenMulti(folderId: string, docs: {
+        namaFile: string;
+        fileUrl: string;
+    }[]): Promise<{
+        count: number;
+        docs: {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            fileUrl: string;
+            namaFile: string;
+            folderId: string;
+        }[];
+    }>;
     deleteDokumen(id: string): Promise<{
         id: string;
         createdAt: Date;

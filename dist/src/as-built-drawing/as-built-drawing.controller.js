@@ -48,9 +48,12 @@ let AsBuiltDrawingController = class AsBuiltDrawingController {
     findDokumen(folderId) {
         return this.asBuiltDrawingService.findDokumenByFolder(folderId);
     }
-    uploadDokumen(folderId, file) {
-        const fileUrl = `/uploads/asbuilt/${file.filename}`;
-        return this.asBuiltDrawingService.addDokumen(folderId, file.originalname, fileUrl);
+    uploadDokumen(folderId, files) {
+        const docs = (files ?? []).map((f) => ({
+            namaFile: f.originalname,
+            fileUrl: `/uploads/asbuilt/${f.filename}`,
+        }));
+        return this.asBuiltDrawingService.addDokumenMulti(folderId, docs);
     }
     findOneDokumen(id) {
         return this.asBuiltDrawingService.findDokumen(id);
@@ -138,21 +141,28 @@ __decorate([
 ], AsBuiltDrawingController.prototype, "findDokumen", null);
 __decorate([
     (0, common_1.Post)(':folderId/dokumen'),
-    (0, roles_decorator_1.Roles)('admin'),
-    (0, swagger_1.ApiOperation)({ summary: 'Upload dokumen ke folder (admin)' }),
+    (0, roles_decorator_1.Roles)('admin', 'superadmin'),
+    (0, swagger_1.ApiOperation)({ summary: 'Upload 1+ dokumen ke folder (admin/superadmin)' }),
     (0, swagger_1.ApiParam)({ name: 'folderId', description: 'Folder ID' }),
     (0, swagger_1.ApiConsumes)('multipart/form-data'),
-    (0, swagger_1.ApiBody)({ schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } } } }),
-    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file', {
+    (0, swagger_1.ApiBody)({
+        schema: {
+            type: 'object',
+            properties: {
+                files: { type: 'array', items: { type: 'string', format: 'binary' } },
+            },
+        },
+    }),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FilesInterceptor)('files', 20, {
         storage: (0, multer_1.diskStorage)({
             destination: (0, path_1.join)(process.cwd(), 'uploads', 'asbuilt'),
-            filename: (_req, file, cb) => cb(null, `${Date.now()}${(0, path_1.extname)(file.originalname)}`),
+            filename: (_req, file, cb) => cb(null, `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${(0, path_1.extname)(file.originalname)}`),
         }),
     })),
     __param(0, (0, common_1.Param)('folderId')),
-    __param(1, (0, common_1.UploadedFile)()),
+    __param(1, (0, common_1.UploadedFiles)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:paramtypes", [String, Array]),
     __metadata("design:returntype", void 0)
 ], AsBuiltDrawingController.prototype, "uploadDokumen", null);
 __decorate([
@@ -176,8 +186,8 @@ __decorate([
 ], AsBuiltDrawingController.prototype, "previewDokumen", null);
 __decorate([
     (0, common_1.Delete)('dokumen/:id'),
-    (0, roles_decorator_1.Roles)('admin'),
-    (0, swagger_1.ApiOperation)({ summary: 'Hapus dokumen (admin)' }),
+    (0, roles_decorator_1.Roles)('admin', 'superadmin'),
+    (0, swagger_1.ApiOperation)({ summary: 'Hapus dokumen (admin/superadmin)' }),
     (0, swagger_1.ApiParam)({ name: 'id', description: 'Dokumen ID' }),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),

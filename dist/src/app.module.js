@@ -21,6 +21,8 @@ const import_module_1 = require("./import/import.module");
 const jalur_kml_module_1 = require("./jalur-kml/jalur-kml.module");
 const aset_module_1 = require("./aset/aset.module");
 const units_module_1 = require("./units/units.module");
+const cui_module_1 = require("./cui/cui.module");
+const cleanup_module_1 = require("./cleanup/cleanup.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -38,6 +40,8 @@ exports.AppModule = AppModule = __decorate([
             jalur_kml_module_1.JalurKmlModule,
             aset_module_1.AsetModule,
             units_module_1.UnitsModule,
+            cui_module_1.CuiModule,
+            cleanup_module_1.CleanupModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

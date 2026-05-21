@@ -1,8 +1,8 @@
 import {
   Controller, Get, Post, Put, Delete, Body, Param, Query,
-  UseGuards, UseInterceptors, UploadedFile, Res,
+  UseGuards, UseInterceptors, UploadedFile, UploadedFiles, Res,
 } from '@nestjs/common'
-import { FileInterceptor } from '@nestjs/platform-express'
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express'
 import { diskStorage } from 'multer'
 import { extname, join } from 'path'
 import type { Response } from 'express'
@@ -79,25 +79,35 @@ export class AsBuiltDrawingController {
   }
 
   @Post(':folderId/dokumen')
-  @Roles('admin')
-  @ApiOperation({ summary: 'Upload dokumen ke folder (admin)' })
+  @Roles('admin', 'superadmin')
+  @ApiOperation({ summary: 'Upload 1+ dokumen ke folder (admin/superadmin)' })
   @ApiParam({ name: 'folderId', description: 'Folder ID' })
   @ApiConsumes('multipart/form-data')
-  @ApiBody({ schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } } } })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        files: { type: 'array', items: { type: 'string', format: 'binary' } },
+      },
+    },
+  })
   @UseInterceptors(
-    FileInterceptor('file', {
+    FilesInterceptor('files', 20, {
       storage: diskStorage({
         destination: join(process.cwd(), 'uploads', 'asbuilt'),
-        filename: (_req, file, cb) => cb(null, `${Date.now()}${extname(file.originalname)}`),
+        filename: (_req, file, cb) => cb(null, `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${extname(file.originalname)}`),
       }),
     }),
   )
   uploadDokumen(
     @Param('folderId') folderId: string,
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFiles() files: Express.Multer.File[],
   ) {
-    const fileUrl = `/uploads/asbuilt/${file.filename}`
-    return this.asBuiltDrawingService.addDokumen(folderId, file.originalname, fileUrl)
+    const docs = (files ?? []).map((f) => ({
+      namaFile: f.originalname,
+      fileUrl: `/uploads/asbuilt/${f.filename}`,
+    }))
+    return this.asBuiltDrawingService.addDokumenMulti(folderId, docs)
   }
 
   @Get('dokumen/:id')
@@ -126,8 +136,8 @@ export class AsBuiltDrawingController {
   }
 
   @Delete('dokumen/:id')
-  @Roles('admin')
-  @ApiOperation({ summary: 'Hapus dokumen (admin)' })
+  @Roles('admin', 'superadmin')
+  @ApiOperation({ summary: 'Hapus dokumen (admin/superadmin)' })
   @ApiParam({ name: 'id', description: 'Dokumen ID' })
   deleteDokumen(@Param('id') id: string) {
     return this.asBuiltDrawingService.deleteDokumen(id)
