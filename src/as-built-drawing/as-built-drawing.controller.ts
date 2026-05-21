@@ -79,8 +79,8 @@ export class AsBuiltDrawingController {
   }
 
   @Post(':folderId/dokumen')
-  @Roles('admin', 'superadmin')
-  @ApiOperation({ summary: 'Upload 1+ dokumen ke folder (admin/superadmin)' })
+  @Roles('admin', 'superadmin', 'teknisi')
+  @ApiOperation({ summary: 'Upload 1+ dokumen ke folder (admin/superadmin/teknisi)' })
   @ApiParam({ name: 'folderId', description: 'Folder ID' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
