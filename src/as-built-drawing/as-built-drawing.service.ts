@@ -156,4 +156,19 @@ export class AsBuiltDrawingService {
     await this.findDokumen(id)
     return this.prisma.asBuiltDokumen.delete({ where: { id } })
   }
+
+  // ── Bulk delete ──────────────────────────────────────────────────────────────
+
+  async bulkDelete(folderIds: string[], dokumenIds: string[]) {
+    const folders = Array.from(new Set(folderIds ?? []))
+    const dokumens = Array.from(new Set(dokumenIds ?? []))
+    if (!folders.length && !dokumens.length) {
+      return { deletedFolders: 0, deletedDokumens: 0 }
+    }
+    const [folderRes, dokumenRes] = await this.prisma.$transaction([
+      this.prisma.asBuiltFolder.deleteMany({ where: { id: { in: folders } } }),
+      this.prisma.asBuiltDokumen.deleteMany({ where: { id: { in: dokumens } } }),
+    ])
+    return { deletedFolders: folderRes.count, deletedDokumens: dokumenRes.count }
+  }
 }

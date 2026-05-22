@@ -14,6 +14,7 @@ import {
 import { AsBuiltDrawingService } from './as-built-drawing.service'
 import { CreateFolderDto } from './dto/create-as-built-drawing.dto'
 import { UpdateAsBuiltDrawingDto } from './dto/update-as-built-drawing.dto'
+import { BulkDeleteDto } from './dto/bulk-delete.dto'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { RolesGuard } from '../auth/roles.guard'
 import { Roles } from '../auth/roles.decorator'
@@ -85,6 +86,14 @@ export class AsBuiltDrawingController {
   @ApiParam({ name: 'id', description: 'Folder ID' })
   deleteFolder(@Param('id') id: string) {
     return this.asBuiltDrawingService.deleteFolder(id)
+  }
+
+  @Post('bulk-delete')
+  @Roles('admin', 'superadmin')
+  @ApiOperation({ summary: 'Hapus banyak folder + dokumen sekaligus (admin/superadmin)' })
+  @ApiBody({ type: BulkDeleteDto })
+  bulkDelete(@Body() dto: BulkDeleteDto) {
+    return this.asBuiltDrawingService.bulkDelete(dto.folderIds ?? [], dto.dokumenIds ?? [])
   }
 
   // ── Dokumen ──────────────────────────────────────────────────────────────────
