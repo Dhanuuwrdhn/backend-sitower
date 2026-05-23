@@ -15,7 +15,12 @@ export class PegawaiService {
     return this.prisma.pegawai.findMany({
       where: {
         role: { not: 'superadmin' },
-        username: { notIn: HIDDEN_USERNAMES },
+        // SQL `NOT IN (...)` excludes NULL rows due to three-valued logic.
+        // Allow NULL username explicitly so users without a username still surface.
+        OR: [
+          { username: null },
+          { username: { notIn: HIDDEN_USERNAMES } },
+        ],
         nik: { notIn: HIDDEN_NIKS },
       },
       select: { id: true, nik: true, nama: true, jabatan: true, unit: true, role: true, aktif: true, expiredAt: true, foto: true, createdAt: true },
