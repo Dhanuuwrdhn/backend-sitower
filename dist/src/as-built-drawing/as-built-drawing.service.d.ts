@@ -9,24 +9,50 @@ export declare class AsBuiltDrawingService {
         tipe?: string;
         tahun?: string;
         towerId?: string;
-    }): import("@prisma/client").Prisma.PrismaPromise<({
-        tower: {
+        parentId?: string;
+    }): Promise<{
+        folders: ({
+            tower: {
+                id: string;
+                nama: string;
+            } | null;
+            _count: {
+                dokumen: number;
+                children: number;
+            };
+            createdBy: {
+                id: string;
+                nama: string;
+                role: string;
+            } | null;
+        } & {
             id: string;
+            towerId: string | null;
+            keterangan: string | null;
+            createdAt: Date;
+            updatedAt: Date;
             nama: string;
-        } | null;
-        _count: {
-            dokumen: number;
-        };
-    } & {
-        id: string;
-        towerId: string | null;
-        keterangan: string | null;
-        createdAt: Date;
-        updatedAt: Date;
-        nama: string;
-        tipe: string;
-        tahun: number;
-    })[]>;
+            tipe: string;
+            tahun: number;
+            parentId: string | null;
+            createdById: string | null;
+        })[];
+        rootDokumen: never[] | ({
+            createdBy: {
+                id: string;
+                nama: string;
+                role: string;
+            } | null;
+        } & {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            fileUrl: string;
+            namaFile: string;
+            createdById: string | null;
+            folderId: string | null;
+        })[];
+    }>;
     findFolder(id: string): Promise<{
         tower: {
             id: string;
@@ -34,15 +60,59 @@ export declare class AsBuiltDrawingService {
         } | null;
         _count: {
             dokumen: number;
+            children: number;
         };
-        dokumen: {
+        dokumen: ({
+            createdBy: {
+                id: string;
+                nama: string;
+                role: string;
+            } | null;
+        } & {
             id: string;
             createdAt: Date;
             updatedAt: Date;
             fileUrl: string;
             namaFile: string;
-            folderId: string;
-        }[];
+            createdById: string | null;
+            folderId: string | null;
+        })[];
+        children: ({
+            tower: {
+                id: string;
+                nama: string;
+            } | null;
+            _count: {
+                dokumen: number;
+                children: number;
+            };
+            createdBy: {
+                id: string;
+                nama: string;
+                role: string;
+            } | null;
+        } & {
+            id: string;
+            towerId: string | null;
+            keterangan: string | null;
+            createdAt: Date;
+            updatedAt: Date;
+            nama: string;
+            tipe: string;
+            tahun: number;
+            parentId: string | null;
+            createdById: string | null;
+        })[];
+        parent: {
+            id: string;
+            nama: string;
+            parentId: string | null;
+        } | null;
+        createdBy: {
+            id: string;
+            nama: string;
+            role: string;
+        } | null;
     } & {
         id: string;
         towerId: string | null;
@@ -52,15 +122,27 @@ export declare class AsBuiltDrawingService {
         nama: string;
         tipe: string;
         tahun: number;
+        parentId: string | null;
+        createdById: string | null;
     }>;
-    createFolder(dto: CreateFolderDto): import("@prisma/client").Prisma.Prisma__AsBuiltFolderClient<{
+    breadcrumb(id: string): Promise<{
+        id: string;
+        nama: string;
+    }[]>;
+    createFolder(dto: CreateFolderDto, createdById?: string): import("@prisma/client").Prisma.Prisma__AsBuiltFolderClient<{
         tower: {
             id: string;
             nama: string;
         } | null;
         _count: {
             dokumen: number;
+            children: number;
         };
+        createdBy: {
+            id: string;
+            nama: string;
+            role: string;
+        } | null;
     } & {
         id: string;
         towerId: string | null;
@@ -70,6 +152,8 @@ export declare class AsBuiltDrawingService {
         nama: string;
         tipe: string;
         tahun: number;
+        parentId: string | null;
+        createdById: string | null;
     }, never, import("@prisma/client/runtime/client").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
     updateFolder(id: string, dto: UpdateAsBuiltDrawingDto): Promise<{
         tower: {
@@ -78,7 +162,13 @@ export declare class AsBuiltDrawingService {
         } | null;
         _count: {
             dokumen: number;
+            children: number;
         };
+        createdBy: {
+            id: string;
+            nama: string;
+            role: string;
+        } | null;
     } & {
         id: string;
         towerId: string | null;
@@ -88,6 +178,8 @@ export declare class AsBuiltDrawingService {
         nama: string;
         tipe: string;
         tahun: number;
+        parentId: string | null;
+        createdById: string | null;
     }>;
     deleteFolder(id: string): Promise<{
         id: string;
@@ -98,44 +190,53 @@ export declare class AsBuiltDrawingService {
         nama: string;
         tipe: string;
         tahun: number;
+        parentId: string | null;
+        createdById: string | null;
     }>;
-    findDokumenByFolder(folderId: string): import("@prisma/client").Prisma.PrismaPromise<{
+    findDokumenByFolder(folderId: string): import("@prisma/client").Prisma.PrismaPromise<({
+        createdBy: {
+            id: string;
+            nama: string;
+            role: string;
+        } | null;
+    } & {
         id: string;
         createdAt: Date;
         updatedAt: Date;
         fileUrl: string;
         namaFile: string;
-        folderId: string;
-    }[]>;
+        createdById: string | null;
+        folderId: string | null;
+    })[]>;
     findDokumen(id: string): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
         fileUrl: string;
         namaFile: string;
-        folderId: string;
+        createdById: string | null;
+        folderId: string | null;
     }>;
-    addDokumen(folderId: string, namaFile: string, fileUrl: string): Promise<{
-        id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        fileUrl: string;
-        namaFile: string;
-        folderId: string;
-    }>;
-    addDokumenMulti(folderId: string, docs: {
+    addDokumenMulti(folderId: string | null, docs: {
         namaFile: string;
         fileUrl: string;
-    }[]): Promise<{
+    }[], createdById?: string): Promise<{
         count: number;
-        docs: {
+        docs: ({
+            createdBy: {
+                id: string;
+                nama: string;
+                role: string;
+            } | null;
+        } & {
             id: string;
             createdAt: Date;
             updatedAt: Date;
             fileUrl: string;
             namaFile: string;
-            folderId: string;
-        }[];
+            createdById: string | null;
+            folderId: string | null;
+        })[];
     }>;
     deleteDokumen(id: string): Promise<{
         id: string;
@@ -143,6 +244,11 @@ export declare class AsBuiltDrawingService {
         updatedAt: Date;
         fileUrl: string;
         namaFile: string;
-        folderId: string;
+        createdById: string | null;
+        folderId: string | null;
+    }>;
+    bulkDelete(folderIds: string[], dokumenIds: string[]): Promise<{
+        deletedFolders: number;
+        deletedDokumens: number;
     }>;
 }
