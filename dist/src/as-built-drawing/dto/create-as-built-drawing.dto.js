@@ -18,6 +18,7 @@ class CreateFolderDto {
     tipe;
     tahun;
     towerId;
+    parentId;
     keterangan;
 }
 exports.CreateFolderDto = CreateFolderDto;
@@ -27,7 +28,8 @@ __decorate([
     __metadata("design:type", String)
 ], CreateFolderDto.prototype, "nama", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ enum: ['Electrical', 'Mechanical', 'Civil', 'Grounding', 'Lainnya'], example: 'Electrical' }),
+    (0, swagger_1.ApiPropertyOptional)({ enum: ['Electrical', 'Mechanical', 'Civil', 'Grounding', 'Lainnya'], example: 'Lainnya' }),
+    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsIn)(['Electrical', 'Mechanical', 'Civil', 'Grounding', 'Lainnya']),
     __metadata("design:type", String)
@@ -44,6 +46,12 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateFolderDto.prototype, "towerId", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'ID folder induk untuk nested folder (opsional)' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateFolderDto.prototype, "parentId", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ example: 'Drawing hasil revisi 2024' }),
     (0, class_validator_1.IsOptional)(),

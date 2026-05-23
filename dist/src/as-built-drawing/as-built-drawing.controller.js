@@ -22,9 +22,15 @@ const swagger_1 = require("@nestjs/swagger");
 const as_built_drawing_service_1 = require("./as-built-drawing.service");
 const create_as_built_drawing_dto_1 = require("./dto/create-as-built-drawing.dto");
 const update_as_built_drawing_dto_1 = require("./dto/update-as-built-drawing.dto");
+const bulk_delete_dto_1 = require("./dto/bulk-delete.dto");
 const jwt_auth_guard_1 = require("../auth/jwt-auth.guard");
 const roles_guard_1 = require("../auth/roles.guard");
 const roles_decorator_1 = require("../auth/roles.decorator");
+const DISK_STORAGE = (0, multer_1.diskStorage)({
+    destination: (0, path_1.join)(process.cwd(), 'uploads', 'asbuilt'),
+    filename: (_req, file, cb) => cb(null, `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${(0, path_1.extname)(file.originalname)}`),
+});
+const userId = (req) => req?.user?.sub ?? req?.user?.id;
 let AsBuiltDrawingController = class AsBuiltDrawingController {
     asBuiltDrawingService;
     constructor(asBuiltDrawingService) {
@@ -33,11 +39,14 @@ let AsBuiltDrawingController = class AsBuiltDrawingController {
     findAll(query) {
         return this.asBuiltDrawingService.findAllFolders(query);
     }
+    breadcrumb(id) {
+        return this.asBuiltDrawingService.breadcrumb(id);
+    }
     findFolder(id) {
         return this.asBuiltDrawingService.findFolder(id);
     }
-    createFolder(dto) {
-        return this.asBuiltDrawingService.createFolder(dto);
+    createFolder(dto, req) {
+        return this.asBuiltDrawingService.createFolder(dto, userId(req));
     }
     updateFolder(id, dto) {
         return this.asBuiltDrawingService.updateFolder(id, dto);
@@ -45,15 +54,25 @@ let AsBuiltDrawingController = class AsBuiltDrawingController {
     deleteFolder(id) {
         return this.asBuiltDrawingService.deleteFolder(id);
     }
+    bulkDelete(dto) {
+        return this.asBuiltDrawingService.bulkDelete(dto.folderIds ?? [], dto.dokumenIds ?? []);
+    }
     findDokumen(folderId) {
         return this.asBuiltDrawingService.findDokumenByFolder(folderId);
     }
-    uploadDokumen(folderId, files) {
+    uploadRootDokumen(files, req) {
         const docs = (files ?? []).map((f) => ({
             namaFile: f.originalname,
             fileUrl: `/uploads/asbuilt/${f.filename}`,
         }));
-        return this.asBuiltDrawingService.addDokumenMulti(folderId, docs);
+        return this.asBuiltDrawingService.addDokumenMulti(null, docs, userId(req));
+    }
+    uploadDokumen(folderId, files, req) {
+        const docs = (files ?? []).map((f) => ({
+            namaFile: f.originalname,
+            fileUrl: `/uploads/asbuilt/${f.filename}`,
+        }));
+        return this.asBuiltDrawingService.addDokumenMulti(folderId, docs, userId(req));
     }
     findOneDokumen(id) {
         return this.asBuiltDrawingService.findDokumen(id);
@@ -65,9 +84,14 @@ let AsBuiltDrawingController = class AsBuiltDrawingController {
             return res.status(404).json({ message: 'File tidak ditemukan di server' });
         }
         const ext = (0, path_1.extname)(doc.namaFile).toLowerCase();
+        const IMG = {
+            '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+            '.gif': 'image/gif', '.webp': 'image/webp', '.svg': 'image/svg+xml',
+            '.bmp': 'image/bmp',
+        };
         const mime = ext === '.pdf' ? 'application/pdf'
-            : ['.png', '.jpg', '.jpeg'].includes(ext) ? `image/${ext.slice(1)}`
-                : 'application/octet-stream';
+            : IMG[ext]
+                ?? 'application/octet-stream';
         res.setHeader('Content-Type', mime);
         res.setHeader('Content-Disposition', `inline; filename="${doc.namaFile}"`);
         (0, fs_1.createReadStream)(filePath).pipe(res);
@@ -79,19 +103,29 @@ let AsBuiltDrawingController = class AsBuiltDrawingController {
 exports.AsBuiltDrawingController = AsBuiltDrawingController;
 __decorate([
     (0, common_1.Get)(),
-    (0, swagger_1.ApiOperation)({ summary: 'List semua folder as-built drawing' }),
+    (0, swagger_1.ApiOperation)({ summary: 'List folder + dokumen di level tertentu (root jika parentId kosong)' }),
     (0, swagger_1.ApiQuery)({ name: 'search', required: false }),
-    (0, swagger_1.ApiQuery)({ name: 'tipe', required: false, enum: ['Electrical', 'Mechanical', 'Civil', 'Grounding', 'Lainnya'] }),
+    (0, swagger_1.ApiQuery)({ name: 'tipe', required: false }),
     (0, swagger_1.ApiQuery)({ name: 'tahun', required: false }),
     (0, swagger_1.ApiQuery)({ name: 'towerId', required: false }),
+    (0, swagger_1.ApiQuery)({ name: 'parentId', required: false, description: '"root"/null untuk root level' }),
     __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], AsBuiltDrawingController.prototype, "findAll", null);
 __decorate([
+    (0, common_1.Get)('breadcrumb/:id'),
+    (0, swagger_1.ApiOperation)({ summary: 'Breadcrumb chain dari root ke folder ini' }),
+    (0, swagger_1.ApiParam)({ name: 'id', description: 'Folder ID' }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], AsBuiltDrawingController.prototype, "breadcrumb", null);
+__decorate([
     (0, common_1.Get)(':id'),
-    (0, swagger_1.ApiOperation)({ summary: 'Detail folder + list dokumen' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Detail folder + subfolders + dokumen' }),
     (0, swagger_1.ApiParam)({ name: 'id', description: 'Folder ID' }),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
@@ -100,18 +134,19 @@ __decorate([
 ], AsBuiltDrawingController.prototype, "findFolder", null);
 __decorate([
     (0, common_1.Post)(),
-    (0, roles_decorator_1.Roles)('admin'),
-    (0, swagger_1.ApiOperation)({ summary: 'Buat folder as-built drawing baru (admin)' }),
+    (0, roles_decorator_1.Roles)('admin', 'superadmin'),
+    (0, swagger_1.ApiOperation)({ summary: 'Buat folder as-built drawing baru (admin/superadmin)' }),
     (0, swagger_1.ApiBody)({ type: create_as_built_drawing_dto_1.CreateFolderDto }),
     __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [create_as_built_drawing_dto_1.CreateFolderDto]),
+    __metadata("design:paramtypes", [create_as_built_drawing_dto_1.CreateFolderDto, Object]),
     __metadata("design:returntype", void 0)
 ], AsBuiltDrawingController.prototype, "createFolder", null);
 __decorate([
     (0, common_1.Put)(':id'),
-    (0, roles_decorator_1.Roles)('admin'),
-    (0, swagger_1.ApiOperation)({ summary: 'Update folder (admin)' }),
+    (0, roles_decorator_1.Roles)('admin', 'superadmin'),
+    (0, swagger_1.ApiOperation)({ summary: 'Update folder (admin/superadmin)' }),
     (0, swagger_1.ApiParam)({ name: 'id', description: 'Folder ID' }),
     (0, swagger_1.ApiBody)({ type: update_as_built_drawing_dto_1.UpdateAsBuiltDrawingDto }),
     __param(0, (0, common_1.Param)('id')),
@@ -122,14 +157,24 @@ __decorate([
 ], AsBuiltDrawingController.prototype, "updateFolder", null);
 __decorate([
     (0, common_1.Delete)(':id'),
-    (0, roles_decorator_1.Roles)('admin'),
-    (0, swagger_1.ApiOperation)({ summary: 'Hapus folder + semua dokumen (admin)' }),
+    (0, roles_decorator_1.Roles)('admin', 'superadmin'),
+    (0, swagger_1.ApiOperation)({ summary: 'Hapus folder + semua subfolder & dokumen (admin/superadmin)' }),
     (0, swagger_1.ApiParam)({ name: 'id', description: 'Folder ID' }),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], AsBuiltDrawingController.prototype, "deleteFolder", null);
+__decorate([
+    (0, common_1.Post)('bulk-delete'),
+    (0, roles_decorator_1.Roles)('admin', 'superadmin'),
+    (0, swagger_1.ApiOperation)({ summary: 'Hapus banyak folder + dokumen sekaligus (admin/superadmin)' }),
+    (0, swagger_1.ApiBody)({ type: bulk_delete_dto_1.BulkDeleteDto }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [bulk_delete_dto_1.BulkDeleteDto]),
+    __metadata("design:returntype", void 0)
+], AsBuiltDrawingController.prototype, "bulkDelete", null);
 __decorate([
     (0, common_1.Get)(':folderId/dokumen'),
     (0, swagger_1.ApiOperation)({ summary: 'List dokumen dalam folder' }),
@@ -140,29 +185,41 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], AsBuiltDrawingController.prototype, "findDokumen", null);
 __decorate([
+    (0, common_1.Post)('dokumen'),
+    (0, roles_decorator_1.Roles)('admin', 'superadmin', 'teknisi'),
+    (0, swagger_1.ApiOperation)({ summary: 'Upload 1+ dokumen langsung di root (admin/superadmin/teknisi)' }),
+    (0, swagger_1.ApiConsumes)('multipart/form-data'),
+    (0, swagger_1.ApiBody)({
+        schema: {
+            type: 'object',
+            properties: { files: { type: 'array', items: { type: 'string', format: 'binary' } } },
+        },
+    }),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FilesInterceptor)('files', 20, { storage: DISK_STORAGE })),
+    __param(0, (0, common_1.UploadedFiles)()),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Array, Object]),
+    __metadata("design:returntype", void 0)
+], AsBuiltDrawingController.prototype, "uploadRootDokumen", null);
+__decorate([
     (0, common_1.Post)(':folderId/dokumen'),
-    (0, roles_decorator_1.Roles)('admin', 'superadmin'),
-    (0, swagger_1.ApiOperation)({ summary: 'Upload 1+ dokumen ke folder (admin/superadmin)' }),
+    (0, roles_decorator_1.Roles)('admin', 'superadmin', 'teknisi'),
+    (0, swagger_1.ApiOperation)({ summary: 'Upload 1+ dokumen ke folder (admin/superadmin/teknisi)' }),
     (0, swagger_1.ApiParam)({ name: 'folderId', description: 'Folder ID' }),
     (0, swagger_1.ApiConsumes)('multipart/form-data'),
     (0, swagger_1.ApiBody)({
         schema: {
             type: 'object',
-            properties: {
-                files: { type: 'array', items: { type: 'string', format: 'binary' } },
-            },
+            properties: { files: { type: 'array', items: { type: 'string', format: 'binary' } } },
         },
     }),
-    (0, common_1.UseInterceptors)((0, platform_express_1.FilesInterceptor)('files', 20, {
-        storage: (0, multer_1.diskStorage)({
-            destination: (0, path_1.join)(process.cwd(), 'uploads', 'asbuilt'),
-            filename: (_req, file, cb) => cb(null, `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${(0, path_1.extname)(file.originalname)}`),
-        }),
-    })),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FilesInterceptor)('files', 20, { storage: DISK_STORAGE })),
     __param(0, (0, common_1.Param)('folderId')),
     __param(1, (0, common_1.UploadedFiles)()),
+    __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Array]),
+    __metadata("design:paramtypes", [String, Array, Object]),
     __metadata("design:returntype", void 0)
 ], AsBuiltDrawingController.prototype, "uploadDokumen", null);
 __decorate([
