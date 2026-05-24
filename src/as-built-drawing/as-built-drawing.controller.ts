@@ -19,6 +19,8 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { RolesGuard } from '../auth/roles.guard'
 import { Roles } from '../auth/roles.decorator'
 
+const MAX_FILE_BYTES = 100 * 1024 * 1024 // 100 MB
+
 const DISK_STORAGE = diskStorage({
   destination: join(process.cwd(), 'uploads', 'asbuilt'),
   filename: (_req, file, cb) => cb(
@@ -116,7 +118,7 @@ export class AsBuiltDrawingController {
       properties: { files: { type: 'array', items: { type: 'string', format: 'binary' } } },
     },
   })
-  @UseInterceptors(FilesInterceptor('files', 20, { storage: DISK_STORAGE }))
+  @UseInterceptors(FilesInterceptor('files', 20, { storage: DISK_STORAGE, limits: { fileSize: MAX_FILE_BYTES } }))
   uploadRootDokumen(@UploadedFiles() files: Express.Multer.File[], @Req() req: any) {
     const docs = (files ?? []).map((f) => ({
       namaFile: f.originalname,
@@ -136,7 +138,7 @@ export class AsBuiltDrawingController {
       properties: { files: { type: 'array', items: { type: 'string', format: 'binary' } } },
     },
   })
-  @UseInterceptors(FilesInterceptor('files', 20, { storage: DISK_STORAGE }))
+  @UseInterceptors(FilesInterceptor('files', 20, { storage: DISK_STORAGE, limits: { fileSize: MAX_FILE_BYTES } }))
   uploadDokumen(
     @Param('folderId') folderId: string,
     @UploadedFiles() files: Express.Multer.File[],
