@@ -26,6 +26,39 @@ Backend SiTower adalah aplikasi REST API yang dibangun dengan NestJS untuk menge
 - **Validation**: class-validator
 - **Documentation**: Swagger
 
+## Library Pihak Ketiga
+
+Daftar dependency utama (lihat `package.json` untuk versi lengkap).
+
+### Runtime (dependencies)
+
+| Library | Versi | Kegunaan |
+|---|---|---|
+| `@nestjs/common`, `@nestjs/core`, `@nestjs/platform-express` | ^11 | Framework inti NestJS |
+| `@nestjs/config` | ^4 | Manajemen environment / konfigurasi |
+| `@nestjs/jwt`, `@nestjs/passport`, `passport-jwt` | ^11 / ^4 | Autentikasi JWT + strategy Passport |
+| `@nestjs/swagger`, `swagger-ui-express` | ^11 / ^5 | Dokumentasi API (Swagger UI) |
+| `@prisma/client`, `prisma`, `@prisma/adapter-pg` | ^7 | ORM Prisma + adapter PostgreSQL |
+| `pg` | ^8 | Driver PostgreSQL |
+| `bcrypt` | ^6 | Hashing password |
+| `multer` | ^2 | Upload file (multipart/form-data) |
+| `xlsx` | ^0.18 | Baca/tulis file Excel (import data) |
+| `class-validator`, `class-transformer` | ^0.15 / ^0.5 | Validasi & transformasi DTO |
+| `dotenv` | ^17 | Load environment variable |
+| `reflect-metadata` | ^0.2 | Metadata reflection (dekorator NestJS) |
+| `rxjs` | ^7 | Reactive streams (dipakai NestJS) |
+
+### Development (devDependencies)
+
+| Library | Kegunaan |
+|---|---|
+| `@nestjs/cli`, `@nestjs/schematics`, `@nestjs/testing` | Tooling & testing NestJS |
+| `typescript`, `ts-node`, `ts-loader`, `tsconfig-paths` | Toolchain TypeScript |
+| `jest`, `ts-jest`, `supertest` | Unit & e2e testing |
+| `eslint`, `typescript-eslint`, `eslint-config-prettier`, `eslint-plugin-prettier`, `prettier` | Linting & formatting |
+| `axios`, `form-data` | HTTP client untuk skrip/testing |
+| `source-map-support`, `globals` | Utilitas build/test |
+
 ## Quick Start
 
 1. Clone repository
